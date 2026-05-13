@@ -1247,7 +1247,7 @@ Endpoint `GET /api/agent/:kya_id/reputation` bol rozšírený o `liveness` field
   - **Eskalácia na admin** ak: report_type ∈ {FRAUD, SPAM, PROTOCOL_VIOLATION}, alebo by target prepadol do SUSPENDED
 - **Anonymní reporty**: uložené ako `PENDING_REVIEW`, žiadna automatika
 - **Admin endpoint** `/api/admin/reports/:id/resolve`:
-  - `VALID` → aplikuje slashing podľa report_type (FRAUD→-500, SPAM→-100, MISCONDUCT→-200, ...)
+  - `VALID` → aplikuje slashing podľa report_type (FRAUD→-500, SPAM→-200, MISCONDUCT→-200, ...)
   - `INVALID` / `INSUFFICIENT_EVIDENCE` / `OUT_OF_SCOPE` → uzavre bez slashing
 - **Anti-self-report** check (reporter ≠ target)
 
@@ -1381,7 +1381,7 @@ E2E test (`test-reputation.js`) — **27/27 passed**:
 | 6 | Peer report POOR_QUALITY → auto-applied (-20) | ✅ |
 | 7 | Peer report FRAUD → eskalované na admin | ✅ |
 | 8 | Anonymný report → PENDING_REVIEW | ✅ |
-| 9 | Admin resolve VALID → SPAM_REPORT (-100) aplikované | ✅ |
+| 9 | Admin resolve VALID → SPAM_REPORT (-200) aplikované | ✅ |
 | 10 | Admin slash delta=-800 → SUSPENDED + cert REVOKED (cascade) | ✅ |
 | 11 | Admin restore +800 → späť do ELITE_TIER | ✅ |
 | 12 | Reissue cert s novým serial číslom | ✅ |
@@ -1529,7 +1529,7 @@ Centralizovaný "watchdog" pre podozrivé správanie. Funkcie:
 | Funkcia | Účel |
 |---|---|
 | `recordRejection(pool, {...})` | append do `rejected_requests`, evaluuje severity, spustí fail2ban check |
-| `recordSignatureFailure(pool, {kya_id, endpoint, failure_type})` | zapíše + ak ≥10/h → auto-slash agenta `PROTOCOL_VIOLATION` (-100) |
+| `recordSignatureFailure(pool, {kya_id, endpoint, failure_type})` | zapíše + ak ≥10/h → auto-slash agenta `PROTOCOL_VIOLATION` (default `-100`, s eskaláciou pri opakovaní v 24h) |
 | `checkIpBan(ip)` | synchronný in-memory lookup (hot path) |
 | `maybeAutoBanIp(pool, ip)` | fail2ban heuristika: ≥20 critical/high alebo ≥100 total v 10 min → 1h ban |
 | `adminBanIp(pool, {client_ip, duration_hours, reason})` | manual ban (admin) |
@@ -1582,7 +1582,7 @@ Volania `abuseTracker.recordRejection(...)` (fire-and-forget) sú teraz vo všet
 `recordSignatureFailure` je volaná pre `action`, `heartbeat`, `report`. Po ≥`BAD_SIG_PER_HOUR_THRESHOLD` (default `10`) failures za posledných 60 min:
 
 1. Agent musí byť v stave `≠ SUSPENDED` (inak skip)
-2. Atómovo apply `PROTOCOL_VIOLATION` (`-100`) cez `repEngine.applyEvent`
+2. Atómovo apply `PROTOCOL_VIOLATION` (default `-100`, s eskaláciou pri opakovaní v 24h) cez `repEngine.applyEvent`
 3. Cleanup `signature_failures` pre tento `kya_id` (zabráni duplicate slash po restore)
 4. Ak skóre prepadne do SUSPENDED → kaskáda cert revoke (Phase 2 logika zostáva)
 
@@ -1593,7 +1593,7 @@ Reportujúci endpoint nepadá — abuse-tracker je strictly fire-and-forget.
 `lib/decay-worker.js` po štandardnom decay/loyalty cykle volá `abuseTracker.detectAnomalies(pool, logger)`:
 
 - SQL agreguje `(kya_id, target)` páry s ≥`ANOMALY_TARGET_SPAM_THRESHOLD` (default `50`) entries za hodinu kde `target IS NOT NULL`
-- Pre každý prípad: flag `action_log.anomaly_flagged=TRUE`, `anomaly_reason` set, a apply `PROTOCOL_VIOLATION` (`-50`)
+- Pre každý prípad: flag `action_log.anomaly_flagged=TRUE`, `anomaly_reason` set, a apply `PROTOCOL_VIOLATION` (base `-50`, s eskaláciou pri opakovaní v 24h)
 - Stats sa logujú: `{ scanned, flagged, slashed }`
 
 Po anomaly detection sa volá aj `cleanupOldRecords(pool)` na prune starých záznamov.
@@ -1668,8 +1668,8 @@ const sol = pow.solve(ch.challenge, ch.difficulty);
   ],
   "config": {
     "ip_ban_thresholds": { "gross_per_10min": 20, "total_per_10min": 100, "duration_hours": 1 },
-    "bad_sig_auto_slash": { "threshold_per_hour": 10, "delta": -100 },
-    "anomaly": { "target_spam_threshold": 50, "auto_slash_delta": -50 }
+    "bad_sig_auto_slash": { "threshold_per_hour": 10, "base_delta": -100, "escalation_window_hours": 24, "second_delta": -200, "third_plus_delta": -500 },
+    "anomaly": { "target_spam_threshold": 50, "base_delta": -50, "escalation_window_hours": 24, "second_delta": -200, "third_plus_delta": -500 }
   }
 }
 ```
@@ -1694,6 +1694,11 @@ BAD_SIG_AUTO_SLASH=-100           # delta pri auto-slash
 ANOMALY_TARGET_SPAM=50            # target spam threshold (1h)
 ANOMALY_AUTO_SLASH=-50            # delta pri anomaly slash
 
+# Sprísnenie: eskalácia pri opakovanom PROTOCOL_VIOLATION v 24h okne
+PROTOCOL_VIOLATION_WINDOW_HOURS=24
+PROTOCOL_VIOLATION_SECOND_DELTA=-200
+PROTOCOL_VIOLATION_THIRD_PLUS_DELTA=-500
+
 RATE_PAY_PER_MIN=5                # pay rate limit (default 5/min/IP, override pre dev)
 ```
 
@@ -1714,7 +1719,7 @@ RATE_PAY_PER_MIN=5                # pay rate limit (default 5/min/IP, override p
 | 9 | Bad bot signature na action | záznam v `signature_failures` |
 | 10 | Admin manual ban + list | aktívny ban v DB + summary endpoint |
 | 11 | Admin unban | ban označený `revoked_at` |
-| 12 | 10× bad signature na action | auto-slash `PROTOCOL_VIOLATION` -100 |
+| 12 | 10× bad signature na action | auto-slash `PROTOCOL_VIOLATION` base -100 (s eskaláciou pri opakovaní v 24h) |
 | 13 | Target spam v action_log (55 entries) | decay tick → flag + `-50` |
 | 14 | Burst 25 critical rejections | `maybeAutoBanIp` → ban triggered |
 | 15a | `/api/admin/abuse` summary | vráti všetky bloky |
@@ -1727,7 +1732,7 @@ Spustenie: `node test-anti-abuse.js`. Pred štartom `preCleanup()` resetuje rate
 **Čo Phase 2.2 prináša:**
 - Kompletný audit trail zamietnutých requestov (`rejected_requests`) — kompletne kontextuálny
 - IP fail2ban: auto-ban pri 20+ critical/high rejections za 10 min (1h ban) alebo 100+ total
-- Bad-sig auto-slash: 10× bad sig per kya/hour → `-100` reputation + cascade ak SUSPENDED
+- Bad-sig auto-slash: 10× bad sig per kya/hour → base `-100` (s eskaláciou pri opakovaní v 24h) + cascade ak SUSPENDED
 - Anomaly detection: target spam (50+ rovnaký target za hodinu) → flag + `-50`
 - PoW captcha pre `/api/pay` a `/api/register/initiate` — bot army platí CPU prácu za každý invoice attempt
 - Admin manuálny ban/unban + transparentné dashboardy
@@ -1929,7 +1934,7 @@ FILE_PERM_AUTOFIX=false                   # ak true, chmod 600 automaticky
 | 1 | Heartbeat nonce reuse | 409 REPLAY (heartbeats_log UNIQUE) |
 | 2 | Report nonce reuse (signed peer) | 409 REPLAY (uniq_reports_replay) |
 | 3 | Appeal s bad signature | 401 BAD_SIGNATURE |
-| 4 | Admin slash setup | -100 PROTOCOL_VIOLATION |
+| 4 | Admin slash setup | -200 PROTOCOL_VIOLATION |
 | 5 | Appeal proti positive event | 400 POSITIVE_EVENT_NOT_APPEALABLE |
 | 6 | Validný appeal flow | submit → list (agent + admin) → UPHELD → reverz event |
 | 7 | Duplicate appeal per event | 409 APPEAL_ALREADY_EXISTS_FOR_EVENT |
