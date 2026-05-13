@@ -21,10 +21,10 @@ services:
       #   VIRTUAL_HOST_NAME = logical alias (for upstream group)
       #   VIRTUAL_HOST      = hostname(s) (for server_name)
       VIRTUAL_HOST_NAME: "kyahub"
-      VIRTUAL_HOST: "umbraxon.xyz"
+      VIRTUAL_HOST: "umbraxon.xyz,bots.umbraxon.xyz"
       VIRTUAL_PORT: "80"
       VIRTUAL_NETWORK: "nginx-proxy"
-      LETSENCRYPT_HOST: "umbraxon.xyz"
+      LETSENCRYPT_HOST: "umbraxon.xyz,bots.umbraxon.xyz"
       LETSENCRYPT_EMAIL: "admin@umbraxon.xyz"
       # Force nginx-gen to apply HSTS at outer layer
       HSTS: "max-age=63072000; includeSubDomains; preload"
