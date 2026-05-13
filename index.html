@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMBRAXON | KYA HUB</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --gold: #f2a900;
+            --bg: #000000;
+            --panel: #080808;
+            --border: #1a1a1a;
+            --text: #888;
+            --text-bright: #e0e0e0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text-bright);
+            font-family: 'Inter', 'JetBrains Mono', monospace;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* HEADER AREA */
+        header {
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .brand-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .logo-jet {
+            width: 80px;
+            height: auto;
+            filter: grayscale(1) brightness(0.8) drop-shadow(0 0 5px rgba(242, 169, 0, 0.2));
+            margin-bottom: 8px;
+        }
+
+        .brand-name {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+
+        .lang-switch {
+            display: flex;
+            gap: 10px;
+        }
+
+        .lang-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: #444;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .lang-btn.active {
+            color: var(--gold);
+            border-color: var(--gold);
+        }
+
+        /* TABS / SECTIONS NAVIGATION */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-item {
+            padding-bottom: 15px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #444;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .nav-item.active, .nav-item:hover {
+            color: var(--gold);
+            border-bottom: 2px solid var(--gold);
+        }
+
+        /* MAIN 3-COLUMN LAYOUT */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 2px;
+            background: var(--border);
+            max-width: 1600px;
+            margin: 0 auto;
+            border: 1px solid var(--border);
+        }
+
+        .col {
+            background: var(--panel);
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        h2 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* INTERFACE ELEMENTS */
+        input {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border);
+            padding: 15px;
+            color: var(--gold);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .btn-action {
+            width: 100%;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            padding: 18px;
+            font-weight: 900;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        #qr-container {
+            margin-top: 40px;
+            display: none;
+            text-align: center;
+        }
+
+        #qrcode {
+            background: #fff;
+            padding: 15px;
+            display: inline-block;
+            border: 4px solid var(--gold);
+        }
+
+        /* DATA TABLE */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 10px; color: #444; padding: 15px 10px; border-bottom: 1px solid var(--border); }
+        td { padding: 15px 10px; font-size: 12px; border-bottom: 1px solid #0f0f0f; color: var(--text-bright); }
+        .tag-status { color: var(--gold); font-size: 10px; font-weight: bold; }
+
+        .terminal-log {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #333;
+            line-height: 2;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand-container">
+        <!-- Logo havrana v tvare stíhačky -->
+        <img src="logo.png" alt="UMBRAXON" class="logo-jet" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2806/2806253.png'">
+        <div class="brand-name">Umbraxon</div>
+    </div>
+    
+    <div class="lang-switch">
+        <button class="lang-btn active" onclick="setLang('sk')">SK</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('de')">DE</button>
+    </div>
+</header>
+
+<div class="nav-tabs">
+    <div class="nav-item active" data-lang="nav_agents">AI Agents</div>
+    <div class="nav-item" data-lang="nav_lnet">L-Net</div>
+    <div class="nav-item" data-lang="nav_integrity">Integrity</div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- COL 1: REGISTRATION -->
+    <div class="col">
+        <h2 data-lang="title_reg">Registration</h2>
+        <input type="text" id="agentName" placeholder="AGENT_SERIAL_ID">
+        <select id="tierSelect" style="width:100%;background:#000;border:1px solid var(--border);padding:15px;color:var(--gold);margin-bottom:20px;font-family:monospace;font-size:13px;">
+            <option value="10000">BASIC — 10 000 SATS (12 mesiacov)</option>
+            <option value="50000">ELITE — 50 000 SATS (neobmedzene)</option>
+        </select>
+        <button class="btn-action" onclick="initiateKYA()" data-lang="btn_init">Initialize Agent</button>
+        
+        <div id="qr-container">
+            <div id="qrcode"></div>
+            <p id="status-msg" style="font-size: 11px; color: var(--gold); margin-top: 20px;" data-lang="waiting">Waiting for Lightning Uplink...</p>
+            <p id="invoice-link" style="font-size: 10px; color: #555; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <!-- COL 2: LEDGER -->
+    <div class="col">
+        <h2 data-lang="title_ledger">Active Ledger</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th data-lang="th_id">ID</th>
+                    <th data-lang="th_score">REPUTATION</th>
+                    <th data-lang="th_status">STATUS</th>
+                </tr>
+            </thead>
+            <tbody id="ledger-body"></tbody>
+        </table>
+    </div>
+
+    <!-- COL 3: SYSTEM STATUS -->
+    <div class="col">
+        <h2 data-lang="title_status">System Status</h2>
+        <div class="terminal-log">
+            <p>> KYA_HUB: ONLINE</p>
+            <p>> ENCRYPTION: SHA-256 ACTIVE</p>
+            <p>> DATABASE: POSTGRES_CONNECTED</p>
+            <p>> UMBRA_NODE: ACTIVE_RELAY_01</p>
+            <p>> REPUTATION_ENGINE: RUNNING</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const i18n = {
+        sk: {
+            nav_agents: "AI Agenti", nav_lnet: "L-Net", nav_integrity: "Integrity",
+            title_reg: "Registrácia", title_ledger: "Aktívny Ledger", title_status: "Systémový Status",
+            btn_init: "Inicializovať Agenta", waiting: "Čakám na Lightning spojenie...",
+            th_id: "IDENTIFIKÁTOR", th_score: "REPUTÁCIA", th_status: "STAV"
+        },
+        en: {
+            nav_agents: "AI Agents", nav_lnet: "L-Net", nav_integrity: "Integrity",
+            title_reg: "Registration", title_ledger: "Active Ledger", title_status: "System Status",
+            btn_init: "Initialize Agent", waiting: "Waiting for Lightning Uplink...",
+            th_id: "ID", th_score: "REPUTATION", th_status: "STATUS"
+        },
+        de: {
+            nav_agents: "KI Agenten", nav_lnet: "L-Net", nav_integrity: "Integrität",
+            title_reg: "Registrierung", title_ledger: "Aktives Ledger", title_status: "Systemstatus",
+            btn_init: "Agent Initialisieren", waiting: "Warten na Lightning-Verbindung...",
+            th_id: "ID", th_score: "REPUTATION", th_status: "STATUS"
+        }
+    };
+
+    function setLang(lang) {
+        document.querySelectorAll('[data-lang]').forEach(el => {
+            const key = el.getAttribute('data-lang');
+            el.innerText = i18n[lang][key];
+        });
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase() === lang));
+    }
+
+async function initiateKYA() {
+    const agentName = document.getElementById('agentName').value.trim();
+    const amount = parseInt(document.getElementById('tierSelect').value);
+
+    if(!agentName) {
+        alert("CHYBA: Zadajte ID Agenta.");
+        return;
+    }
+    if (![10000, 50000].includes(amount)) {
+        alert("CHYBA: Neplatný tier. Povolené: 10000 (BASIC) alebo 50000 (ELITE).");
+        return;
+    }
+
+    const res = await fetch('/api/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentName, amount, pubkey: '', manifest: {} })
+    });
+    
+    const data = await res.json();
+    if(data.error) {
+        alert("SYSTÉM [" + data.error + "]: " + (data.message || "Neznáma chyba"));
+        return;
+    }
+
+    // Zobraz QR pre BOLT11 (Lightning) ak je dostupný, inak otvor BTCPay checkout
+    document.getElementById('qr-container').style.display = "block";
+    const qrBox = document.getElementById('qrcode');
+    qrBox.innerHTML = "";
+
+    if (data.paymentRequest) {
+        // LNURL / BOLT11 / bitcoin: URI — zachovaj case (LNURL je case-sensitive bech32)
+        new QRCode(qrBox, { text: data.paymentRequest, width: 220, height: 220 });
+        const methodLabel = (data.paymentMethod || '').includes('LNURL') ? 'LNURL-Pay' 
+            : (data.paymentMethod || '').includes('LIGHTNING') ? 'Lightning' 
+            : 'Bitcoin';
+        document.getElementById('status-msg').innerText = "Čakám na " + methodLabel + " platbu (" + (amount/1000) + "k SATS)...";
+    } else {
+        // Fallback: QR na BTCPay checkout URL
+        new QRCode(qrBox, { text: data.checkoutLink, width: 220, height: 220 });
+        document.getElementById('status-msg').innerText = "Otvor BTCPay checkout pre zaplatenie.";
+    }
+    document.getElementById('invoice-link').innerHTML = 
+        '<a href="' + data.checkoutLink + '" target="_blank" style="color:var(--gold);">Otvoriť BTCPay checkout →</a>';
+
+    monitorPayment(data.invoiceId);
+}
+
+    function monitorPayment(invoiceId) {
+        const statusEl = document.getElementById('status-msg');
+        const check = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/check-status/${invoiceId}`);
+                const data = await res.json();
+                if(data.status === "PAID") { 
+                    clearInterval(check); 
+                    statusEl.innerText = "✓ PLATBA POTVRDENÁ — aktivujem agenta...";
+                    statusEl.style.color = "#0f0";
+                    setTimeout(() => location.reload(), 2000);
+                } else if (data.status === "PROCESSING") {
+                    statusEl.innerText = "⏳ Platba v procese (čaká na confirmation)...";
+                } else if (data.status === "EXPIRED") {
+                    clearInterval(check);
+                    statusEl.innerText = "✗ Faktúra expirovala. Skús znova.";
+                    statusEl.style.color = "#f00";
+                }
+            } catch (e) {
+                console.error('status check fail:', e);
+            }
+        }, 3000);
+    }
+
+    async function updateLedger() {
+        const res = await fetch('/api/dashboard');
+        const list = await res.json();
+        document.getElementById('ledger-body').innerHTML = list.map(a => `
+            <tr>
+                <td style="color:var(--text-bright); font-weight:700;">${a.agent_name}</td>
+                <td>${a.reputation_score}</td>
+                <td><span class="tag-status">${a.status}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    updateLedger();
+</script>
+</body>
+</html>

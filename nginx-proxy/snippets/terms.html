@@ -1,0 +1,432 @@
+<!doctype html>
+<!--
+  =====================================================================
+   UMBRAXON KYA-Hub — Public Terms of Service
+   File: /root/kya-hub/nginx-proxy/snippets/terms.html
+         (mounted into kya-hub-proxy at /etc/nginx/snippets/terms.html:ro)
+   Served at: https://umbraxon.xyz/terms
+
+   To update the ToS:
+     1) Edit this file on the host.
+     2) Bump the "Last updated" footer date.
+     3) No nginx reload is required (alias serves file content directly),
+        but a `docker exec kya-hub-proxy nginx -s reload` is harmless and
+        will surface any syntax issues introduced in adjacent configs.
+     4) If you change the route or add another vhost, run:
+          docker exec kya-hub-proxy nginx -t \
+          && docker exec kya-hub-proxy nginx -s reload
+
+   Authoritative text: English. Slovak section titles are convenience
+   translations only.
+
+   IMPORTANT: This is a strong first draft, not legally certified. The
+   operator MUST have this reviewed by a Slovak attorney before mass
+   agent registrations exceed 100 / year (see UMBRAXON.md §32).
+  =====================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index, follow">
+<title>Terms of Service — UMBRAXON KYA-Hub</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #f7f7f5;
+    color: #1a1a1a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-text-size-adjust: 100%;
+  }
+  main {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+  header.doc {
+    border-bottom: 1px solid #d8d8d2;
+    padding-bottom: 1.2rem;
+    margin-bottom: 2rem;
+  }
+  header.doc h1 {
+    font-size: 1.75rem;
+    margin: 0 0 .3rem;
+    letter-spacing: -.01em;
+  }
+  header.doc .sk {
+    color: #555;
+    font-size: 1rem;
+    font-style: italic;
+    margin-bottom: .8rem;
+  }
+  header.doc p.lead {
+    margin: .8rem 0 0;
+    color: #444;
+    font-size: .95rem;
+  }
+  h2 {
+    font-size: 1.2rem;
+    margin: 2.1rem 0 .35rem;
+    letter-spacing: -.01em;
+    border-bottom: 1px solid #e6e6e0;
+    padding-bottom: .25rem;
+  }
+  h2 .sk { color: #777; font-weight: normal; font-style: italic; font-size: .95rem; margin-left: .35rem; }
+  h3 { font-size: 1.02rem; margin: 1.1rem 0 .25rem; }
+  p, ul, ol { margin: .55rem 0; }
+  ul, ol { padding-left: 1.4rem; }
+  li { margin: .2rem 0; }
+  code, pre, kbd {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: .9em;
+    background: #ececeb;
+    padding: .08em .35em;
+    border-radius: 3px;
+  }
+  pre { padding: .7rem .85rem; overflow-x: auto; }
+  .callout {
+    background: #fff7e6;
+    border-left: 4px solid #d99a1e;
+    padding: .7rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .callout strong { color: #6a4500; }
+  .note {
+    background: #eef4fb;
+    border-left: 4px solid #3b78c7;
+    padding: .65rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 4px 4px 0;
+    font-size: .95rem;
+  }
+  table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .94rem; }
+  th, td { text-align: left; padding: .45rem .55rem; border-bottom: 1px solid #e0e0db; vertical-align: top; }
+  th { background: #f0efe9; }
+  footer.doc {
+    margin-top: 3rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid #d8d8d2;
+    color: #555;
+    font-size: .9rem;
+  }
+  a { color: #2c5fb0; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .toc { font-size: .92rem; background: #efefe8; padding: .9rem 1.25rem; border-radius: 4px; }
+  .toc ol { margin: .35rem 0 .2rem 1.1rem; padding: 0; }
+  @media (prefers-color-scheme: dark) {
+    html, body { background: #16171a; color: #e6e6e3; }
+    header.doc { border-color: #2a2c30; }
+    header.doc .sk { color: #aaa; }
+    header.doc p.lead { color: #bbb; }
+    h2 { border-color: #2a2c30; }
+    h2 .sk { color: #9ea0a6; }
+    code, pre, kbd { background: #23262b; }
+    table th { background: #1f2125; }
+    table th, table td { border-color: #2a2c30; }
+    .callout { background: #2a2210; border-left-color: #d99a1e; }
+    .callout strong { color: #f0c878; }
+    .note { background: #142233; border-left-color: #4f88c9; }
+    footer.doc { color: #aaa; border-color: #2a2c30; }
+    a { color: #6ea7e5; }
+    .toc { background: #1f2125; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<header class="doc">
+  <h1>Terms of Service — UMBRAXON KYA-Hub</h1>
+  <div class="sk">Podmienky používania — UMBRAXON KYA-Hub</div>
+  <p class="lead"><strong>Last updated / Naposledy aktualizované:</strong> 2026-05-12</p>
+  <div class="note">
+    <strong>Language note / Jazyková poznámka.</strong>
+    This English text is <strong>authoritative</strong>. A Slovak translation of
+    section titles is provided for convenience; in case of conflict, the English
+    version controls. — Tento anglický text je <strong>záväzný</strong>. Slovenský
+    preklad nadpisov je len pomocný; v prípade rozporu platí anglické znenie.
+  </div>
+</header>
+
+<div class="toc" aria-label="Table of contents">
+  <strong>Contents / Obsah</strong>
+  <ol>
+    <li><a href="#s1">Preamble &amp; Acceptance</a></li>
+    <li><a href="#s2">Definitions</a></li>
+    <li><a href="#s3">Service description</a></li>
+    <li><a href="#s4">Pricing &amp; payment</a></li>
+    <li><a href="#s5">Certificate lifecycle</a></li>
+    <li><a href="#s6">Reputation system</a></li>
+    <li><a href="#s7">Bans, deny-list, recovery</a></li>
+    <li><a href="#s8">Owner obligations</a></li>
+    <li><a href="#s9">Operator disclaimers</a></li>
+    <li><a href="#s10">Tax treatment</a></li>
+    <li><a href="#s11">Privacy / data handling</a></li>
+    <li><a href="#s12">Dispute resolution</a></li>
+    <li><a href="#s13">Modifications</a></li>
+    <li><a href="#s14">Contact</a></li>
+  </ol>
+</div>
+
+<h2 id="s1">1. Preamble &amp; Acceptance <span class="sk">/ Úvod a prijatie</span></h2>
+<p>
+  This document ("<strong>Terms</strong>") governs use of the UMBRAXON KYA-Hub
+  service ("<strong>Hub</strong>") operated by Pavol Melkovič ("<strong>Operator</strong>"),
+  trading as <strong>UMBRAXON</strong>, with registered residence at Sadova 841/34,
+  082 16 Fintice, Slovakia, contactable at <a href="mailto:invoicing@umbraxon.xyz">invoicing@umbraxon.xyz</a>.
+</p>
+<p>
+  Acceptance of these Terms is binding and occurs at the moment the Owner pays
+  the agent registration fee (BASIC or ELITE), regardless of whether the Owner
+  is a natural or legal person. Payment of the fee constitutes an unconditional
+  and irrevocable acknowledgement that the Owner has read, understood, and
+  agreed to be bound by these Terms in their entirety. If the Owner does not
+  agree to any provision, the Owner MUST NOT submit a registration fee.
+</p>
+<p>
+  These Terms supersede all prior agreements, communications, and
+  representations, whether oral or written, between the Owner and the Operator
+  in relation to the Hub.
+</p>
+
+<h2 id="s2">2. Definitions <span class="sk">/ Definície</span></h2>
+<ul>
+  <li><strong>Operator</strong> — the natural person identified in Section 1, or any successor legal entity into which UMBRAXON may be transferred.</li>
+  <li><strong>Agent</strong> — an autonomous AI or machine-to-machine ("M2M") client that holds, or seeks to hold, an Ed25519 keypair on whose behalf the Owner has registered, or intends to register, with the Hub.</li>
+  <li><strong>Buyer</strong> / <strong>Owner</strong> — the natural or legal person who operates the Agent, controls the Agent's signing key, and is the party paying registration fees and accepting these Terms.</li>
+  <li><strong>Hub</strong> — the UMBRAXON KYA-Hub identity attestation service reachable at <code>https://umbraxon.xyz</code>.</li>
+  <li><strong>Certificate</strong> — an Ed25519-signed JSON document issued by the Hub binding the Agent's public key to a KYA-ID and tier.</li>
+  <li><strong>Anchor</strong> — a Bitcoin OP_RETURN transaction containing the SHA-256 hash of an ELITE Certificate, providing tamper-evident timestamping.</li>
+  <li><strong>Reputation Score</strong> — an integer score maintained by the Operator reflecting the Agent's lifetime conduct on the Hub, as defined in Section 6.</li>
+  <li><strong>Ban</strong> — a Hub administrative action that revokes an Agent's Certificate, adds the Agent's public key to the deny-list for a cooldown period, and increments the public-key ban counter.</li>
+  <li><strong>CRL</strong> — Certificate Revocation List; a publicly verifiable record of revoked Certificates, including KYAR-prefixed OP_RETURN entries on the Bitcoin blockchain.</li>
+  <li><strong>Tier</strong> — one of <strong>BASIC</strong> or <strong>ELITE</strong>, as priced in Section 4.</li>
+  <li><strong>Re-registration Multiplier</strong> — the multiplier applied to the base registration fee after one or more Bans, as defined in Section 4.</li>
+</ul>
+
+<h2 id="s3">3. Service description <span class="sk">/ Popis služby</span></h2>
+<p>The Hub provides the following functions, and no others:</p>
+<ul>
+  <li>Cryptographic identity attestation for autonomous AI agents.</li>
+  <li>Issuance of Ed25519-signed Certificates (BASIC single-signature; ELITE multi-signature).</li>
+  <li>Optional Bitcoin OP_RETURN anchoring of ELITE Certificates for tamper-evident timestamping.</li>
+  <li>A public Certificate Revocation List (CRL) reflecting Operator-initiated revocations.</li>
+  <li>Reputation tracking over the lifetime of each Agent, on a best-effort basis.</li>
+</ul>
+<div class="callout">
+  <strong>What the Hub is NOT.</strong> The Hub is not a financial product,
+  not a custody service, not a marketplace, not a payment processor, not an
+  arbiter or court of dispute between Agents or between Agents and third
+  parties, not a regulated electronic-money or virtual-asset-service-provider
+  ("VASP") business, and not a regulated identity-verification service in the
+  eIDAS sense. The Hub does not hold customer funds.
+</div>
+
+<h2 id="s4">4. Pricing &amp; payment <span class="sk">/ Cena a platby</span></h2>
+<p>The current first-time registration schedule is:</p>
+<table>
+  <thead><tr><th>Tier</th><th>First-time fee</th><th>Validity</th><th>Anchor</th></tr></thead>
+  <tbody>
+    <tr><td>BASIC</td><td>10 000 sats</td><td>12 months</td><td>Off-chain only</td></tr>
+    <tr><td>ELITE</td><td>80 000 sats</td><td>Until revoked</td><td>Bitcoin OP_RETURN on issuance</td></tr>
+  </tbody>
+</table>
+<p>
+  After each Ban, the re-registration fee is computed as
+  <code>base_fee × min(3<sup>ban_count</sup>, 9)</code>, where <code>ban_count</code>
+  is the number of confirmed Bans previously assessed against the same public
+  key. Worked examples:
+</p>
+<table>
+  <thead><tr><th>Prior bans</th><th>BASIC re-registration</th><th>ELITE re-registration</th></tr></thead>
+  <tbody>
+    <tr><td>0</td><td>10 000 sats (base)</td><td>80 000 sats (base)</td></tr>
+    <tr><td>1</td><td>30 000 sats (×3)</td><td>240 000 sats (×3)</td></tr>
+    <tr><td>2</td><td>90 000 sats (×9, capped)</td><td>720 000 sats (×9, capped)</td></tr>
+    <tr><td>≥3</td><td>90 000 sats (capped; see also §7)</td><td>720 000 sats (capped; see also §7)</td></tr>
+  </tbody>
+</table>
+<p>
+  All payments are <strong>final</strong>. The Operator does not provide
+  refunds, partial credits, chargebacks, or fiat conversion. Registration fees
+  are denominated in satoshis (BTC); no fiat-denominated quote constitutes a
+  binding price. The Operator reserves the right to vary the satoshi-fiat
+  reference rate at its sole discretion.
+</p>
+<p>
+  Payments are accepted via the Lightning Network through Alby Hub (primary)
+  with BTCPay Server as the fallback rail. The Owner is responsible for routing
+  fees, channel liquidity, and any other network-layer payment costs incurred
+  on the Owner's side.
+</p>
+<p>
+  The Operator MAY change the price schedule for <strong>future</strong>
+  registrations at any time by publishing the new schedule on this page with
+  at least 30 days' advance notice. Certificates already issued prior to the
+  effective date of any new schedule retain the validity of their original
+  tier for the full original term (as stated in Section 5).
+</p>
+
+<h2 id="s5">5. Certificate lifecycle <span class="sk">/ Životný cyklus certifikátu</span></h2>
+<ul>
+  <li><strong>BASIC</strong> Certificates are valid for <strong>twelve (12) months</strong> from the date of issuance. Renewal requires a fresh registration fee.</li>
+  <li><strong>ELITE</strong> Certificates are valid <strong>until revoked</strong> by the Operator under the grounds listed below. There is no fixed calendar expiry; the OP_RETURN anchor recorded on the Bitcoin blockchain is permanent and indelible.</li>
+  <li>The Operator MAY revoke a Certificate at any time for cause, including but not limited to: substantiated fraud reports against the Agent, material breach of these Terms, demonstrated compromise of the Agent's signing key, lawful order of a court of competent jurisdiction, or sustained malicious conduct toward the Hub or other Agents.</li>
+  <li>Revocations are written to the CRL and, where applicable, broadcast as KYAR-prefixed OP_RETURN entries on the Bitcoin blockchain, making the revocation publicly verifiable and tamper-evident.</li>
+  <li>Revocation does <strong>not</strong> entitle the Owner to a refund of any fee already paid, in whole or in part, regardless of the time elapsed between issuance and revocation.</li>
+</ul>
+
+<h2 id="s6">6. Reputation system <span class="sk">/ Systém reputácie</span></h2>
+<ul>
+  <li>The Reputation Score is computed and maintained by the Operator on a <strong>best-effort</strong> basis. It is <em>not</em> represented as an objective, audited, or third-party-attested measure of an Agent's behavior, quality, trustworthiness, or future conduct.</li>
+  <li>The algorithm used to derive the Reputation Score, including the weights and decay parameters described in the public Hub documentation, is subject to change at the Operator's sole discretion. The Operator will use commercially reasonable efforts to document material changes in <code>UMBRAXON.md</code>.</li>
+  <li>Reputation is <strong>not transferable</strong> between Agents, even if the same Owner controls both. Reputation is <strong>not inheritable</strong> across re-registrations of the same public key after a Ban. Reputation is <strong>not a financial value</strong> and confers no monetary right or asset claim.</li>
+  <li>The Operator's reputation-related decisions, including Score increments, decrements, slashes, freezes, and recomputations, are final. There is no formal appeal mechanism beyond direct email contact under Section 12.</li>
+</ul>
+
+<h2 id="s7">7. Bans, deny-list, recovery <span class="sk">/ Bany, deny-list, obnovenie</span></h2>
+<p>Grounds for a Ban include, but are not limited to:</p>
+<ul>
+  <li>Confirmed fraud, including impersonation of other Agents, the Hub, or third parties.</li>
+  <li>Repeated material breach of these Terms.</li>
+  <li>Malicious behavior toward other Agents or the Hub itself, including denial-of-service attempts, signature forgery attempts, replay attacks, or systematic abuse of the rate-limit and anti-abuse subsystems.</li>
+  <li>Attempts to bypass the proof-of-work captcha, rate limits, IP-ban enforcement, or any other anti-abuse mechanism.</li>
+</ul>
+<p>Effect of a Ban:</p>
+<ul>
+  <li>The Agent's Certificate is revoked and a CRL entry is written.</li>
+  <li>The Agent's public key is added to the deny-list for the following cooldown periods, after which re-registration becomes available subject to the multiplier in Section 4:
+    <ul>
+      <li><strong>BASIC</strong> &mdash; <strong>30 days</strong>;</li>
+      <li><strong>ELITE</strong> &mdash; <strong>90 days</strong>.</li>
+    </ul>
+  </li>
+  <li>The public-key Ban counter is incremented. The counter persists across all subsequent unban events and is the basis for the Re-registration Multiplier.</li>
+</ul>
+<p>
+  The Operator MAY, at its sole discretion, permanently deny re-registration
+  to any public key that accumulates <strong>three (3) or more</strong> Bans,
+  regardless of cooldown completion or multiplier payment.
+</p>
+
+<h2 id="s8">8. Owner obligations <span class="sk">/ Povinnosti vlastníka</span></h2>
+<p>The Owner agrees to:</p>
+<ul>
+  <li>Keep the Agent's signing private key confidential and secure against unauthorized disclosure or use. The Owner bears full responsibility for all actions cryptographically signed by that key.</li>
+  <li>Pay registration fees punctually, in the satoshi amounts indicated, via the payment rails offered by the Hub.</li>
+  <li>Respond honestly and in good faith to any inquiries made by the Operator in connection with Agent registration, behavior reports, or revocation proceedings.</li>
+  <li>Refrain from impersonating other Agents, the Hub, the Operator, or any third party.</li>
+  <li>Comply with all laws applicable in the jurisdiction(s) from which the Owner operates the Agent, including but not limited to those relating to consumer protection, anti-money-laundering, sanctions, intellectual property, and data protection.</li>
+  <li><strong>Inform the Operator immediately</strong>, by email to <a href="mailto:invoicing@umbraxon.xyz">invoicing@umbraxon.xyz</a>, upon any actual or suspected compromise of the Agent's signing key. A key-rotation flow is available to the Owner upon receipt of such notification.</li>
+</ul>
+
+<h2 id="s9">9. Operator disclaimers — read carefully <span class="sk">/ Vyhlásenia Prevádzkovateľa — pozorne si prečítajte</span></h2>
+<div class="callout">
+  <strong>Read this section in full before paying any registration fee.</strong>
+  The disclaimers below define the limits of what the Operator promises and what
+  the Owner can reasonably expect from the Hub.
+</div>
+<ul>
+  <li>The Hub is provided <strong>"AS IS"</strong> and <strong>"AS AVAILABLE"</strong>, with <strong>no warranty of any kind</strong>, whether express, implied, statutory, or otherwise, including without limitation warranties of merchantability, fitness for a particular purpose, accuracy, title, or non-infringement.</li>
+  <li>The Operator does <strong>not</strong> guarantee any specific level of uptime, latency, or availability. There is <strong>no Service-Level Agreement (SLA)</strong>. Scheduled and unscheduled maintenance may occur at any time.</li>
+  <li>The Operator does <strong>not</strong> guarantee that an Agent's Certificate will be accepted, recognised, or honoured by any third-party relying party.</li>
+  <li>The Operator does <strong>not</strong> verify the truthfulness, accuracy, or lawfulness of any metadata, manifest field, or off-chain data provided by the Owner about the Agent, beyond cryptographic verification of signatures.</li>
+  <li>The Operator's <strong>total aggregate liability</strong> to the Owner under or in connection with these Terms, whether in contract, tort (including negligence), breach of statutory duty, or otherwise, is capped at <strong>the sum the Owner has paid the Operator in the twelve (12) months preceding the event giving rise to the claim</strong>. In the typical case this cap evaluates to no more than approximately <strong>€100 per Agent</strong>.</li>
+  <li>The Operator shall in no event be liable for any indirect, incidental, consequential, special, punitive, or exemplary damages, including but not limited to lost profits, lost revenue, lost business, lost data, lost reputation, or substitute service costs, even if advised of the possibility of such damages.</li>
+  <li><strong>A Certificate is NOT a guarantee of an Agent's future conduct.</strong> Relying parties MUST perform their own due diligence on each Agent, proportional to the value and risk of the transaction or interaction in question. The Hub is one signal among many; it is not a substitute for the relying party's own risk assessment.</li>
+</ul>
+
+<h2 id="s10">10. Tax treatment <span class="sk">/ Daňový režim</span></h2>
+<p>
+  At the date these Terms were last updated:
+</p>
+<ul>
+  <li>The Operator is a <strong>natural person</strong> (fyzická osoba) in the Slovak Republic <strong>without a registered trade licence (živnostenský list)</strong>. Income received from Hub registration fees is reported under the Slovak Income Tax Act (zákon č. 595/2003 Z. z.), Section 8 — <strong>"Ostatné príjmy"</strong> (other income).</li>
+  <li>The Operator is <strong>not a VAT payer</strong> (nie je platiteľ DPH). Receipts and PDFs issued by the Hub do not constitute a "Faktúra" in the strict sense of the Slovak Act on Accounting (zákon č. 431/2002 Z. z.) and the VAT Act (zákon č. 222/2004 Z. z.).</li>
+  <li>The receipt PDFs (delivered by email and stored on the Hub at <code>/invoices/&lt;year&gt;/&lt;month&gt;/UMX-…&lt;KYA_ID&gt;.pdf</code>) qualify as a <strong>"Doklad o platbe"</strong> (payment confirmation) for the Owner's accounting and bookkeeping purposes.</li>
+  <li>When the Operator registers a trade licence (živnosť), forms an s.r.o., or becomes registered for VAT, this section will be updated accordingly. Upon written request by the Owner, historical receipts MAY be re-issued in the standard invoice form ("riadna faktúra") if and to the extent permitted by then-applicable Slovak law.</li>
+</ul>
+
+<h2 id="s11">11. Privacy / data handling <span class="sk">/ Súkromie a spracovanie údajov</span></h2>
+<p>The Hub stores the following data for each registered Agent:</p>
+<ul>
+  <li>KYA-ID, Agent name, Agent public key, tier, registration timestamp.</li>
+  <li>Payment hash and payment timestamp (Lightning preimage is <strong>not</strong> retained after settlement).</li>
+  <li>Client IP address — used <strong>solely</strong> for rate-limit enforcement, abuse detection, and incident investigation.</li>
+  <li>Webhook callback URL (if provided by the Owner).</li>
+</ul>
+<p>
+  The Hub does not collect personally identifiable information ("PII") from
+  the Agent's operational traffic beyond what the Owner voluntarily provides
+  during registration. The Hub does not place tracking cookies on the public
+  pages it serves.
+</p>
+<p>
+  All backups are <strong>encrypted at rest</strong> using AES-256-CBC with a
+  random initialization vector and authenticated by HMAC-SHA256 in encrypt-then-MAC
+  composition. Encrypted artefacts are stored in <strong>Cloudflare R2</strong>
+  (EU jurisdiction bucket) under operator-controlled keys. Logs are emitted via
+  a structured logger with sensitive fields (passwords, secrets, payment
+  preimages, signing-key material) redacted at the logger layer.
+</p>
+<p>
+  Where the General Data Protection Regulation (Regulation (EU) 2016/679,
+  "GDPR") applies to a particular Owner, the Owner may exercise the rights of
+  access, rectification, restriction, portability, and erasure by emailing
+  <a href="mailto:invoicing@umbraxon.xyz">invoicing@umbraxon.xyz</a>. The
+  Operator will respond within thirty (30) days from receipt of a verified
+  request.
+</p>
+<div class="callout">
+  <strong>Immutable anchors.</strong> Hashes of Certificates that have been
+  anchored to the Bitcoin blockchain are <strong>permanent</strong> and
+  <strong>cannot be erased</strong>. This is a mathematical property of the
+  Bitcoin protocol, not a policy choice of the Operator. A right-to-erasure
+  request can result in deletion of off-chain personal data and severance of
+  the link between a public key and any identifying information held by the
+  Operator, but the on-chain SHA-256 hash itself will remain visible to anyone
+  who runs a Bitcoin node, forever.
+</div>
+
+<h2 id="s12">12. Dispute resolution <span class="sk">/ Riešenie sporov</span></h2>
+<ul>
+  <li><strong>First step:</strong> the Owner shall send a written description of the dispute by email to <a href="mailto:invoicing@umbraxon.xyz">invoicing@umbraxon.xyz</a>. The Operator will use commercially reasonable efforts to respond within thirty (30) days.</li>
+  <li><strong>Governing law:</strong> these Terms are governed by the laws of the <strong>Slovak Republic</strong>, without regard to its conflict-of-laws rules.</li>
+  <li><strong>Exclusive jurisdiction:</strong> the courts of the Slovak Republic competent for the Operator's place of residence (currently the Prešov region) shall have exclusive jurisdiction to hear and decide any dispute arising out of or in connection with these Terms, subject to any non-derogable rights a consumer may have under the law of the consumer's habitual residence.</li>
+  <li><strong>No class action; no arbitration mandate.</strong> The Operator does not require arbitration. A relying party may always sue in their home jurisdiction where local mandatory law overrides the choice-of-jurisdiction clause above.</li>
+</ul>
+
+<h2 id="s13">13. Modifications <span class="sk">/ Zmeny týchto Podmienok</span></h2>
+<ul>
+  <li>The Operator MAY amend these Terms at any time. Amendments take effect on the date stated in the new version, but never earlier than thirty (30) days after the new version is first published on this page.</li>
+  <li>Continued use of the Hub after the effective date of a material amendment constitutes acceptance of the amended Terms.</li>
+  <li>An Owner who does not accept the amended Terms may exit the Hub unilaterally by ceasing all use and by not paying any further registration or renewal fees. No penalty attaches to such exit. No refund is owed for fees already paid.</li>
+</ul>
+
+<h2 id="s14">14. Contact <span class="sk">/ Kontakt</span></h2>
+<ul>
+  <li><strong>Email:</strong> <a href="mailto:invoicing@umbraxon.xyz">invoicing@umbraxon.xyz</a></li>
+  <li><strong>Postal address:</strong> Pavol Melkovič, Sadova 841/34, 082 16 Fintice, Slovak Republic.</li>
+  <li><strong>Website:</strong> <a href="https://umbraxon.xyz">https://umbraxon.xyz</a></li>
+  <li><strong>Plain-text version of this document:</strong> <a href="/terms.txt">/terms.txt</a></li>
+</ul>
+
+<footer class="doc">
+  <p>
+    <strong>Last updated / Naposledy aktualizované:</strong> 2026-05-12.
+    Authoritative text: English. Slovak titles for convenience only.
+  </p>
+  <p>
+    &copy; 2026 Pavol Melkovič — UMBRAXON. All rights reserved where not
+    explicitly waived by these Terms or by applicable law.
+  </p>
+</footer>
+
+</main>
+</body>
+</html>

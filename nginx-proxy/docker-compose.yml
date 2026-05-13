@@ -1,0 +1,64 @@
+# =====================================================================
+#  kya-hub-proxy  —  Ambassador container that lets BTCPay's nginx-gen
+#                    expose umbraxon.xyz with auto-TLS, while forwarding
+#                    all traffic to the host-side kya-hub on port 3000.
+#
+#  Start:   cd /root/kya-hub/nginx-proxy && docker compose up -d
+#  Logs:    docker logs -f kya-hub-proxy
+#  Reload:  docker exec kya-hub-proxy nginx -s reload
+# =====================================================================
+
+services:
+  kya-hub-proxy:
+    image: nginx:1.27-alpine
+    container_name: kya-hub-proxy
+    restart: unless-stopped
+
+    # nginx-gen watches Docker events and auto-creates server blocks
+    # in the outer BTCPay nginx based on these env vars.
+    environment:
+      # BTCPay's docker-gen template requires BOTH:
+      #   VIRTUAL_HOST_NAME = logical alias (for upstream group)
+      #   VIRTUAL_HOST      = hostname(s) (for server_name)
+      VIRTUAL_HOST_NAME: "kyahub"
+      VIRTUAL_HOST: "umbraxon.xyz"
+      VIRTUAL_PORT: "80"
+      VIRTUAL_NETWORK: "nginx-proxy"
+      LETSENCRYPT_HOST: "umbraxon.xyz"
+      LETSENCRYPT_EMAIL: "admin@umbraxon.xyz"
+      # Force nginx-gen to apply HSTS at outer layer
+      HSTS: "max-age=63072000; includeSubDomains; preload"
+
+    # Configs mounted read-only — single source of truth in git
+    volumes:
+      - ./conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./snippets:/etc/nginx/snippets:ro
+
+    # Host-gateway lets the container resolve `host.docker.internal`
+    # to the docker bridge gateway → reaches the host kya-hub:3000.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Connect to BTCPay's existing network so nginx-gen sees us
+    networks:
+      - btcpay-net
+
+    healthcheck:
+      # Use 127.0.0.1 (IPv4) — `localhost` resolves to ::1 in alpine,
+      # but nginx only listens on IPv4 by default.
+      test: ["CMD", "wget", "-qO-", "--timeout=2", "http://127.0.0.1/api/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+networks:
+  btcpay-net:
+    name: generated_default
+    external: true

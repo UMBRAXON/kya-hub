@@ -1,0 +1,14 @@
+/root/.pm2/logs/*.log /var/log/kya-*.log {
+    daily
+    rotate 30
+    missingok
+    notifempty
+    compress
+    delaycompress
+    dateext
+    dateformat -%Y%m%d
+    copytruncate
+    su root root
+    create 0640 root root
+}
+

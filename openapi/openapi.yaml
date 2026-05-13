@@ -1,0 +1,1108 @@
+openapi: 3.0.3
+info:
+  title: UMBRAXON KYA-Hub API
+  version: "1.0"
+  description: |
+    Minimal OpenAPI spec for the public + admin API surface.
+    This is intentionally not exhaustive yet; it covers the integration-critical endpoints
+    and documents security schemes at a high level.
+
+servers:
+  - url: https://umbraxon.xyz
+    description: Production (via reverse proxy)
+  - url: http://127.0.0.1:3000
+    description: Local / on-host
+
+tags:
+  - name: public
+    description: Public endpoints (no admin auth).
+  - name: protocol
+    description: Protocol negotiation + registration schema/docs.
+  - name: webhooks
+    description: Webhook ingestion endpoints (signature/HMAC verified server-side).
+  - name: agent
+    description: Agent-facing endpoints (some are public, some require Ed25519-signed payloads).
+  - name: admin
+    description: Admin-only endpoints (require `X-Admin-Key`).
+  - name: metrics
+    description: Prometheus scrape endpoint and related metrics surface.
+
+components:
+  securitySchemes:
+    AdminKey:
+      type: apiKey
+      in: header
+      name: X-Admin-Key
+      description: Admin authentication key.
+  responses:
+    InternalError:
+      description: Internal error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: INTERNAL }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        message: { type: string }
+
+    PayRequest:
+      type: object
+      required: [amount, agentName]
+      additionalProperties: false
+      properties:
+        amount:
+          type: integer
+          description: Tier price in sats (maps to BASIC/ELITE).
+          example: 10000
+        agentName:
+          type: string
+          description: Requested agent display name.
+          example: "UmbraAgent-01"
+        pubkey:
+          type: string
+          description: Optional Ed25519 pubkey (hex) used for deny-list checks and downstream flows.
+          example: "9f2a... (hex)"
+        manifest:
+          type: object
+          description: Optional manifest snapshot attached to payment metadata (debug/forensics).
+        paymentMethod:
+          type: string
+          description: Optional hint to prefer a backend.
+          enum: [btcpay, alby]
+
+    PayResponse:
+      type: object
+      description: Invoice payload (shape differs by backend).
+      required: [method, invoiceId]
+      properties:
+        method:
+          type: string
+          example: "alby-lightning"
+        invoiceId:
+          type: string
+        paymentRequest:
+          type: string
+          description: BOLT11 invoice (Lightning).
+        checkoutLink:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          nullable: true
+          description: ISO timestamp (if available from backend).
+        tier:
+          type: object
+          properties:
+            name: { type: string, example: ELITE }
+            grade: { type: string, example: A }
+            total: { type: integer, example: 10000 }
+      additionalProperties: true
+
+    RegisterInitiateRequest:
+      type: object
+      required: [manifest, manifest_signature, challenge_id, challenge_response]
+      additionalProperties: false
+      properties:
+        manifest:
+          type: object
+          description: Signed agent manifest.
+        manifest_signature:
+          type: string
+          description: Ed25519 signature over manifest hash (64B hex).
+          example: "aabb... (128 hex chars)"
+        challenge_id:
+          type: string
+          description: Challenge id from `GET /api/auth/challenge`.
+        challenge_response:
+          type: string
+          description: Ed25519 signature over challenge nonce (64B hex).
+          example: "aabb... (128 hex chars)"
+
+    RegisterInitiateResponse:
+      type: object
+      description: Registration intent + invoice details.
+      properties:
+        registration_id:
+          type: string
+          example: "REG-0123abcd..."
+        invoice:
+          $ref: "#/components/schemas/PayResponse"
+      additionalProperties: true
+
+paths:
+  /api/health:
+    get:
+      tags: [public]
+      summary: Health snapshot (cached upstream probes)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/tiers:
+    get:
+      tags: [public]
+      summary: Tier pricing snapshot
+      responses:
+        "200":
+          description: OK
+
+  /api/pay:
+    post:
+      tags: [public]
+      summary: Create invoice / registration intent payment
+      description: |
+        Protected by PoW gate + rate limiting. Request/response shapes are documented in `UMBRAXON.md`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayResponse"
+        "429":
+          description: Rate limited
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/check-status/{invoiceId}:
+    get:
+      tags: [public]
+      summary: Poll invoice status
+      parameters:
+        - in: path
+          name: invoiceId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+
+  /api/protocol/manifest-schema:
+    get:
+      tags: [protocol]
+      summary: Manifest JSON schema
+      responses:
+        "200":
+          description: OK
+
+  /api/protocol/versions:
+    get:
+      tags: [protocol]
+      summary: Protocol version negotiation
+      responses:
+        "200":
+          description: OK
+
+  /api/hub/pubkey:
+    get:
+      tags: [public]
+      summary: Hub public key and trusted manufacturers
+      responses:
+        "200":
+          description: OK
+
+  /api/metrics:
+    get:
+      tags: [metrics, admin]
+      summary: Prometheus scrape endpoint (admin-gated)
+      security:
+        - AdminKey: []
+      responses:
+        "200":
+          description: Prometheus text format
+          content:
+            text/plain:
+              schema: { type: string }
+        "401":
+          description: Unauthorized
+
+  /api/webhook/btcpay:
+    post:
+      tags: [webhooks]
+      summary: BTCPay webhook (raw body + HMAC)
+      description: |
+        Expects `application/json` raw body. Signature header is verified server-side.
+      responses:
+        "200":
+          description: OK (always 200 to avoid infinite retries; failures are logged internally)
+
+  /api/webhook/alby:
+    post:
+      tags: [webhooks]
+      summary: Alby webhook (raw body + signature)
+      responses:
+        "200":
+          description: OK
+
+  /api/register/initiate:
+    post:
+      tags: [protocol]
+      summary: Registration initiation (signed manifest + challenge)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInitiateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterInitiateResponse"
+
+  /api/cert/{kya_id}:
+    get:
+      tags: [agent]
+      summary: Fetch agent certificate
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+
+  /api/cert/{kya_id}/status:
+    get:
+      tags: [agent]
+      summary: Fetch certificate status
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+
+  /api/cert/verify:
+    post:
+      tags: [agent]
+      summary: Online certificate verification
+      responses:
+        "200":
+          description: OK
+
+  /api/protocol/reputation-model:
+    get:
+      tags: [protocol]
+      summary: Reputation model reference (public)
+      responses:
+        "200": { description: OK }
+
+  /api/dashboard:
+    get:
+      tags: [admin]
+      summary: Admin dashboard (agents snapshot)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/anchors/pending:
+    get:
+      tags: [admin]
+      summary: Pending anchors (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/reputation:
+    get:
+      tags: [agent]
+      summary: Agent reputation (public)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/actions:
+    get:
+      tags: [agent]
+      summary: Agent actions list (public)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/appeal:
+    post:
+      tags: [agent]
+      summary: Submit an appeal (agent self-service)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/appeals:
+    get:
+      tags: [agent]
+      summary: List appeals for agent (public)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/system-health:
+    get:
+      tags: [admin]
+      summary: Admin system health summary
+      security:
+        - AdminKey: []
+      responses:
+        "200":
+          description: OK
+
+  /api/status:
+    get:
+      tags: [public]
+      summary: Lightweight status endpoint (used by reverse-proxy healthchecks)
+      responses:
+        "200": { description: OK }
+
+  /api/admin/health/details:
+    get:
+      tags: [admin]
+      summary: Detailed health diagnostics (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/run-decay:
+    post:
+      tags: [admin]
+      summary: Manually trigger decay tick
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/reports:
+    get:
+      tags: [admin]
+      summary: List reports (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/reports/{id}/resolve:
+    post:
+      tags: [admin]
+      summary: Resolve a report
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/agent/{kya_id}/slash:
+    post:
+      tags: [admin]
+      summary: Slash agent (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/agent/{kya_id}/restore:
+    post:
+      tags: [admin]
+      summary: Restore agent (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/agent/{kya_id}/reissue-cert:
+    post:
+      tags: [admin]
+      summary: Reissue certificate after restore (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/abuse:
+    get:
+      tags: [admin]
+      summary: Abuse overview (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/abuse/ban:
+    post:
+      tags: [admin]
+      summary: Manual IP ban (admin)
+      security: [{ AdminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/abuse/unban:
+    post:
+      tags: [admin]
+      summary: Manual IP unban (admin)
+      security: [{ AdminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/abuse/reset-rate-limit:
+    post:
+      tags: [admin]
+      summary: Reset in-memory rate-limit buckets (admin test helper)
+      security: [{ AdminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/abuse/agent/{kya_id}:
+    get:
+      tags: [admin]
+      summary: Abuse state for agent (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/anchor/queue:
+    get:
+      tags: [admin]
+      summary: Anchor queue (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/anchor/force:
+    post:
+      tags: [admin]
+      summary: Force anchor processing (admin)
+      security: [{ AdminKey: [] }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/anchor/audit/{kya_id}:
+    get:
+      tags: [admin]
+      summary: Anchor audit for agent (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/webhooks/queue:
+    get:
+      tags: [admin]
+      summary: Webhook queue (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/appeals:
+    get:
+      tags: [admin]
+      summary: List appeals (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/appeals/{id}/resolve:
+    post:
+      tags: [admin]
+      summary: Resolve appeal (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/sybil/circles:
+    get:
+      tags: [admin]
+      summary: Sybil circle detection (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: query
+          name: days
+          required: false
+          schema: { type: integer }
+        - in: query
+          name: min_pairs
+          required: false
+          schema: { type: integer }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/breakers:
+    get:
+      tags: [admin]
+      summary: All breaker states (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/volumetric-limits:
+    get:
+      tags: [admin]
+      summary: List volumetric limits (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [admin]
+      summary: Upsert volumetric limit (admin)
+      security: [{ AdminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/volumetric-limits/{limit_key}:
+    get:
+      tags: [admin]
+      summary: Get volumetric limit (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: limit_key
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/volumetric-limits/prune:
+    post:
+      tags: [admin]
+      summary: Prune volumetric counters (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/lightning/liquidity:
+    get:
+      tags: [admin]
+      summary: Lightning liquidity snapshot (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/chain-status:
+    get:
+      tags: [admin]
+      summary: Chain consensus status (admin)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/crl/anchor-now:
+    post:
+      tags: [admin]
+      summary: Trigger CRL anchor build/broadcast now (admin)
+      security: [{ AdminKey: [] }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/manufacturer/{manufacturer_id}/attestations:
+    get:
+      tags: [admin]
+      summary: List manufacturer attestations (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: manufacturer_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/manufacturer/attestation/{id}/revoke:
+    post:
+      tags: [admin]
+      summary: Revoke manufacturer attestation (admin)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/pricing:
+    get:
+      tags: [admin]
+      summary: Get current pricing (optionally history)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [admin]
+      summary: Update pricing (live)
+      security: [{ AdminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/pricing/reload:
+    post:
+      tags: [admin]
+      summary: Force pricing cache reload from DB
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/deny-list:
+    get:
+      tags: [admin]
+      summary: Public-key deny list (truncated pubkey prefixes)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/registration/quote:
+    get:
+      tags: [public]
+      summary: Registration quote (re-registration multiplier / cooldown aware)
+      parameters:
+        - in: query
+          name: tier
+          required: true
+          schema: { type: string, enum: [BASIC, ELITE] }
+        - in: query
+          name: pubkey
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/agents/{kya_id}/ban:
+    post:
+      tags: [admin]
+      summary: Ban agent (no-custody penalty system)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/agents/{kya_id}/unban:
+    post:
+      tags: [admin]
+      summary: Unban agent (clears cooldown only)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/hub-keys:
+    get:
+      tags: [admin]
+      summary: Hub key metadata + signing activity
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/cert-signing-log:
+    get:
+      tags: [admin]
+      summary: Certificate signing log (audit)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/invoices:
+    get:
+      tags: [admin]
+      summary: List invoices
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/invoices/{invoice_number}.json:
+    get:
+      tags: [admin]
+      summary: Invoice metadata (JSON)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: invoice_number
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/invoices/{invoice_number}/pdf:
+    get:
+      tags: [admin]
+      summary: Invoice PDF (streams)
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: invoice_number
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: PDF
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+
+  /api/admin/invoices/regenerate/{invoice_number}:
+    post:
+      tags: [admin]
+      summary: Re-render invoice PDF
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: invoice_number
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/data-exports:
+    get:
+      tags: [admin]
+      summary: List data exports
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/data-exports/prune:
+    post:
+      tags: [admin]
+      summary: Prune expired data exports
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/manufacturer/register:
+    post:
+      tags: [admin]
+      summary: Register manufacturer
+      security: [{ AdminKey: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/manufacturer/{manufacturer_id}/verify:
+    post:
+      tags: [admin]
+      summary: Verify manufacturer
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: manufacturer_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/manufacturer/{manufacturer_id}/suspend:
+    post:
+      tags: [admin]
+      summary: Suspend manufacturer
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: manufacturer_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/manufacturer/{manufacturer_id}/revoke:
+    post:
+      tags: [admin]
+      summary: Revoke manufacturer
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: manufacturer_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/manufacturers:
+    get:
+      tags: [public]
+      summary: List public manufacturers
+      responses:
+        "200": { description: OK }
+
+  /api/manufacturer/{manufacturer_id}:
+    get:
+      tags: [public]
+      summary: Public manufacturer info
+      parameters:
+        - in: path
+          name: manufacturer_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/manufacturer/attestation:
+    post:
+      tags: [public]
+      summary: Submit manufacturer attestation for a manifest
+      responses:
+        "200": { description: OK }
+        "429": { description: Rate limited }
+
+  /api/agent/{kya_id}/action:
+    post:
+      tags: [agent]
+      summary: Agent action (Ed25519-signed)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/heartbeat:
+    post:
+      tags: [agent]
+      summary: Agent heartbeat (Ed25519-signed)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/report:
+    post:
+      tags: [agent]
+      summary: Agent peer report
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/events:
+    get:
+      tags: [agent]
+      summary: Agent events feed (public)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/retire:
+    post:
+      tags: [agent]
+      summary: Agent self-retire (signed)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/data-export:
+    post:
+      tags: [agent]
+      summary: Request data export (signed)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+
+  /api/agent/{kya_id}/data-export/{export_id}:
+    get:
+      tags: [agent]
+      summary: Fetch data export (download link / status)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: export_id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200": { description: OK }
+
+  /api/admin/breaker/cert-issuance/state:
+    get:
+      tags: [admin]
+      summary: Cert issuance breaker state
+      security:
+        - AdminKey: []
+      responses:
+        "200":
+          description: OK
+
+  /api/admin/breaker/cert-issuance/reset:
+    post:
+      tags: [admin]
+      summary: Reset cert issuance breaker (maintenance halt)
+      security:
+        - AdminKey: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: OK
+
+  /api/admin/retention/sizes:
+    get:
+      tags: [admin]
+      summary: Retention sizing snapshot
+      security:
+        - AdminKey: []
+      responses:
+        "200":
+          description: OK
+
+  /api/admin/retention/run:
+    post:
+      tags: [admin]
+      summary: Trigger retention tick
+      security:
+        - AdminKey: []
+      responses:
+        "200":
+          description: OK
+

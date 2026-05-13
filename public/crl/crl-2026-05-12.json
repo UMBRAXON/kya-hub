@@ -1,0 +1,99 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://umbraxon.xyz/contexts/kya-crl-v1"
+  ],
+  "type": [
+    "VerifiableCredential",
+    "KYACertRevocationList"
+  ],
+  "id": "urn:kya:crl:CRL-2026-05-12",
+  "issuer": {
+    "id": "did:key:ed25519:7b51ce92c886ec673eef45a7c3171d086ce434e86661e606e31c788d64fa8e96",
+    "name": "Umbraxon KYA-Hub",
+    "url": "https://umbraxon.xyz"
+  },
+  "issuanceDate": "2026-05-12T14:36:34.466Z",
+  "epoch": {
+    "epoch_id": 20585,
+    "epoch_label": "CRL-2026-05-12",
+    "cadence": "daily",
+    "magic": "KYAR",
+    "anchor": null
+  },
+  "merkle_root": "cec0ef51f356d862495d81ab220871226346f9f1e160061f46b648fab371fecd",
+  "leaf_count": 3,
+  "revocations": [
+    {
+      "cert_serial": "CERT-CAD028-001",
+      "kya_id": "UMBRA-CAD028",
+      "revoked_at": "2026-05-12T14:14:32.276Z",
+      "revoked_by": "anchor-worker",
+      "revocation_reason": "reissued_with_anchor",
+      "revocation_category": "REISSUED",
+      "revocation_hash": "6bfb19e1c56302c4bfc9edd8857b9fdee57f31d91d018ebc768c7a3303c04bc8",
+      "merkle_leaf_index": 0,
+      "merkle_proof": [
+        {
+          "pos": "right",
+          "hash": "4a8e1885d5d3771d996570642e75057e64e22c49d55fff6b27f5a1a1665d551f"
+        },
+        {
+          "pos": "right",
+          "hash": "fa7fa8d8c1696403d82dc7d81dcb7253b514d705d40cac2c111600b2e35eb600"
+        }
+      ]
+    },
+    {
+      "cert_serial": "CERT-8A260C-001",
+      "kya_id": "UMBRA-8A260C",
+      "revoked_at": "2026-05-11T20:18:53.234Z",
+      "revoked_by": "owner",
+      "revocation_reason": "Voluntary retire by owner: Project sunset, voluntary exit.",
+      "revocation_category": "VOLUNTARY_RETIRE",
+      "revocation_hash": "4a8e1885d5d3771d996570642e75057e64e22c49d55fff6b27f5a1a1665d551f",
+      "merkle_leaf_index": 1,
+      "merkle_proof": [
+        {
+          "pos": "left",
+          "hash": "6bfb19e1c56302c4bfc9edd8857b9fdee57f31d91d018ebc768c7a3303c04bc8"
+        },
+        {
+          "pos": "right",
+          "hash": "fa7fa8d8c1696403d82dc7d81dcb7253b514d705d40cac2c111600b2e35eb600"
+        }
+      ]
+    },
+    {
+      "cert_serial": "CERT-6C459D-001",
+      "kya_id": "UMBRA-6C459D",
+      "revoked_at": "2026-05-12T14:14:32.242Z",
+      "revoked_by": "anchor-worker",
+      "revocation_reason": "reissued_with_anchor",
+      "revocation_category": "REISSUED",
+      "revocation_hash": "ecb325671e7821360b9303ddae4a2dc7b5943d5905f9815caba8d1394aaf1de1",
+      "merkle_leaf_index": 2,
+      "merkle_proof": [
+        {
+          "pos": "right",
+          "hash": "ecb325671e7821360b9303ddae4a2dc7b5943d5905f9815caba8d1394aaf1de1"
+        },
+        {
+          "pos": "left",
+          "hash": "168403ef9aa2b670f08e99cb3475d582f5ab274309a07ceaed0e030f539b872a"
+        }
+      ]
+    }
+  ],
+  "proof": {
+    "type": "Ed25519Signature2020",
+    "created": "2026-05-12T14:36:34.546Z",
+    "verificationMethod": "did:key:ed25519:d280308f1b9abd439418942a34c142ebcefa4245322680b67ca887b96e769527#key-1",
+    "proofPurpose": "assertionMethod",
+    "algorithm": "Ed25519",
+    "canonicalizationAlgorithm": "urn:umbraxon:json-sorted-keys-v1",
+    "digestAlgorithm": "SHA-256",
+    "signatureValue": "493b2e29ce2bef08f06c0b8f9b3aa2578b89f44c9aa6d590311dd6aa5d105719ef49ac362bbaa57a11f3feee51cf27e6753fe073bfaaeee613654171314f7e00",
+    "signingRole": "ROOT"
+  }
+}

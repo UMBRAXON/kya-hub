@@ -1,0 +1,112 @@
+# ============================================================================
+# UMBRAXON KYA-Hub — Prometheus alert rules
+# Strategic Sprint §30 Item 10 — 2026-05-12
+# ----------------------------------------------------------------------------
+# Drop this file into the operator's Prometheus rules folder (often
+# `/etc/prometheus/rules/`) and reload Prometheus:
+#   systemctl reload prometheus
+#
+# The Telegram bridge is the operator's standard alertmanager route. Severity
+# `critical` should page; `warning` should be Telegram-only.
+# ============================================================================
+groups:
+  - name: kya-hub-slo
+    rules:
+      - alert: KYAHubPayLatencyP99High
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum by (le) (
+              rate(kyahub_request_duration_seconds_bucket{route="/api/pay"}[5m])
+            )
+          ) > 0.5
+        for: 5m
+        labels: { severity: warning, service: kya-hub }
+        annotations:
+          summary: "p99 /api/pay latency > 500 ms for 5 min"
+          description: "Investigate BTCPay / Alby upstream latency, DB pool saturation, HUB key decrypt cost, or anchor batching."
+
+      - alert: KYAHubPayLatencyP99Critical
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum by (le) (
+              rate(kyahub_request_duration_seconds_bucket{route="/api/pay"}[5m])
+            )
+          ) > 2.0
+        for: 5m
+        labels: { severity: critical, service: kya-hub }
+        annotations:
+          summary: "p99 /api/pay latency > 2 s for 5 min — registration flow degraded"
+          description: "Users are abandoning registrations. Check breaker state and DB pool immediately."
+
+      - alert: KYAHubHigh5xxRate
+        expr: |
+          (
+            sum(rate(kyahub_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(kyahub_requests_total[5m]))
+          ) > 0.02
+        for: 10m
+        labels: { severity: warning, service: kya-hub }
+        annotations:
+          summary: "5xx error rate > 2% over 10 min"
+          description: "Server-side errors elevated. Inspect logs."
+
+  - name: kya-hub-operations
+    rules:
+      - alert: KYAHubAnchorBacklog
+        expr: kyahub_pending_anchors > 10
+        for: 15m
+        labels: { severity: warning, service: kya-hub }
+        annotations:
+          summary: "Pending anchors backlog > 10 for 15 min"
+          description: "Anchor worker may be stuck; check kya-anchor-worker logs."
+
+      - alert: KYAHubBreakerOpen
+        expr: kyahub_circuit_breaker_state > 0
+        for: 1m
+        labels: { severity: warning, service: kya-hub }
+        annotations:
+          summary: "Circuit breaker {{ $labels.breaker_name }} in non-CLOSED state"
+          description: "State value: {{ $value }} (1=OPEN, 2=HALF_OPEN, 3=DEGRADED_WARN, 4=MAINTENANCE_HALT)."
+
+      - alert: KYAHubCertBreakerHalted
+        expr: kyahub_circuit_breaker_state{breaker_name="cert_issuance"} == 4
+        for: 1m
+        labels: { severity: critical, service: kya-hub }
+        annotations:
+          summary: "Cert issuance MAINTENANCE_HALT — /api/pay returning 503"
+          description: "8% threshold tripped. Reset via POST /api/admin/breaker/cert-issuance/reset after investigation."
+
+      - alert: KYAHubChainForkDetected
+        expr: kyahub_chain_consensus_state == 3
+        for: 1m
+        labels: { severity: critical, service: kya-hub }
+        annotations:
+          summary: "Bitcoin chain fork detected by kya-fork-detector"
+          description: "Local bitcoind disagrees with mempool.space and/or blockstream.info on the tip hash. Pause kya-anchor-worker if not already auto-paused."
+
+      - alert: KYAHubLowInboundLiquidity
+        expr: kyahub_lightning_inbound_sat > -1 AND kyahub_lightning_inbound_sat < 200000
+        for: 10m
+        labels: { severity: warning, service: kya-hub }
+        annotations:
+          summary: "Lightning inbound < 200k sat"
+          description: "Buy a +500k SAT inbound channel from MegaLith (~9k SAT fee)."
+
+      - alert: KYAHubBitcoindAnchorWalletLow
+        expr: kyahub_bitcoind_anchor_balance_sat < 5000
+        for: 30m
+        labels: { severity: warning, service: kya-hub }
+        annotations:
+          summary: "bitcoind kya-anchor wallet < 5 000 sat"
+          description: "Anchor worker may run out of UTXO. Top up the wallet from the operator's cold storage."
+
+      - alert: KYAHubBtcpayBalanceLow
+        expr: kyahub_btcpay_balance_sat < 5000
+        for: 30m
+        labels: { severity: warning, service: kya-hub }
+        annotations:
+          summary: "BTCPay store balance < 5 000 sat"
+          description: "Receiving BASIC tier payments may stall on hot-wallet rebalance — investigate."

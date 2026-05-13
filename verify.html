@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <title>KYA Hub - Overenie Agenta</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding: 50px; }
+        .search-box { background: #1e1e1e; padding: 30px; border-radius: 15px; display: inline-block; }
+        input { padding: 10px; border-radius: 5px; border: none; font-size: 1.1em; }
+        button { padding: 10px 20px; border-radius: 5px; border: none; background: #4caf50; color: white; font-weight: bold; cursor: pointer; }
+        #result { margin-top: 20px; padding: 20px; border-radius: 10px; display: none; }
+        .verified { background: #2e7d32; border: 2px solid #4caf50; }
+        .not-found { background: #c62828; border: 2px solid #f44336; }
+    </style>
+</head>
+<body>
+    <div class="search-box">
+        <h1>Overenie KYA Identity</h1>
+        <p>Zadaj meno agenta na overenie jeho statusu:</p>
+        <input type="text" id="agentSearch" placeholder="Názov agenta...">
+        <button onclick="searchAgent()">Overiť</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function searchAgent() {
+            const name = document.getElementById('agentSearch').value;
+            const resDiv = document.getElementById('result');
+            const res = await fetch(`/api/verify/${name}`);
+            const data = await res.json();
+
+            resDiv.style.display = "block";
+            if (data.found) {
+                resDiv.className = "verified";
+                resDiv.innerHTML = `
+                    <h3>✅ AGENT OVERENÝ</h3>
+                    <p>Meno: <strong>${data.agent.agent_name}</strong></p>
+                    <p>KYA ID: ${data.agent.kya_id}</p>
+                    <p>Reputácia: ${data.agent.reputation_score}/100</p>
+                    <p>Dátum: ${new Date(data.agent.verified_at).toLocaleDateString()}</p>
+                `;
+            } else {
+                resDiv.className = "not-found";
+                resDiv.innerHTML = `<h3>❌ AGENT NENÁJDENÝ</h3><p>${data.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

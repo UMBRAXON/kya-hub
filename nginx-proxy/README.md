@@ -1,0 +1,78 @@
+# kya-hub-proxy — Ambassador Reverse Proxy
+
+Lightweight `nginx:alpine` container that bridges BTCPay's outer nginx-proxy
+(jwilder/nginx-proxy stack) to the host-side **kya-hub** running on port 3000.
+
+```
+INTERNET
+   ↓ HTTPS:443
+[BTCPay nginx] ──Host=pay.umbraxon.xyz──► btcpayserver
+       │
+       └────Host=umbraxon.xyz───────────► kya-hub-proxy:80
+                                              │
+                                              └── proxy_pass → host:3000 (kya-hub)
+                                                            └─ rate limits, body limits,
+                                                               slowloris protection
+```
+
+## Why an ambassador?
+
+- BTCPay's `nginx-gen` automatically discovers containers with `VIRTUAL_HOST` env vars and
+  generates server blocks + Let's Encrypt TLS certs for them.
+- `kya-hub` runs natively on the host (via pm2), not in Docker, so it can't be discovered.
+- This tiny container exposes the right env vars and forwards traffic to the host.
+
+## Commands
+
+```bash
+# Start
+cd /root/kya-hub/nginx-proxy
+docker compose up -d   # (or docker-compose up -d)
+
+# Logs (combined)
+docker logs -f kya-hub-proxy
+
+# Reload after config change (no downtime)
+docker exec kya-hub-proxy nginx -s reload
+
+# Stop
+docker compose down
+```
+
+## Rate limit profile
+
+| Zone | Rate | Burst | Used for |
+|------|------|-------|----------|
+| `rl_pay` | 10/min | 5 | `/api/pay`, `/api/invoice/*` |
+| `rl_register` | 6/min | 3 | `/api/register-bot`, `/api/register` |
+| `rl_action` | 120/min | 30 | `/api/action`, `/api/heartbeat`, `/api/report` |
+| `rl_admin` | 30/min | 15 | `/api/admin/*` |
+| `rl_default` | 60/min | 20 | everything else |
+| `cc_per_ip` | 50 conn | - | concurrent TCP cap per IP |
+
+Trigger: HTTP 429 with JSON `{"error":"rate_limited","retry_after_seconds":60}`.
+
+## Hard limits
+
+- `client_max_body_size`: 256 KB (64 KB for `/webhook/btcpay`)
+- `client_body_timeout` / `header_timeout` / `send_timeout`: 10s
+- `proxy_read_timeout`: 20s
+- Connection limit per IP: 50 concurrent
+
+## Adding `www.umbraxon.xyz` later
+
+1. Create DNS A record: `www.umbraxon.xyz → 46.225.170.80`.
+2. Edit `docker-compose.yml`:
+   ```yaml
+   VIRTUAL_HOST: "umbraxon.xyz,www.umbraxon.xyz"
+   LETSENCRYPT_HOST: "umbraxon.xyz,www.umbraxon.xyz"
+   ```
+3. `docker compose up -d --force-recreate`
+4. Let's Encrypt will issue a new combined cert within ~60s.
+
+## Optional: Cloudflare proxy + origin firewall
+
+If DNS uses Cloudflare **Proxied** (orange cloud) with SSL mode **Full (strict)**,
+you may restrict host UFW so only Cloudflare edge IPs reach `:80`/`:443`.
+See `UMBRAXON.md` §22.12–22.13 and `scripts/ufw-restrict-http-to-cloudflare.sh`.
+
