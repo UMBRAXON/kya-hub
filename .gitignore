@@ -61,3 +61,6 @@ monitoring/.venv/
 .DS_Store
 .idea/
 .vscode/
+
+# --- Local release bundles (git archive / hand-off tarballs) ------------
+dist/
