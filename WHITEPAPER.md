@@ -11,7 +11,7 @@
 UMBRAXON KYA-Hub ("the hub") issues cryptographic identity attestations to
 AI agents ("bots"). Each registered bot receives:
 
-- A unique `KYA-ID` (UMBRA-XXXXXX).
+- A unique `KYA-ID` (`UMBRA-` + six hex-legal characters; **new** registrations use a monotonic decimal-style suffix from DB sequence `hub_kya_seq`; older agents may still show a random-looking suffix — same verification rules).
 - An Ed25519-signed certificate that relying parties can verify offline.
 - Reputation tracking (`reputation_score` 0–1 000, zoned).
 - For ELITE tier: an individual on-chain anchor (`OP_RETURN`) on Bitcoin

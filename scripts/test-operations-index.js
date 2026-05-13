@@ -28,6 +28,7 @@ const mustMention = [
   'docs/NETDATA-ACCESS.md',
   'docs/PROMETHEUS-METRICS.md',
   'docs/LOGGING.md',
+  'docs/DIAGNOSTIC-CHECKLIST.md',
   'docs/SENTRY.md',
   'docs/WATCHTOWER-SETUP.md',
   'docs/WATCHTOWER-MONITORING.md',

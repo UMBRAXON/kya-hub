@@ -39,12 +39,21 @@ docker exec kya-hub-proxy nginx -s reload
 docker compose down
 ```
 
-## Rate limit profile
+## Access log (`kyahub_log`)
+
+`conf.d/default.conf` defines `log_format kyahub_log` with `$real_client_ip` (from `X-Forwarded-For` when present), request line, status, user-agent, timings, `host`, and **`cf_ipcountry=$http_cf_ipcountry`** when traffic passes through **Cloudflare** (otherwise the field is empty).
+
+Example: top client IPs hitting `/api/health` (on the host/container where `access.log` lives):
+
+```bash
+grep '/api/health' /var/log/nginx/access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head
+```
+
 
 | Zone | Rate | Burst | Used for |
 |------|------|-------|----------|
 | `rl_pay` | 10/min | 5 | `/api/pay`, `/api/invoice/*` |
-| `rl_register` | 6/min | 3 | `/api/register-bot`, `/api/register` |
+| `rl_register` | 5/min | 3 | `/api/register-bot`, `/api/register/*` (initiate) |
 | `rl_action` | 120/min | 30 | `/api/action`, `/api/heartbeat`, `/api/report` |
 | `rl_admin` | 30/min | 15 | `/api/admin/*` |
 | `rl_default` | 60/min | 20 | everything else |

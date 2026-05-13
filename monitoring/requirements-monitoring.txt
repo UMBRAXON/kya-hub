@@ -1,0 +1,4 @@
+# KYA Hub Streamlit ops dashboard (isolated from main Node app)
+streamlit>=1.28.0,<2
+psutil>=5.9.0,<8
+psycopg2-binary>=2.9.9,<3

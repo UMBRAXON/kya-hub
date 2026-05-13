@@ -21,6 +21,11 @@ All metrics use the `kyahub_` prefix (configurable via `METRICS_PREFIX`).
 | `kyahub_request_duration_seconds`                         | histogram   | route, method                     | latency distribution. Buckets: 5 ms, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000 |
 | `kyahub_pending_anchors`                                  | gauge       | —                                 | rows in `pending_anchors` with status PENDING/BROADCAST (sampled every 15 s)        |
 | `kyahub_active_agents`                                    | gauge       | tier, zone                        | active (non-retired) agents bucketed by tier + reputation zone (GREEN/YELLOW/RED)   |
+| `kyahub_agents_ever_registered`                           | gauge       | —                                 | `COUNT(*)` from `agents` (lifetime rows, including retired)                         |
+| `kyahub_registration_intents`                             | gauge       | status                            | `registration_intents` grouped by `status` (DB truth; refreshed with other slow gauges) |
+| `kyahub_webhook_deliveries_unprocessed`                   | gauge       | source                            | rows in `webhook_deliveries` with `processed = false`, by `source` (`btcpay` / `alby`) |
+| `kyahub_rejected_requests_24h`                            | gauge       | —                                 | rows in `rejected_requests` with `occurred_at` in the rolling last 24 hours          |
+| `kyahub_rejected_requests_by_reason_24h`                | gauge       | reason                            | top 8 `reason` values in that same 24 h window (bounded cardinality)                   |
 | `kyahub_circuit_breaker_state`                            | gauge       | breaker_name                      | 0=CLOSED, 1=OPEN, 2=HALF_OPEN, 3=DEGRADED_WARN, 4=MAINTENANCE_HALT                  |
 | `kyahub_cert_breaker_fail_pct`                            | gauge       | —                                 | cert-issuance breaker rolling-window failure %                                      |
 | `kyahub_chain_consensus_state`                            | gauge       | —                                 | 0=OK, 1=INSUFFICIENT_SOURCES, 2=LOCAL_RPC_UNREACHABLE, 3=FORK_DETECTED              |
@@ -54,6 +59,44 @@ KYAHUB_ADMIN_API_KEY=...
 ```
 
 Reload Netdata: `systemctl reload netdata`.
+
+## Human-readable ops summary (same aggregates)
+
+- **`GET /api/admin/ops-summary`** — JSON with the same DB aggregates as the gauges above, plus `agents_active`, `agents_ever_registered`, and the last 15 `rejected_requests` rows. Same **`X-Admin-Key`** as other admin routes.
+- **Web dashboard (čísla + grafy):** v prehliadači otvor  
+  **`https://<tvoj-hub-host>/public/admin/ops-dashboard.html`**  
+  (napr. `https://umbraxon.xyz/public/admin/ops-dashboard.html`). Zadaj **Base URL** ak otváraš z inej domény, vlož **`X-Admin-Key`**, tlačidlo **Načítať** — stránka volá `ops-summary` (vrátane bloku **`extended`**: zamietnutia podľa cesty/statusu, PoW, auth challenge, heartbeat log, anchory, action log), zobrazí karty, grafy a **vysvetlenie „Aktívni agenti“** v poli `legend`. Predvolene auto-obnovenie každých 30 s. Vyžaduje Chart.js z CDN (internet).
+
+## PromQL examples (registration & pay traffic)
+
+**Two notions of “failed registration”:**
+
+1. **HTTP layer** — `kyahub_requests_total` for `route="/api/register/initiate"` with `status="4xx"` or `status="5xx"` (and exact codes on the `status` label). Counters reset on hub process restart.
+2. **DB layer** — `kyahub_registration_intents{status="FAILED"}` and/or `status="EXPIRED"` (intent never completed or timed out).
+
+**Registration initiate error rate (5m, HTTP 5xx class):**
+
+```promql
+sum(rate(kyahub_requests_total{route="/api/register/initiate",status="5xx"}[5m]))
+```
+
+**Pay endpoint volume (5m, all methods):**
+
+```promql
+sum(rate(kyahub_requests_total{route="/api/pay"}[5m]))
+```
+
+**Webhook backlog (should usually be near 0):**
+
+```promql
+sum(kyahub_webhook_deliveries_unprocessed)
+```
+
+**Rejected API traffic (24 h rolling, as exposed at scrape time):**
+
+```promql
+kyahub_rejected_requests_24h
+```
 
 ## Reference alerts (Prometheus alertmanager)
 
@@ -105,3 +148,4 @@ the histogram, and alerting belongs in alertmanager.
   reason.
 - Anything containing actual sats numbers per agent — `volumetric_usage`
   is the only exception, and it's protected by admin auth.
+- **`GET /api/admin/ops-summary`** includes recent rejection rows (paths, IPs in DB) — treat like other admin-only surfaces; do not expose publicly without auth.

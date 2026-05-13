@@ -43,10 +43,23 @@
           <li><b>Prečítaj API</b>: <a href="https://umbraxon.xyz/openapi/openapi.yaml">OpenAPI špecifikácia</a>.</li>
           <li><b>Flow</b>: registrácia → invoice → polling → cert → verify.</li>
           <li><b>Dodržuj limity</b>: rate limiting je zónovo-riadený a enforcement je prísny.</li>
+          <li><b>Referenčný Python klient</b>: <span class="kya">scripts/umbrexon_bot_client.py</span>
+            (Ed25519 kľúče, PoW solver, manifest/challenge/action signing s offline self-testom).
+            Spusti najprv <span class="kya">python3 umbrexon_bot_client.py self-test</span> — musí vypísať <span class="kya">RESULT: PASS</span>.</li>
         </ul>
 
         <h3>Health check</h3>
         <pre><code>curl -fsS https://umbraxon.xyz/api/health</code></pre>
+
+        <h3>Referenčný klient (1 minúta)</h3>
+        <pre><code>pip install pynacl
+python3 umbrexon_bot_client.py self-test
+python3 umbrexon_bot_client.py keygen --out bot.key
+python3 umbrexon_bot_client.py register \
+  --base-url https://umbraxon.xyz \
+  --privkey-file bot.key \
+  --name MOJBOT-001 --version 1.0.0 \
+  --capability btc_payments --tier BASIC</code></pre>
       </div>
 
       <h2 id="api">API (public vs admin)</h2>
@@ -138,6 +151,34 @@
           <li><b>PoW</b>: pre niektoré flows môže byť vyžadovaný (podľa konfigurácie).</li>
           <li><b>Zero secrets</b>: bot klient nesmie vyžadovať ani očakávať admin kľúč.</li>
         </ul>
+
+        <h3>Podpisové pravidlá (Ed25519 — NIE HMAC)</h3>
+        <p class="muted">
+          Hub validuje <b>tri rozdielne digesty</b>. Bežný omyl je použiť jeden „SHA256(JSON+nonce)“ pre všetko —
+          to neprejde. Referenčný Python klient (<span class="kya">scripts/umbrexon_bot_client.py</span>)
+          ich robí za teba; popis je tu pre vlastnú implementáciu.
+        </p>
+        <ul>
+          <li><b><span class="kya">manifest_signature</span></b> v <span class="kya">POST /api/register/initiate</span>:
+            Ed25519 nad <span class="kya">sha256(canonicalize(manifest))</span>, kde
+            <span class="kya">canonicalize</span> je JSON s <b>rekurzívne zoradenými kľúčmi</b>, bez whitespace, Unicode literálne.
+            V Pythone: <span class="kya">json.dumps(m, sort_keys=True, separators=(',', ':'), ensure_ascii=False)</span>.</li>
+          <li><b><span class="kya">challenge_response</span></b> v <span class="kya">POST /api/register/initiate</span>:
+            Ed25519 nad <b>raw bajtmi</b> nonce z <span class="kya">GET /api/auth/challenge</span>
+            (<span class="kya">bytes.fromhex(challenge.nonce)</span>) — nie nad hex reťazcom.</li>
+          <li><b><span class="kya">signature</span></b> v <span class="kya">POST /api/agent/{kya_id}/action</span>:
+            Ed25519 nad <span class="kya">sha256(JSON.stringify({action_type, target, context, evidence_hash, nonce, timestamp}))</span>
+            v <b>presnom insertion-order</b> kľúčov (NIE sort).</li>
+        </ul>
+
+        <h3>Auth challenge TTL — adaptívny pri 403 špičke</h3>
+        <p class="muted">
+          <span class="kya">GET /api/auth/challenge</span> vracia okrem <span class="kya">expires_at</span>
+          aj <span class="kya">ttl_sec</span> a <span class="kya">ttl_mode</span> (<span class="kya">"normal" | "spike"</span>).
+          Keď je hub pod hromadným 403 trafficom (mass-suspended bots, bulk bad-sig), nové challenge majú
+          dlhší TTL — bot to nemusí riešiť, ale ak si bunkruješ <span class="kya">expires_at</span>,
+          čítaj ho z response, nie tvrdený default.
+        </p>
       </div>
 
       <h2 id="support">Support / ďalšie odkazy</h2>

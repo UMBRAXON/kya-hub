@@ -58,6 +58,11 @@ async function main() {
         'kyahub_request_duration_seconds_count',
         'kyahub_pending_anchors',
         'kyahub_active_agents',
+        'kyahub_agents_ever_registered',
+        'kyahub_registration_intents',
+        'kyahub_webhook_deliveries_unprocessed',
+        'kyahub_rejected_requests_24h',
+        'kyahub_rejected_requests_by_reason_24h',
         'kyahub_circuit_breaker_state',
         'kyahub_lightning_inbound_sat',
         'kyahub_btcpay_balance_sat',
@@ -109,6 +114,17 @@ async function main() {
         '7.4 alert references the metric name we expose');
     truthy(raw.includes('KYAHubChainForkDetected'), '7.5 fork-detected alert defined');
     truthy(raw.includes('KYAHubCertBreakerHalted'), '7.6 cert-breaker-halt alert defined');
+
+    console.log('=== 8) ops-summary admin JSON (full + extended) ===');
+    const os = await ax.get('/api/admin/ops-summary', { headers });
+    eq(os.status, 200, '8.1 ops-summary status 200');
+    truthy(os.data && typeof os.data.generated_at === 'string', '8.2 generated_at present');
+    truthy(Array.isArray(os.data.registration_intents), '8.3 registration_intents array');
+    truthy(Array.isArray(os.data.recent_rejected_requests), '8.4 recent_rejected_requests array');
+    truthy(typeof os.data.agents_ever_registered === 'number', '8.5 agents_ever_registered number');
+    truthy(os.data.extended && typeof os.data.extended.rejected_total_7d === 'number', '8.6 extended.rejected_total_7d');
+    truthy(os.data.legend && typeof os.data.legend.agents_active === 'string', '8.7 legend.agents_active');
+    truthy(Array.isArray(os.data.extended.rejected_paths_24h), '8.8 extended.rejected_paths_24h');
 
     console.log(`\nSUMMARY: ${passed} passed, ${failed} failed`);
     process.exit(failed === 0 ? 0 : 1);

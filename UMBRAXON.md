@@ -1,7 +1,7 @@
 # UMBRAXON KYA-Hub — Projektová dokumentácia
 
 **Verzia:** Phase 2.5 Payment Production ✅ (Alby UI setup pending)  
-**Posledná aktualizácia:** 2026-05-11  
+**Posledná aktualizácia:** 2026-05-14  
 **Stav:** Phase 1+1.5+2+2.1+2.2+2.3+2.4 done. Resilience & Scale layer hotová.
 
 ---
@@ -10,7 +10,7 @@
 
 **KYA Hub (Know Your Agent Hub)** je registračná a verifikačná služba pre AI agentov.
 
-Bot (AI agent) zaplatí Bitcoin platbu, dostane unikátnu kryptografickú identitu (`UMBRA-XXXXXX` axisId + HMAC pečať) a zapíše sa do databázy. ELITE agenti dostanú navyše individuálny anchor v Bitcoin blockchaine cez `OP_RETURN`.
+Bot (AI agent) zaplatí Bitcoin platbu, dostane unikátnu kryptografickú identitu (`UMBRA-XXXXXX` axisId / `kya_id` + HMAC pečať) a zapíše sa do databázy. **Nové** `kya_id` sú chronologické (`UMBRA-000465` — 6 miest, sekvencia `hub_kya_seq`, migrácia `018_hub_kya_seq.sql`); starší agenti môžu mať náhodný hex sufix. Zápis v `registerAgent()` ide v **jednej DB transakcii** s `pg_advisory_xact_lock` na `agent_name` a `SELECT … FOR UPDATE` na riadku `registration_intents` (ak existuje). ELITE agenti dostanú navyše individuálny anchor v Bitcoin blockchaine cez `OP_RETURN`.
 
 ### Tiery
 
@@ -122,6 +122,7 @@ GET /api/registration/quote?tier=ELITE&pubkey=<hex>
 │   ├── zone-rate-limiter.js   # Per-agent rate limit podľa zóny (Phase 2.1)
 │   ├── abuse-tracker.js       # IP-ban, sig-fail counter, anomaly, fail2ban (Phase 2.2)
 │   ├── pow.js                 # Proof-of-Work captcha (Phase 2.2)
+│   ├── allocate-kya-id.js     # Chronologické kya_id (hub_kya_seq, migrácia 018)
 │   ├── appeal-service.js      # Dispute resolution flow + SLA auto-uphold (Phase 2.3)
 │   ├── retire-service.js      # Signed exit + GDPR purge + pubkey blacklist (Phase 2.3)
 │   ├── file-perm-watcher.js   # .env chmod 600 watcher (Phase 2.3)
@@ -462,7 +463,7 @@ curl http://localhost:3000/api/health
 | Stĺpec | Typ | Poznámka |
 |---|---|---|
 | id | integer | PK |
-| kya_id | varchar | UMBRA-XXXXXX (unique) |
+| kya_id | varchar | `UMBRA-` + 6 znakov `[0-9A-F]` (unique); nové = chronologický suffix z `hub_kya_seq`, legacy = náhodný hex |
 | agent_name | varchar | **unique constraint v Phase 1** |
 | status | varchar | VERIFIED / PENDING_ANCHOR |
 | reputation_score | integer | default 100 |
@@ -690,10 +691,12 @@ Zobrazuje:
 5. KYA Hub (cez alby.onSettled subscription):
    ├─ recordWebhookDelivery — idempotency
    ├─ registerAgent({ tier, agentName, pubkey, manifest, ... })
+   │  ├─ BEGIN; pg_advisory_xact_lock(hashtext('kya:agent_reg:'||agentName))
+   │  ├─ (intent) SELECT registration_intents … FOR UPDATE; kontrola PENDING_PAYMENT
+   │  ├─ SELECT agents WHERE agent_name … FOR UPDATE (skorý duplikát → COMMIT bez nextval)
+   │  ├─ axisId = next `hub_kya_seq` → `UMBRA-` + 6 číslic; seal = HMAC(HUB_SECRET, "agentName:axisId:total")
    │  ├─ INSERT INTO agents (ON CONFLICT DO NOTHING)
-   │  ├─ Vygeneruje axisId = UMBRA-XXXXXX
-   │  ├─ Vypočíta seal = HMAC(HUB_SECRET, "agentName:axisId:total")
-   │  └─ Ak ELITE → INSERT INTO pending_anchors (status: PENDING)
+   │  └─ Ak ELITE → INSERT INTO pending_anchors (status: PENDING); COMMIT
    └─ markWebhookProcessed (success)
 
 6. Frontend polluje GET /api/check-status/:invoiceId
@@ -771,6 +774,22 @@ Pri každej následnej interakcii (verifikácia, reputation update):
 - Header: Authorization: BotSig <signature>
 - KYA Hub overí podpisom proti uloženému pubkey
 ```
+
+#### Podpisové pravidlá (NIE HMAC) — tri rôzne digesty
+
+Boti často chybujú tým, že použijú jeden „SHA256(JSON+nonce)“ pre všetko. V skutočnosti hub validuje tri rozdielne digesty:
+
+| Endpoint | Digest | Podpis (Ed25519, hex 128) |
+|---|---|---|
+| `POST /api/register/initiate` — `manifest_signature` | `sha256(canonicalize(manifest))` — recursive **sorted-keys** JSON, bez whitespace | nad **32 B digestom** |
+| `POST /api/register/initiate` — `challenge_response` | RAW 32 B bajtov nonce (`bytes.fromhex(challenge.nonce)`) | nad **raw nonce bytes** |
+| `POST /api/agent/:kya_id/action` — `signature` | `sha256(JSON.stringify({action_type, target, context, evidence_hash, nonce, timestamp}))` — **pevné** insertion-order, NIE sort | nad **32 B digestom** |
+
+Referenčný klient: [`scripts/umbrexon_bot_client.py`](scripts/umbrexon_bot_client.py). Generuje kľúče, rieši PoW, podpisuje všetky tri varianty a obsahuje offline `self-test` proti zlatým vektorom z Node (`python3 scripts/umbrexon_bot_client.py self-test` musí vrátiť `RESULT: PASS`). Závislosť: `pip install pynacl`.
+
+#### Adaptívne TTL `auth_challenges` pri 403 špičke (Phase 2.5)
+
+`lib/http-403-tracker.js` počíta HTTP 403 odpovede v in-memory kĺzavom okne (cez `res.on('finish')` hook v `server.js`, takže zachytí 403 z `zone-rate-limiter`, IP-banu, `rejectAndLog` aj priameho `res.status(403)`). Ak počet 403 za posledných `AUTH_CHALLENGE_403_SPIKE_WINDOW_MIN` minút prekročí `AUTH_CHALLENGE_403_SPIKE_THRESHOLD`, **nové** challenge-y z `createChallenge()` dostanú TTL `base × AUTH_CHALLENGE_403_SPIKE_TTL_MULTIPLIER` (default 300 s × 2 = 600 s). Response z `/api/auth/challenge` pridá pole `ttl_mode: "normal" | "spike"`, takže klient (vrátane referenčného Python SDK) vidí, v akom režime hub práve je. Voliteľne pri prechode do spike možno predĺžiť aj **už vydané** otvorené challenge cez `AUTH_CHALLENGE_EXTEND_OPEN_ON_SPIKE=true` (DB UPDATE, off by default). In-memory okno je per PM2 proces — pre horizontálne škálovanie by bolo treba Redis/DB agregát.
 
 ### Rate limiting per agent (nielen per IP)
 
@@ -1603,7 +1622,7 @@ Po anomaly detection sa volá aj `cleanupOldRecords(pool)` na prune starých zá
 Hashcash-style PoW: klient nájde `nonce` taký, že `sha256(challenge + ":" + nonce)` má aspoň `difficulty` leading zero bitov.
 
 **Flow:**
-1. `GET /api/pow/challenge?purpose=pay` → `{challenge_id, challenge, difficulty, expires_at}`
+1. `GET /api/pow/challenge?purpose=pay` alebo `?purpose=register` → `{challenge_id, challenge, difficulty, expires_at}` (`purpose=register` bez `&difficulty=` použije `POW_REGISTER_DIFFICULTY` ak je v `.env`, inak rovnaký default ako pay)
 2. Klient lokálne hľadá nonce (CPU práca; typicky < 2s pri default difficulty 18 → ~250k iterácií)
 3. Klient pošle `pow: { challenge_id, nonce, iterations }` v body alebo `X-Pow: challenge_id=...; nonce=...` header
 4. Server overí: nájde záznam, `UPDATE ... SET solved_at` atómovo (one-shot), prepočíta hash, kontroluje leading bits
@@ -1617,9 +1636,14 @@ Hashcash-style PoW: klient nájde `nonce` taký, že `sha256(challenge + ":" + n
 **Konfigurácia (`.env`):**
 ```ini
 POW_ENABLED=true                # default true; nastav false pre vypnutie gate-u
-POW_DEFAULT_DIFFICULTY=18       # leading zero bits; 18 = ~250k iterations
+POW_DEFAULT_DIFFICULTY=18       # leading zero bits pre pay (a všeobecne); 18 ≈ ~250k iterácií
+# Voliteľné: nižšia obtiažnosť len pre GET challenge s purpose=register (bez ?difficulty=)
+# — vhodné pre slabších klientov (BASIC boti); ak nevyplníš, použije sa POW_DEFAULT_DIFFICULTY.
+POW_REGISTER_DIFFICULTY=16
 POW_TTL_SEC=300                 # 5 min na vyriešenie
 POW_REQUIRED_FOR=pay,register   # ktoré endpointy vyžadujú PoW
+# Voliteľné: default max iterácií pre pomocný `lib/pow.solve()` (testy/SDK); produkčný klient má loopovať až do úspechu.
+POW_SOLVE_MAX_ITERATIONS=50000000
 ```
 
 **Admin bypass:** klienti s validným `X-Admin-Key` preskočia PoW gate (testy, tooling). Response header `X-Pow-Bypass: admin`.
@@ -1639,6 +1663,7 @@ const ch = await fetch('/api/pow/challenge?purpose=pay&difficulty=12').then(r =>
 const sol = pow.solve(ch.challenge, ch.difficulty);
 // → POST /api/pay s body: { ..., pow: { challenge_id: ch.challenge_id, nonce: sol.nonce } }
 ```
+Pri vyššej `difficulty` môže jedno volanie `solve()` naraziť na limit iterácií — buď zvýš `POW_SOLVE_MAX_ITERATIONS`, alebo volaj vlastný cyklus (náhodný `nonce` kým `hasLeadingZeroBits` neprejde).
 
 ### 16.8 Admin endpointy
 
@@ -1680,6 +1705,8 @@ const sol = pow.solve(ch.challenge, ch.difficulty);
 # Phase 2.2 anti-abuse
 POW_ENABLED=true
 POW_DEFAULT_DIFFICULTY=18
+# POW_REGISTER_DIFFICULTY=16   # optional; register challenge default (slabší hardware)
+# POW_SOLVE_MAX_ITERATIONS=50000000
 POW_TTL_SEC=300
 POW_REQUIRED_FOR=pay,register
 
@@ -3609,6 +3636,8 @@ ako "snapshot version" hint pre svoj vlastný cache layer.
 `Cache-Control: public, max-age=60` + CORS `*` znamená, že CDN (Cloudflare) sa
 môže cachovať priamo. App-level rate limiting nie je potrebný keďže payload je
 minimálny (počítané v stovkách KB max).
+
+**Pole `kya_id` v `agents[]`:** formát ostáva `UMBRA-` + presne 6 znakov z množiny hex číslic (validácia `INVALID_KYA_ID` sa nemení). Noví agenti majú typicky **číselne radové** ID (`UMBRA-000123`); starší záznamy môžu mať „náhodnejší“ vzhľad (`UMBRA-CAD028`). Zoradenie v odpovedi závisí od SQL dotazu (nie od numerického poradia v `kya_id`).
 
 `/api/verify/anchor/:txid` výstup:
 

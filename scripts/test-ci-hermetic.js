@@ -105,6 +105,7 @@ mustInclude('openapi/openapi.yaml', [
   '/api/register/initiate:',
   '/api/webhook/btcpay:',
   '/api/metrics:',
+  '/api/admin/ops-summary:',
   '/api/admin/pricing:',
   '/api/admin/invoices:',
   '/api/admin/deny-list:',

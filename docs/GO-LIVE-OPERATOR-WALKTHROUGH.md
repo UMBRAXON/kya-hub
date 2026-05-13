@@ -184,6 +184,21 @@ Pošli on-chain BTC na vypísanú **`bc1q…`**; po potvrdení sa zvýši `getba
 
 ---
 
+## Registrácia a verejný whitelist
+
+Po úspešnej platbe a webhooku by mal nový agent vystupovať v hub API s novým `kya_id` (chronologický formát `UMBRA-000…` po migrácii `018_hub_kya_seq.sql`). Overenie bez prihlásenia:
+
+```bash
+curl -sS 'https://umbraxon.xyz/api/whitelist?limit=20' | jq '.epoch, .count, [.agents[] | {kya_id, agent_name, tier}]'
+curl -sS 'https://umbraxon.xyz/api/whitelist/elite?limit=20' | jq '.count'
+```
+
+Kontrakt endpointov: **`UMBRAXON.md` §26.5**. Ak agent chýba, skontroluj `elite_listing_status` / anchor pre ELITE a PM2 log `registerAgent` / `webhook`.
+
+**Webhook a TLS:** v BTCPay musí byť webhook URL **`https://<verejná-domena>/api/webhook/btcpay`** (nie localhost cez mŕtvy tunel). Rýchly test: `curl -X POST …/api/webhook/btcpay` s prázdnym JSON → očakávané **400** ak je reťazec dostupný. TLS handshake meraj cez `curl -w '%{time_appconnect}'`. Ak nevidíš `webhook received` v `kya-hub-out.log`, skontroluj **`LOG_LEVEL`** v `.env` (pre tieto riadky nechaj **`info`**). Podrobnejšie: [`docs/DIAGNOSTIC-CHECKLIST.md`](DIAGNOSTIC-CHECKLIST.md) §7.
+
+---
+
 ## Rýchle odkazy
 
 - Hlavná príručka: [`UMBRAXON.md`](../UMBRAXON.md)

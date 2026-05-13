@@ -64,7 +64,7 @@ Errors:
 
 | HTTP | error code              | meaning                                         |
 | ---- | ----------------------- | ----------------------------------------------- |
-| 400  | `INVALID_KYA_ID`        | format `UMBRA-[A-F0-9]{6}` violated             |
+| 400  | `INVALID_KYA_ID`        | format `UMBRA-[A-F0-9]{6}` violated (digits `0-9` only are valid, e.g. sequential `UMBRA-000123`) |
 | 400  | `BAD_SIGNATURE_FORMAT`  | signature is not 128 hex chars                  |
 | 400  | `INVALID_NONCE_FORMAT`  | nonce not 16–64 hex                             |
 | 400  | `MISSING_TIMESTAMP`     | timestamp omitted                               |

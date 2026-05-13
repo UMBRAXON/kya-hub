@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KYA-Hub — Ops dashboard (full)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+  <style>
+    :root { font-family: system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+    body { max-width: 1280px; margin: 0 auto; padding: 1rem 1.25rem 3rem; }
+    h1 { font-size: 1.35rem; font-weight: 650; margin: 0 0 0.35rem; }
+    .sub { color: #8b949e; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.45; }
+    .sub code { background: #21262d; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.82rem; }
+    .legend-box {
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 0.85rem 1rem;
+      font-size: 0.82rem; color: #c9d1d9; line-height: 1.5; margin: 0.75rem 0 1rem;
+    }
+    .legend-box strong { color: #58a6ff; }
+    label { display: block; margin: 0.65rem 0 0.2rem; font-size: 0.8rem; color: #8b949e; }
+    input[type="url"], input[type="password"], input[type="number"] {
+      width: 100%; max-width: 36rem; padding: 0.45rem 0.55rem; border-radius: 6px;
+      border: 1px solid #30363d; background: #161b22; color: #e6edf3; font-size: 0.9rem;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+    button {
+      padding: 0.45rem 1rem; border-radius: 6px; border: 0; background: #238636; color: #fff;
+      cursor: pointer; font-weight: 600; font-size: 0.88rem;
+    }
+    button:hover { background: #2ea043; }
+    button.secondary { background: #21262d; color: #e6edf3; }
+    button.secondary:hover { background: #30363d; }
+    .err { color: #f85149; }
+    .ok { color: #3fb950; font-size: 0.85rem; }
+    .cards {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.65rem; margin: 0.75rem 0;
+    }
+    .card {
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 0.65rem 0.75rem;
+    }
+    .card .v { font-size: 1.45rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .card .k { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.2rem; line-height: 1.25; }
+    .grid2 {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;
+      margin-top: 0.75rem;
+    }
+    .panel {
+      background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 0.65rem 0.85rem 0.85rem;
+    }
+    .panel h2 { font-size: 0.88rem; font-weight: 600; margin: 0 0 0.4rem; color: #c9d1d9; }
+    .panel canvas { max-height: 240px; }
+    .wide { grid-column: 1 / -1; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.76rem; margin-top: 0.35rem; }
+    th, td { text-align: left; padding: 0.25rem 0.35rem; border-bottom: 1px solid #21262d; word-break: break-all; }
+    th { color: #8b949e; font-weight: 500; }
+    pre {
+      margin-top: 0.75rem; padding: 0.65rem; background: #010409; border: 1px solid #30363d;
+      border-radius: 8px; overflow: auto; font-size: 0.68rem; line-height: 1.35; max-height: 200px;
+    }
+    details { margin-top: 0.75rem; color: #8b949e; font-size: 0.82rem; }
+    details summary { cursor: pointer; color: #58a6ff; }
+    h3.section { font-size: 0.95rem; margin: 1.25rem 0 0.5rem; color: #8b949e; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>KYA-Hub — Ops dashboard (full)</h1>
+  <p class="sub">
+    Dáta z <code>GET /api/admin/ops-summary</code> — základ + blok <code>extended</code> (zamietnutia, cesty, PoW, auth challenge, heartbeat log, anchory, akcie).
+    Otvor z domény hubu, napr. <code>https://umbraxon.xyz/public/admin/ops-dashboard.html</code>.
+  </p>
+
+  <label for="base">Base URL (prázdne = aktuálna doména)</label>
+  <input id="base" type="url" placeholder="https://umbraxon.xyz" autocomplete="off" />
+  <label for="key">X-Admin-Key</label>
+  <input id="key" type="password" autocomplete="off" placeholder="ADMIN_API_KEY" />
+
+  <div class="row">
+    <label style="display:flex;align-items:center;gap:0.35rem;margin:0;">
+      <input type="checkbox" id="auto" checked /> Auto každých
+    </label>
+    <input id="interval" type="number" value="30" min="10" max="300" style="width:4rem;" /> s
+    <button type="button" id="load">Načítať</button>
+    <button type="button" class="secondary" id="stop">Zastaviť auto</button>
+    <button type="button" class="secondary" id="forget">Zabudnúť kľúč</button>
+  </div>
+  <p id="status" class="ok"></p>
+
+  <div class="cards" id="cards"></div>
+  <div id="legend"></div>
+
+  <h3 class="section">Prehľad (grafy)</h3>
+  <div class="grid2">
+    <div class="panel wide">
+      <h2>Trend (z obnovení v tejto karte)</h2>
+      <canvas id="chartTrend" height="90"></canvas>
+    </div>
+    <div class="panel"><h2>Intenty (stav)</h2><canvas id="chartIntents"></canvas></div>
+    <div class="panel"><h2>Webhook backlog</h2><canvas id="chartWebhooks"></canvas></div>
+    <div class="panel"><h2>Zamietnutia 24 h — dôvody</h2><canvas id="chartRejected"></canvas></div>
+    <div class="panel"><h2>Aktívni agenti — tier</h2><canvas id="chartTier"></canvas></div>
+    <div class="panel"><h2>Aktívni — reputačná zóna</h2><canvas id="chartZone"></canvas></div>
+    <div class="panel wide"><h2>Zamietnutia 24 h — top cesty</h2><canvas id="chartPaths"></canvas></div>
+    <div class="panel"><h2>HTTP status (reject 24 h)</h2><canvas id="chartHttp"></canvas></div>
+    <div class="panel"><h2>Signature failures 24 h</h2><canvas id="chartSig"></canvas></div>
+    <div class="panel"><h2>Action log 24 h — typy</h2><canvas id="chartActions"></canvas></div>
+  </div>
+
+  <h3 class="section">Tabuľky (extended)</h3>
+  <div class="grid2" id="extTables"></div>
+
+  <div class="panel wide" style="margin-top:1rem;">
+    <h2>Posledné zamietnutia (+ IP)</h2>
+    <div id="tableRecent"></div>
+  </div>
+
+  <details>
+    <summary>Raw JSON</summary>
+    <pre id="raw"></pre>
+  </details>
+
+  <script>
+(function () {
+  var ChartRef = typeof Chart !== 'undefined' ? Chart : null;
+  if (!ChartRef) {
+    document.body.innerHTML = '<p class="err">Chart.js sa nenačítal z CDN.</p>';
+    return;
+  }
+
+  var CHART_IDS = ['chartTrend','chartIntents','chartWebhooks','chartRejected','chartTier','chartZone','chartPaths','chartHttp','chartSig','chartActions'];
+
+  var baseEl = document.getElementById('base');
+  var keyEl = document.getElementById('key');
+  var rawEl = document.getElementById('raw');
+  var cardsEl = document.getElementById('cards');
+  var legendEl = document.getElementById('legend');
+  var extTablesEl = document.getElementById('extTables');
+  var tableRecentEl = document.getElementById('tableRecent');
+  var statusEl = document.getElementById('status');
+  var autoEl = document.getElementById('auto');
+  var intervalEl = document.getElementById('interval');
+
+  var history = [];
+  var MAX_POINTS = 120;
+  var timer = null;
+
+  var chartDefaults = {
+    color: '#8b949e',
+    grid: 'rgba(48,54,61,0.6)',
+    bar: ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#a371f7', '#79c0ff', '#ff7b72', '#56d364'],
+  };
+
+  function origin() {
+    var b = (baseEl.value || '').trim();
+    if (b) return b.replace(/\/$/, '');
+    return window.location.origin;
+  }
+
+  function destroyChart(canvasId) {
+    var el = document.getElementById(canvasId);
+    if (!el) return;
+    var c = ChartRef.getChart(el);
+    if (c) c.destroy();
+  }
+
+  function sumWebhookBacklog(data) {
+    var rows = data.webhook_unprocessed || [];
+    return rows.reduce(function (s, r) { return s + (Number(r.count) || 0); }, 0);
+  }
+
+  function pushHistory(data) {
+    var ex = data.extended || {};
+    history.push({
+      t: data.generated_at || new Date().toISOString(),
+      agents_ever: Number(data.agents_ever_registered) || 0,
+      agents_active: Number(data.agents_active) || 0,
+      rejected_24h: Number(data.rejected_requests_24h) || 0,
+      webhook_backlog: sumWebhookBacklog(data),
+      hb1h: Number(ex.agents_heartbeat_last_1h) || 0,
+    });
+    if (history.length > MAX_POINTS) history.shift();
+  }
+
+  function esc(x) {
+    return String(x == null ? '' : x).replace(/[&<>"']/g, function (m) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+    });
+  }
+
+  function renderLegend(data) {
+    var L = data.legend || {};
+    var ex = data.extended || {};
+    var meta = data._meta || {};
+    var lines = [];
+    if (L.agents_active) lines.push('<p><strong>Aktívni agenti</strong> — ' + esc(L.agents_active) + '</p>');
+    lines.push(
+      '<p style="margin:0.35rem 0 0;color:#8b949e;font-size:0.78rem;">Rýchle čísla z DB: '
+      + 'dormant aktívni=' + esc(ex.agents_dormant_active)
+      + ' · heartbeat v 1 h=' + esc(ex.agents_heartbeat_last_1h)
+      + ' · heartbeats_log riadkov 24 h=' + esc(ex.heartbeats_log_rows_24h)
+      + ' · zamietnutí 7 d=' + esc(ex.rejected_total_7d)
+      + ' · rôzne IP (rej. 24 h)=' + esc(ex.rejected_unique_ips_24h)
+      + ' · PoW vytvorených 24 h=' + esc(ex.pow_challenges_created_24h)
+      + ' · PoW vyriešených 24 h=' + esc(ex.pow_challenges_solved_24h)
+      + ' · auth challenge vytv. 24 h=' + esc(ex.auth_challenges_created_24h)
+      + (meta.query_ms != null ? ' · DB dotazy ≈ ' + esc(meta.query_ms) + ' ms' : '')
+      + '</p>'
+    );
+    legendEl.innerHTML = '<div class="legend-box">' + lines.join('') + '</div>';
+  }
+
+  function renderCards(data) {
+    var ex = data.extended || {};
+    function card(v, k) {
+      return '<div class="card"><div class="v">' + esc(v) + '</div><div class="k">' + esc(k) + '</div></div>';
+    }
+    cardsEl.innerHTML =
+      card(data.agents_active, 'Aktívni agenti') +
+      card(data.agents_ever_registered, 'Agenti celkom (DB)') +
+      card(data.rejected_requests_24h, 'Zamietnutia 24 h') +
+      card(sumWebhookBacklog(data), 'Webhook backlog') +
+      card(ex.rejected_total_7d != null ? ex.rejected_total_7d : '—', 'Zamietnutia 7 d') +
+      card(ex.heartbeats_log_rows_24h != null ? ex.heartbeats_log_rows_24h : '—', 'Heartbeat log 24 h') +
+      card(ex.agents_heartbeat_last_1h != null ? ex.agents_heartbeat_last_1h : '—', 'HB za 1 h (aktívni)') +
+      card(ex.pow_challenges_open_unsolved != null ? ex.pow_challenges_open_unsolved : '—', 'PoW otvorené');
+  }
+
+  function barChart(canvasId, title, labels, values, indexAxis) {
+    destroyChart(canvasId);
+    if (!labels.length) { labels = ['(žiadne)']; values = [0]; }
+    var ctx = document.getElementById(canvasId).getContext('2d');
+    var colors = labels.map(function (_, i) { return chartDefaults.bar[i % chartDefaults.bar.length]; });
+    new ChartRef(ctx, {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ label: title, data: values, backgroundColor: colors, borderWidth: 0 }] },
+      options: {
+        indexAxis: indexAxis || 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: chartDefaults.color, maxTicksLimit: 14 }, grid: { color: chartDefaults.grid } },
+          y: { ticks: { color: chartDefaults.color }, grid: { color: chartDefaults.grid } },
+        },
+      },
+    });
+  }
+
+  function trendChart() {
+    destroyChart('chartTrend');
+    var ctx = document.getElementById('chartTrend').getContext('2d');
+    if (history.length < 1) {
+      new ChartRef(ctx, {
+        type: 'line',
+        data: { labels: ['—'], datasets: [{ label: 'Čakaj…', data: [0], borderColor: '#484f58' }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: chartDefaults.color } } },
+          scales: {
+            x: { ticks: { color: chartDefaults.color }, grid: { color: chartDefaults.grid } },
+            y: { ticks: { color: chartDefaults.color }, grid: { color: chartDefaults.grid }, beginAtZero: true },
+          },
+        },
+      });
+      return;
+    }
+    var labels = history.map(function (h) {
+      return new Date(h.t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    });
+    new ChartRef(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Agenti celkom', data: history.map(function (h) { return h.agents_ever; }), borderColor: '#58a6ff', tension: 0.2, fill: false },
+          { label: 'Aktívni', data: history.map(function (h) { return h.agents_active; }), borderColor: '#3fb950', tension: 0.2, fill: false },
+          { label: 'HB aktívni 1h', data: history.map(function (h) { return h.hb1h; }), borderColor: '#a371f7', tension: 0.2, fill: false },
+          { label: 'Zamietnutia 24h', data: history.map(function (h) { return h.rejected_24h; }), borderColor: '#f85149', tension: 0.2, fill: false },
+          { label: 'Webhook backlog', data: history.map(function (h) { return h.webhook_backlog; }), borderColor: '#d29922', tension: 0.2, fill: false },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom', labels: { color: chartDefaults.color, boxWidth: 10, font: { size: 10 } } } },
+        scales: {
+          x: { ticks: { color: chartDefaults.color, maxRotation: 45 }, grid: { color: chartDefaults.grid } },
+          y: { ticks: { color: chartDefaults.color }, grid: { color: chartDefaults.grid }, beginAtZero: true },
+        },
+      },
+    });
+  }
+
+  function mkTable(title, rows, cols) {
+    if (!rows || !rows.length) return '<div class="panel"><h2>' + esc(title) + '</h2><p style="color:#8b949e;font-size:0.8rem;">Žiadne dáta.</p></div>';
+    var h = '<div class="panel wide"><h2>' + esc(title) + '</h2><table><tr>';
+    cols.forEach(function (c) { h += '<th>' + esc(c) + '</th>'; });
+    h += '</tr>';
+    rows.forEach(function (r) {
+      h += '<tr>';
+      cols.forEach(function (c) { h += '<td>' + esc(r[c]) + '</td>'; });
+      h += '</tr>';
+    });
+    return h + '</table></div>';
+  }
+
+  function renderExtendedTables(data) {
+    var ex = data.extended || {};
+    var parts = [];
+    parts.push(mkTable('Zamietnutia 24 h — top cesty', ex.rejected_paths_24h, ['path', 'count']));
+    parts.push(mkTable('Zamietnutia 24 h — HTTP status', ex.rejected_http_status_24h, ['http_status', 'count']));
+    parts.push(mkTable('Zamietnutia 7 d — top dôvody', ex.rejected_top_reasons_7d, ['reason', 'count']));
+    parts.push(mkTable('Webhook doručenia 24 h (všetky)', ex.webhook_deliveries_received_24h_by_source, ['source', 'count']));
+    parts.push(mkTable('Pending anchors', ex.pending_anchors_by_status, ['status', 'count']));
+    extTablesEl.innerHTML = parts.join('');
+  }
+
+  function tableRecent(rows) {
+    if (!rows || !rows.length) {
+      tableRecentEl.innerHTML = '<p style="color:#8b949e;font-size:0.8rem;">Žiadne.</p>';
+      return;
+    }
+    var cols = ['occurred_at', 'reason', 'path', 'method', 'http_status', 'severity', 'client_ip'];
+    var h = '<table><tr>';
+    cols.forEach(function (c) { h += '<th>' + c + '</th>'; });
+    h += '</tr>';
+    rows.forEach(function (r) {
+      h += '<tr>';
+      cols.forEach(function (c) { h += '<td>' + esc(r[c]) + '</td>'; });
+      h += '</tr>';
+    });
+    tableRecentEl.innerHTML = h + '</table>';
+  }
+
+  function renderAll(data) {
+    rawEl.textContent = JSON.stringify(data, null, 2);
+    renderCards(data);
+    renderLegend(data);
+    pushHistory(data);
+
+    var intents = data.registration_intents || [];
+    barChart('chartIntents', 'c', intents.map(function (r) { return r.status; }), intents.map(function (r) { return r.count; }), 'y');
+    var wh = data.webhook_unprocessed || [];
+    barChart('chartWebhooks', 'c', wh.map(function (r) { return r.source; }), wh.map(function (r) { return r.count; }), 'y');
+    var rej = data.rejected_top_reasons_24h || [];
+    barChart('chartRejected', 'c', rej.map(function (r) { return (r.reason || '').slice(0, 28); }), rej.map(function (r) { return r.count; }), 'y');
+
+    var ex = data.extended || {};
+    var tiers = ex.agents_by_tier_active || [];
+    barChart('chartTier', 'c', tiers.map(function (r) { return r.tier; }), tiers.map(function (r) { return r.count; }), 'y');
+    var zones = ex.agents_by_reputation_zone || [];
+    barChart('chartZone', 'c', zones.map(function (r) { return r.zone; }), zones.map(function (r) { return r.count; }), 'y');
+
+    var paths = (ex.rejected_paths_24h || []).slice(0, 14);
+    barChart('chartPaths', 'c', paths.map(function (r) { return (r.path || '').slice(0, 48); }), paths.map(function (r) { return r.count; }), 'y');
+
+    var httpS = ex.rejected_http_status_24h || [];
+    barChart('chartHttp', 'c', httpS.map(function (r) { return String(r.http_status); }), httpS.map(function (r) { return r.count; }), 'y');
+
+    var sig = ex.signature_failures_24h_by_type || [];
+    barChart('chartSig', 'c', sig.map(function (r) { return r.failure_type; }), sig.map(function (r) { return r.count; }), 'y');
+
+    var act = ex.action_log_top_types_24h || [];
+    barChart('chartActions', 'c', act.map(function (r) { return (r.action_type || '').slice(0, 24); }), act.map(function (r) { return r.count; }), 'y');
+
+    trendChart();
+    renderExtendedTables(data);
+    tableRecent(data.recent_rejected_requests);
+    statusEl.textContent = 'Aktualizované: ' + (data.generated_at || '') + ' · trend bodov: ' + history.length;
+  }
+
+  function fetchSummary() {
+    var key = keyEl.value.trim();
+    if (!key) {
+      statusEl.innerHTML = '<span class="err">Zadaj X-Admin-Key.</span>';
+      return Promise.reject();
+    }
+    sessionStorage.setItem('kyahub_ops_base', baseEl.value.trim());
+    sessionStorage.setItem('kyahub_ops_admin_key', key);
+    return fetch(origin() + '/api/admin/ops-summary', { headers: { 'X-Admin-Key': key, 'Accept': 'application/json' } })
+      .then(function (r) {
+        return r.text().then(function (t) {
+          if (!r.ok) throw new Error(r.status + ' ' + t.slice(0, 200));
+          return JSON.parse(t);
+        });
+      })
+      .then(renderAll)
+      .catch(function (e) {
+        statusEl.innerHTML = '<span class="err">' + esc(e.message || String(e)) + '</span>';
+      });
+  }
+
+  function schedule() {
+    clearInterval(timer);
+    timer = null;
+    if (!autoEl.checked) return;
+    var sec = parseInt(intervalEl.value, 10);
+    if (!Number.isFinite(sec) || sec < 10) sec = 30;
+    timer = setInterval(function () { fetchSummary(); }, sec * 1000);
+  }
+
+  if (sessionStorage.getItem('kyahub_ops_base')) baseEl.value = sessionStorage.getItem('kyahub_ops_base');
+  if (sessionStorage.getItem('kyahub_ops_admin_key')) keyEl.value = sessionStorage.getItem('kyahub_ops_admin_key');
+
+  document.getElementById('load').onclick = function () { fetchSummary().then(schedule); };
+  document.getElementById('stop').onclick = function () {
+    autoEl.checked = false;
+    clearInterval(timer);
+    timer = null;
+    statusEl.textContent = 'Auto zastavené.';
+  };
+  document.getElementById('forget').onclick = function () {
+    sessionStorage.removeItem('kyahub_ops_admin_key');
+    keyEl.value = '';
+    clearInterval(timer);
+    timer = null;
+    history.length = 0;
+    rawEl.textContent = '';
+    cardsEl.innerHTML = '';
+    legendEl.innerHTML = '';
+    extTablesEl.innerHTML = '';
+    tableRecentEl.innerHTML = '';
+    CHART_IDS.forEach(destroyChart);
+    statusEl.textContent = '';
+  };
+
+  autoEl.onchange = schedule;
+  intervalEl.onchange = schedule;
+
+  if (keyEl.value.trim()) fetchSummary().then(schedule);
+})();
+  </script>
+</body>
+</html>

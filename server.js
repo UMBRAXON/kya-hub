@@ -10,6 +10,7 @@
 //   POST /api/webhook/btcpay          — BTCPay webhook (HMAC validovaný)
 //   POST /api/webhook/alby            — Alby Hub webhook (sig validovaný)
 //   GET  /api/dashboard               — admin-only zoznam agentov
+//   GET  /api/admin/ops-summary       — admin-only JSON (ops agregáty + posledné rejections)
 //
 // Bezpečnosť:
 //   - helmet.js security headers
@@ -44,12 +45,15 @@ const repEngine = require('./lib/reputation-engine');
 const zoneRateLimiter = require('./lib/zone-rate-limiter');
 const abuseTracker = require('./lib/abuse-tracker');
 const pow = require('./lib/pow');
+const http403Tracker = require('./lib/http-403-tracker');
+const { allocateSequentialKyaId } = require('./lib/allocate-kya-id');
 const decayWorker = require('./lib/decay-worker');
 const eliteListing = require('./lib/elite-listing');
 const appealService = require('./lib/appeal-service');
 const retireService = require('./lib/retire-service');
 const dataExportService = require('./lib/data-export-service');
 const metrics = require('./lib/metrics');
+const { fetchOpsSummaryFull } = require('./lib/ops-summary-data');
 const filePermWatcher = require('./lib/file-perm-watcher');
 const sybilResistance = require('./lib/sybil-resistance');
 const pricing = require('./lib/pricing');
@@ -264,17 +268,59 @@ function verifyManufacturerAttestation(manifest) {
 // ----------------------------------------------------------------------------
 const CHALLENGE_TTL_SEC = parseInt(process.env.AUTH_CHALLENGE_TTL_SEC || '300', 10);
 
+// Tracks last seen spike state so we only run the optional "extend open
+// challenges" UPDATE on the rising edge, not on every challenge request.
+let _lastChallengeSpike = false;
+
 async function createChallenge({ pubkey, purpose, clientIp }) {
     const challengeId = 'CH-' + crypto.randomBytes(12).toString('hex');
     const nonce = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + CHALLENGE_TTL_SEC * 1000);
+    const ttl = http403Tracker.computeChallengeTtl(CHALLENGE_TTL_SEC);
+    const expiresAt = new Date(Date.now() + ttl.ttl_sec * 1000);
     
     await pool.query(
         `INSERT INTO auth_challenges (challenge_id, nonce, pubkey, purpose, expires_at, used_by_ip)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [challengeId, nonce, pubkey || null, purpose || 'register', expiresAt, clientIp || null]
     );
-    return { challenge_id: challengeId, nonce, expires_at: expiresAt.toISOString(), ttl_sec: CHALLENGE_TTL_SEC };
+    
+    // Rising-edge: when we just transitioned into a spike, optionally extend
+    // already-issued but unused challenges so honest clients mid-flow do not
+    // get caught by the shorter base TTL. Opt-in via env (see lib/http-403-tracker.js).
+    if (ttl.mode === 'spike' && !_lastChallengeSpike) {
+        if (http403Tracker.CFG.EXTEND_OPEN_ON_SPIKE) {
+            const extraSec = Math.max(0, ttl.ttl_sec - CHALLENGE_TTL_SEC);
+            if (extraSec > 0) {
+                try {
+                    await pool.query(
+                        `UPDATE auth_challenges
+                         SET expires_at = expires_at + make_interval(secs => $1)
+                         WHERE used_at IS NULL
+                           AND expires_at > NOW()
+                           AND expires_at < NOW() + make_interval(secs => $2)`,
+                        [extraSec, CHALLENGE_TTL_SEC]
+                    );
+                } catch (e) {
+                    logger.warn({ err: e.message }, 'extend open auth_challenges on spike FAIL');
+                }
+            }
+        }
+        logger.warn({
+            count_403_in_window: ttl.count_in_window,
+            window_min: http403Tracker.CFG.WINDOW_MIN,
+            new_ttl_sec: ttl.ttl_sec,
+            base_ttl_sec: CHALLENGE_TTL_SEC,
+        }, 'auth_challenge entering 403-spike mode (longer TTL)');
+    }
+    _lastChallengeSpike = (ttl.mode === 'spike');
+    
+    return {
+        challenge_id: challengeId,
+        nonce,
+        expires_at: expiresAt.toISOString(),
+        ttl_sec: ttl.ttl_sec,
+        ttl_mode: ttl.mode,
+    };
 }
 
 async function consumeChallenge({ challengeId, nonce, expectedPubkey }) {
@@ -446,14 +492,9 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
         }
     }
 
-    const axisId = 'UMBRA-' + crypto.randomBytes(3).toString('hex').toUpperCase();
     const validUntil = tier.durationMonths
         ? new Date(new Date().setMonth(new Date().getMonth() + tier.durationMonths))
         : null;
-    
-    const seal = crypto.createHmac('sha256', cfg.HUB_SECRET)
-        .update(`${agentName}:${axisId}:${tier.total}`)
-        .digest('hex');
     
     // Phase 1.5: Ak máme intent (validated manifest+signature), použijeme ho
     let manifestHash = null;
@@ -493,6 +534,63 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
+
+        // Serialize registration for the same agent_name (parallel webhooks / BTCPay+LN).
+        // Transaction-scoped: released on COMMIT/ROLLBACK.
+        await client.query(
+            `SELECT pg_advisory_xact_lock(CAST(hashtext($1::text) AS bigint))`,
+            [`kya:agent_reg:${agentName}`]
+        );
+
+        // Phase 1.5: row lock on intent so only one txn can finalize PENDING_PAYMENT → COMPLETED.
+        if (registrationIntent && registrationIntent.id) {
+            const intentRow = await client.query(
+                `SELECT id, status, agent_name FROM registration_intents WHERE id = $1 FOR UPDATE`,
+                [registrationIntent.id]
+            );
+            if (intentRow.rowCount === 0) {
+                await client.query('COMMIT');
+                logger.warn({ intentId: registrationIntent.id, agentName }, 'registration intent row missing');
+                return { duplicate: true, agentName };
+            }
+            const ir = intentRow.rows[0];
+            if (ir.status !== 'PENDING_PAYMENT') {
+                await client.query('COMMIT');
+                logger.warn({
+                    intentId: registrationIntent.id, agentName, status: ir.status,
+                }, 'registration intent already finalized');
+                return { duplicate: true, agentName };
+            }
+            if (ir.agent_name !== agentName) {
+                await client.query('ROLLBACK');
+                throw new Error('REGISTRATION_INTENT_AGENT_MISMATCH');
+            }
+        }
+
+        const existingAgent = await client.query(
+            `SELECT id, kya_id FROM agents WHERE agent_name = $1 FOR UPDATE`,
+            [agentName]
+        );
+        if (existingAgent.rowCount > 0) {
+            const row = existingAgent.rows[0];
+            if (registrationIntent && registrationIntent.id) {
+                await client.query(
+                    `UPDATE registration_intents
+                     SET status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP
+                     WHERE id = $1 AND status = 'PENDING_PAYMENT'`,
+                    [registrationIntent.id]
+                );
+            }
+            await client.query('COMMIT');
+            logger.warn({ agentName, kya_id: row.kya_id }, 'Agent už existuje — preskakujem registráciu');
+            return { duplicate: true, agentName, axisId: row.kya_id };
+        }
+
+        // Chronological public id: UMBRA-000042 (hub_kya_seq, see migrations/018_hub_kya_seq.sql)
+        const axisId = await allocateSequentialKyaId(client);
+        const seal = crypto.createHmac('sha256', cfg.HUB_SECRET)
+            .update(`${agentName}:${axisId}:${tier.total}`)
+            .digest('hex');
         
         const insertRes = await client.query(
             `INSERT INTO agents (
@@ -522,10 +620,26 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
         );
         
         if (insertRes.rowCount === 0) {
-            // Agent už existuje (duplikát) — neaktivujeme znova
-            logger.warn({ agentName }, 'Agent už existuje — preskakujem registráciu');
-            await client.query('ROLLBACK');
-            return { duplicate: true, agentName };
+            logger.warn({ agentName }, 'INSERT agents ON CONFLICT — duplikát agent_name');
+            const ag = await client.query(
+                `SELECT id, kya_id FROM agents WHERE agent_name = $1`,
+                [agentName]
+            );
+            if (ag.rowCount === 0) {
+                await client.query('ROLLBACK');
+                logger.error({ agentName }, 'INSERT ON CONFLICT but agent row missing');
+                throw new Error('AGENT_INSERT_CONFLICT_UNKNOWN');
+            }
+            if (registrationIntent && registrationIntent.id) {
+                await client.query(
+                    `UPDATE registration_intents
+                     SET status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP
+                     WHERE id = $1 AND status = 'PENDING_PAYMENT'`,
+                    [registrationIntent.id]
+                );
+            }
+            await client.query('COMMIT');
+            return { duplicate: true, agentName, axisId: ag.rows[0].kya_id };
         }
         
         const newAgent = insertRes.rows[0];
@@ -646,6 +760,11 @@ app.use(helmet({
     contentSecurityPolicy: false, // frontend HTML používa inline scripty, dorobíme neskôr
     crossOriginEmbedderPolicy: false,
 }));
+
+// HTTP 403 sliding-window counter (Phase 2.5) — must attach BEFORE any
+// route/middleware that may emit 403, so `res.on('finish')` fires for every
+// 403 response (zone limiter, ip ban, suspended agents, rejectAndLog …).
+app.use(http403Tracker.buildExpressMiddleware());
 
 // IP ban check (Phase 2.2) — beží PRED akýmkoľvek iným spracovaním
 // Health a webhook majú výnimku (nech monitoring funguje aj keď je IP banned)
@@ -960,6 +1079,18 @@ const payPowGate = pow.buildRequireMiddleware({
         path: req.path, method: req.method, reason,
         http_status: 402, client_ip: req.ip, user_agent: req.headers['user-agent'],
     }),
+    // Telemetria pre dashboard: distribúcia reálneho času riešenia legit klientov.
+    // Hľadáme p50/p95/p99 — ak je p95 < 5 s, dnešná obtiažnosť je v poriadku.
+    onSuccess: (req, info) => {
+        logger.info({
+            msg: 'pow_solved',
+            purpose: info.purpose,
+            difficulty: info.difficulty,
+            iterations: info.iterations,
+            solve_ms: info.solve_ms,
+            client_ip: req.ip,
+        }, 'pow_solved');
+    },
 });
 
 app.post('/api/pay', payLimiter, payPowGate, async (req, res) => {
@@ -1589,6 +1720,17 @@ const registerPowGate = pow.buildRequireMiddleware({
         path: req.path, method: req.method, reason,
         http_status: 402, client_ip: req.ip, user_agent: req.headers['user-agent'],
     }),
+    // Telemetria pre dashboard (rovnaký dôvod ako pri payPowGate).
+    onSuccess: (req, info) => {
+        logger.info({
+            msg: 'pow_solved',
+            purpose: info.purpose,
+            difficulty: info.difficulty,
+            iterations: info.iterations,
+            solve_ms: info.solve_ms,
+            client_ip: req.ip,
+        }, 'pow_solved');
+    },
 });
 
 app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res) => {
@@ -1760,9 +1902,11 @@ app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res)
     // Vytvor invoice — preferuj Alby ak je dostupné
     const description = `UMBRAXON ${tier.name} registration: ${agentName} [${registrationId}]`;
     const useAlby = alby.isConfigured() && alby.isConnected();
-    
+    let invoiceFailSource = null;
+
     try {
         if (useAlby) {
+            invoiceFailSource = 'alby';
             const inv = await alby.createInvoice({
                 amountSats: tier.total,
                 description,
@@ -1783,8 +1927,9 @@ app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res)
                 manifest_hash: mHash,
             });
         }
-        
+
         // Fallback BTCPay
+        invoiceFailSource = 'btcpay';
         const r = await axios.post(
             `${cfg.BTCPAY_URL}/api/v1/stores/${cfg.BTCPAY_STORE_ID}/invoices`,
             {
@@ -1811,8 +1956,24 @@ app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res)
             manifest_hash: mHash,
         });
     } catch (err) {
-        log.error({ err: err.message }, 'invoice create FAIL');
-        return res.status(502).json({ error: 'INVOICE_FAILED' });
+        const httpStatus = (err.response && typeof err.response.status === 'number')
+            ? err.response.status : null;
+        const errCode = err.code ? String(err.code) : null;
+        log.error({
+            err: err.message,
+            http_status: httpStatus,
+            code: errCode,
+            source: invoiceFailSource,
+            registration_id: registrationId,
+        }, 'invoice create FAIL');
+        const body = {
+            error: 'INVOICE_FAILED',
+            message: 'Nepodarilo sa vytvoriť faktúru, skús to o chvíľu znova.',
+        };
+        if (invoiceFailSource) body.source = invoiceFailSource;
+        if (httpStatus != null) body.upstream_http_status = httpStatus;
+        if (errCode) body.upstream_error_code = errCode;
+        return res.status(502).json(body);
     }
 });
 
@@ -2255,34 +2416,30 @@ app.post('/api/agent/:kya_id/action', phase2Limiter, zoneLimitAction, async (req
     try {
         await client.query('BEGIN');
         
-        // Pokús insert action_log — UNIQUE (kya_id, nonce) padne pri replay
-        let actionId;
-        try {
-            const ar = await client.query(
-                `INSERT INTO action_log (
-                    agent_id, kya_id, action_type, target, context, evidence_hash,
-                    signature, nonce, score_delta, bot_timestamp
-                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-                RETURNING id`,
-                [
-                    agent.id, kya_id, action_type, target || null,
-                    context ? JSON.stringify(context) : null, evidence_hash || null,
-                    signature, nonce, 0, new Date(tsMs)
-                ]
-            );
-            actionId = ar.rows[0].id;
-        } catch (e) {
-            if (e.code === '23505') { // unique violation
-                await client.query('ROLLBACK');
-                abuseTracker.recordRejection(pool, {
-                    path: req.path, method: req.method, reason: 'REPLAY',
-                    http_status: 409, kya_id, client_ip: req.ip, user_agent: req.headers['user-agent'],
-                    error_detail: 'nonce already used in action_log',
-                }).catch(() => {});
-                return res.status(409).json({ error: 'REPLAY', message: 'nonce už použitý' });
-            }
-            throw e;
+        // Replay: ON CONFLICT = žiadny failed statement → nezvýši PostgreSQL xact_rollback
+        const ar = await client.query(
+            `INSERT INTO action_log (
+                agent_id, kya_id, action_type, target, context, evidence_hash,
+                signature, nonce, score_delta, bot_timestamp
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+            ON CONFLICT (kya_id, nonce) DO NOTHING
+            RETURNING id`,
+            [
+                agent.id, kya_id, action_type, target || null,
+                context ? JSON.stringify(context) : null, evidence_hash || null,
+                signature, nonce, 0, new Date(tsMs)
+            ]
+        );
+        if (ar.rowCount === 0) {
+            await client.query('COMMIT');
+            abuseTracker.recordRejection(pool, {
+                path: req.path, method: req.method, reason: 'REPLAY',
+                http_status: 409, kya_id, client_ip: req.ip, user_agent: req.headers['user-agent'],
+                error_detail: 'nonce already used in action_log',
+            }).catch(() => {});
+            return res.status(409).json({ error: 'REPLAY', message: 'nonce už použitý' });
         }
+        const actionId = ar.rows[0].id;
         
         // Rate limit (only pre pozitívne actions)
         let rateInfo = { allowed: true };
@@ -2400,22 +2557,20 @@ app.post('/api/agent/:kya_id/heartbeat', phase2Limiter, zoneLimitHeartbeat, asyn
     }
     
     // Phase 2.3: Replay protection cez heartbeats_log (UNIQUE(kya_id, nonce))
-    try {
-        await pool.query(
-            `INSERT INTO heartbeats_log (agent_id, kya_id, nonce, client_ip, bot_timestamp)
-             VALUES ($1, $2, $3, $4, $5)`,
-            [agent.id, kya_id, nonce, req.ip, new Date(tsMs)]
-        );
-    } catch (e) {
-        if (e.code === '23505') {
-            abuseTracker.recordRejection(pool, {
-                path: req.path, method: req.method, reason: 'REPLAY',
-                http_status: 409, kya_id, client_ip: req.ip, user_agent: req.headers['user-agent'],
-                error_detail: 'heartbeat nonce already used',
-            }).catch(() => {});
-            return res.status(409).json({ error: 'REPLAY', message: 'nonce už použitý' });
-        }
-        throw e;
+    const hbIns = await pool.query(
+        `INSERT INTO heartbeats_log (agent_id, kya_id, nonce, client_ip, bot_timestamp)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (kya_id, nonce) DO NOTHING
+         RETURNING id`,
+        [agent.id, kya_id, nonce, req.ip, new Date(tsMs)]
+    );
+    if (hbIns.rowCount === 0) {
+        abuseTracker.recordRejection(pool, {
+            path: req.path, method: req.method, reason: 'REPLAY',
+            http_status: 409, kya_id, client_ip: req.ip, user_agent: req.headers['user-agent'],
+            error_detail: 'heartbeat nonce already used',
+        }).catch(() => {});
+        return res.status(409).json({ error: 'REPLAY', message: 'nonce už použitý' });
     }
     
     await pool.query(
@@ -2496,15 +2651,15 @@ app.post('/api/agent/:kya_id/elite-listing/redeem-free', phase2Limiter, zoneLimi
     }, ['redeem_free']);
     if (!v.ok) return res.status(v.error === 'BAD_SIGNATURE' ? 401 : 400).json(v);
     const hbNonce = ('RF' + String(nonce)).slice(0, 64);
-    try {
-        await pool.query(
-            `INSERT INTO heartbeats_log (agent_id, kya_id, nonce, client_ip, bot_timestamp)
-             VALUES ($1, $2, $3, $4, NOW())`,
-            [agent.id, kya_id, hbNonce, req.ip]
-        );
-    } catch (e) {
-        if (e.code === '23505') return res.status(409).json({ error: 'REPLAY', message: 'nonce already used' });
-        throw e;
+    const hbRf = await pool.query(
+        `INSERT INTO heartbeats_log (agent_id, kya_id, nonce, client_ip, bot_timestamp)
+         VALUES ($1, $2, $3, $4, NOW())
+         ON CONFLICT (kya_id, nonce) DO NOTHING
+         RETURNING id`,
+        [agent.id, kya_id, hbNonce, req.ip]
+    );
+    if (hbRf.rowCount === 0) {
+        return res.status(409).json({ error: 'REPLAY', message: 'nonce already used' });
     }
     const r = await eliteListing.redeemFreeReactivation(pool, kya_id);
     if (!r.ok) {
@@ -2612,20 +2767,19 @@ app.post('/api/agent/:kya_id/report', phase2Limiter, async (req, res) => {
         }
     }
     
+    // Rate limit mimo transakcie (iba SELECT) — vyhne sa ROLLBACK metrike pri 429
+    if (reporter) {
+        const rl = await repEngine.checkPeerReportRateLimit(pool, {
+            reporter_kya_id, target_kya_id: kya_id,
+        });
+        if (!rl.allowed) {
+            return res.status(429).json({ error: 'RATE_LIMIT', reason: rl.reason, counters: rl.counters });
+        }
+    }
+    
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        
-        // Anti-spam: rate limit pre peer reportéra
-        if (reporter) {
-            const rl = await repEngine.checkPeerReportRateLimit(client, {
-                reporter_kya_id, target_kya_id: kya_id,
-            });
-            if (!rl.allowed) {
-                await client.query('ROLLBACK');
-                return res.status(429).json({ error: 'RATE_LIMIT', reason: rl.reason, counters: rl.counters });
-            }
-        }
         
         // Auto-apply pre signed peer reports v zóne ≥ NEUTRAL
         let autoApplied = false;
@@ -2671,36 +2825,33 @@ app.post('/api/agent/:kya_id/report', phase2Limiter, async (req, res) => {
             }
         }
         
-        let insertRes;
-        try {
-            insertRes = await client.query(
-                `INSERT INTO reports (
-                    target_agent_id, target_kya_id, report_type, description, evidence,
-                    reporter_kya_id, reporter_pubkey, reporter_signature, reporter_ip,
-                    status, auto_applied_delta, report_nonce, report_timestamp
-                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-                RETURNING id, status`,
-                [
-                    target.id, kya_id, report_type, description,
-                    evidence ? JSON.stringify(evidence) : null,
-                    reporter_kya_id || null, reporter_pubkey || null, reporter_signature || null, req.ip,
-                    status, autoDelta,
-                    report_nonce || null,
-                    report_timestamp ? new Date(report_timestamp) : null,
-                ]
-            );
-        } catch (e) {
-            if (e.code === '23505') {
-                await client.query('ROLLBACK');
-                abuseTracker.recordRejection(pool, {
-                    path: req.path, method: req.method, reason: 'REPORT_REPLAY',
-                    http_status: 409, kya_id: reporter_kya_id || null,
-                    client_ip: req.ip, user_agent: req.headers['user-agent'],
-                    error_detail: `report nonce reused by pubkey=${reporter_pubkey?.slice(0,16)}`,
-                }).catch(() => {});
-                return res.status(409).json({ error: 'REPLAY', message: 'report nonce už použitý' });
-            }
-            throw e;
+        const insertRes = await client.query(
+            `INSERT INTO reports (
+                target_agent_id, target_kya_id, report_type, description, evidence,
+                reporter_kya_id, reporter_pubkey, reporter_signature, reporter_ip,
+                status, auto_applied_delta, report_nonce, report_timestamp
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+            ON CONFLICT (reporter_pubkey, report_nonce) WHERE reporter_pubkey IS NOT NULL AND report_nonce IS NOT NULL
+            DO NOTHING
+            RETURNING id, status`,
+            [
+                target.id, kya_id, report_type, description,
+                evidence ? JSON.stringify(evidence) : null,
+                reporter_kya_id || null, reporter_pubkey || null, reporter_signature || null, req.ip,
+                status, autoDelta,
+                report_nonce || null,
+                report_timestamp ? new Date(report_timestamp) : null,
+            ]
+        );
+        if (insertRes.rowCount === 0) {
+            await client.query('COMMIT');
+            abuseTracker.recordRejection(pool, {
+                path: req.path, method: req.method, reason: 'REPORT_REPLAY',
+                http_status: 409, kya_id: reporter_kya_id || null,
+                client_ip: req.ip, user_agent: req.headers['user-agent'],
+                error_detail: `report nonce reused by pubkey=${reporter_pubkey?.slice(0,16)}`,
+            }).catch(() => {});
+            return res.status(409).json({ error: 'REPLAY', message: 'report nonce už použitý' });
         }
         const reportId = insertRes.rows[0].id;
         
@@ -2852,10 +3003,10 @@ app.post('/api/admin/reports/:id/resolve', security.adminAuth, async (req, res) 
     try {
         await client.query('BEGIN');
         const rr = await client.query(`SELECT * FROM reports WHERE id = $1 FOR UPDATE`, [id]);
-        if (rr.rowCount === 0) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'REPORT_NOT_FOUND' }); }
+        if (rr.rowCount === 0) { await client.query('COMMIT'); return res.status(404).json({ error: 'REPORT_NOT_FOUND' }); }
         const rep = rr.rows[0];
         if (rep.status !== 'PENDING_REVIEW' && rep.status !== 'ESCALATED') {
-            await client.query('ROLLBACK');
+            await client.query('COMMIT');
             return res.status(409).json({ error: 'ALREADY_RESOLVED', status: rep.status });
         }
         
@@ -3012,6 +3163,8 @@ app.get('/api/admin/abuse', security.adminAuth, async (req, res) => {
             out.pow_config = {
                 enabled: pow.CFG.ENABLED,
                 default_difficulty: pow.CFG.DEFAULT_DIFFICULTY,
+                register_difficulty: pow.CFG.REGISTER_DIFFICULTY,
+                solve_max_iterations_default: pow.CFG.SOLVE_MAX_ITERATIONS,
                 ttl_sec: pow.CFG.TTL_SEC,
                 required_for: pow.CFG.REQUIRED_FOR,
             };
@@ -4374,6 +4527,26 @@ app.get('/api/admin/breakers', security.adminAuth, (_req, res) => {
         config: breaker.CFG,
         cert_issuance: certIssuanceBreaker.state(),
     });
+});
+
+// Ops dashboard JSON — DB agregáty (základ + extended blok pre správanie botov / traffic).
+app.get('/api/admin/ops-summary', security.adminAuth, async (req, res) => {
+    try {
+        const [data, recentR] = await Promise.all([
+            fetchOpsSummaryFull(pool),
+            pool.query(
+                `SELECT occurred_at, reason, path, method, http_status, severity, client_ip::text AS client_ip
+                 FROM rejected_requests ORDER BY occurred_at DESC LIMIT 20`
+            ),
+        ]);
+        res.json({
+            ...data,
+            recent_rejected_requests: recentR.rows,
+        });
+    } catch (e) {
+        logger.error({ err: e.message, route: 'ops-summary' }, 'ops-summary FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
 });
 
 // Strategic Sprint §30 Item 10 — Prometheus scrape endpoint. Admin-auth
