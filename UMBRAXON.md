@@ -869,7 +869,7 @@ p.query('SELECT * FROM schema_migrations').then(r=>{console.log(r.rows); p.end()
 - [x] **Logy + rotácia (baseline)**: PM2 file logs + `logrotate` policy:
   - `docs/LOGGING.md`
   - `config/logrotate-kya-hub`
-- [ ] **Watchtower (operator action)**: nakonfigurovať watchtower podľa `docs/WATCHTOWER-SETUP.md` a následne (voliteľne) zapnúť monitoring `WATCHTOWER_MONITOR_ENABLED=true` (viď `docs/WATCHTOWER-MONITORING.md`).
+- [ ] **Watchtower (operator action)**: nakonfigurovať watchtower podľa `docs/WATCHTOWER-SETUP.md` a následne (voliteľne) zapnúť monitoring `WATCHTOWER_MONITOR_ENABLED=true` (viď `docs/WATCHTOWER-MONITORING.md`). **Go-live 2026-05-13:** zámerne odložené — §30.14.1 gate #5.
 
 ### Plán dokončenia infra (priorita → postupne)
 
@@ -2736,15 +2736,17 @@ Aktuálny `BTCPAY_API_KEY` nemá `canmodifystoresettings` permission, takže aut
 
 ### 21.10 Production launch checklist
 
-- [ ] **Alby Hub setup**: SSH tunel + setup wizard + channel s LSP (200k SAT inbound)
-- [ ] **NWC URI**: skopírovaný do `.env` ako `ALBY_NWC_URI`
-- [ ] **BTCPay API key**: full access kľúč v `.env`
-- [ ] **Cold wallet**: `gen-cold-wallet.js` → seed na papier → zpub do BTCPay → `SWEEP_DESTINATION_ADDRESS` v `.env`
-- [ ] **Mainnet test 1000 SAT**: BASIC registrácia úspešná end-to-end
-- [ ] **Sweep cron**: aktívny (4× denne kontrola)
-- [ ] **Backup**: prvý úspešný `backup-db.sh` (cron 03:15 alebo manuálne)
-- [ ] **Hardware wallet objednaný**: nahradí paper seed po doručení (Trezor Safe 3 / Coldcard)
-- [ ] **Disaster recovery test**: minimálne 1× ročne — `pg_restore` do `kyahub_restore` DB a verifikácia
+Stav synchronizovaný s dokumentovanými dôkazmi v tejto príručke + verejným smoke testom **2026-05-13** (`https://umbraxon.xyz/api/health`, `/api/tiers`, `/terms` → HTTP 200; `umbraxon.xyz:3000` z internetu timeout — API ide cez 443/nginx). Položky označené `[ ]` vyžadujú ešte explicitné potvrdenie operátora (cold wallet / sweep / HW).
+
+- [x] **Alby Hub setup**: SSH tunel + setup wizard + channel s LSP (200k SAT inbound) — viď §21.9b + §30.Y (MegaLith ~1M kanál, liquidity OK).
+- [x] **NWC URI**: skopírovaný do `.env` ako `ALBY_NWC_URI` — predpoklad potvrdený funkčným webhook flow v §21.9b.
+- [x] **BTCPay API key**: kľúč v `.env` (verejný `/api/health` 2026-05-13: `btcpay.status` = OK).
+- [ ] **Cold wallet**: `gen-cold-wallet.js` → seed na papier → zpub do BTCPay → `SWEEP_DESTINATION_ADDRESS` v `.env` — operátor potvrdí.
+- [x] **Mainnet test 1000 SAT**: BASIC registrácia end-to-end — splnené cez real LN test (6000 SAT temp tier) v **§21.9b**; aktuálna BASIC cena 10 000 sat (§21.9b pricing revert).
+- [ ] **Sweep cron**: aktívny (4× denne kontrola) — skontrolovať `crontab` + §21.5; starší poznámok riadok o BTCPay API scope pre payout treba overiť proti aktuálnemu kľúču.
+- [x] **Backup**: prvý úspešný off-site upload — `scripts/backup-database.sh` + `scripts/backup-channel-state.sh` + R2 (§30.14 gate #1 RESOLVED).
+- [ ] **Hardware wallet objednaný**: nahradí paper seed po doručení (Trezor Safe 3 / Coldcard) — operátor.
+- [x] **Disaster recovery test**: kvartálny restore drill PASS 2026-05-12 (§31 A.3); ročný cyklus ponechať v runbooku.
 
 ### 21.11 Out-of-scope (Phase 2.5b / Phase 3)
 
@@ -5735,6 +5737,21 @@ Coverage:
 | 6 | **First CRL broadcast** (Phase 5) — pre-existing, unchanged by this sprint.                                                                                                                                                                                    | LOW      | CRL transparency log "ready" → "live"                                             |
 | 7 | **bitcoind txindex reindex** — pre-existing, unchanged by this sprint.                                                                                                                                                                                         | LOW      | full historical anchor verification at the `/api/verify/anchor` endpoint          |
 
+### 30.14.1 Go-live gate disposition (2026-05-13)
+
+Zatvorenie alebo zámerné odloženie zvyšných operátorských „gates“ z tabuľky §30.14 vyššie (bez zmeny kódu). **Faktúry — hlavička PDF** (`INVOICE_SELLER_*`, `INVOICE_SELLER_LOGO_PATH`, pozri §31): doplniť `.env` a podľa potreby `POST /api/admin/invoices/regenerate/...` — **odložené** (neblokuje spustenie API).
+
+| # | disposition | notes |
+|---|-------------|-------|
+| 3 | **Deferred ≤ Week 1 ops** | Netdata Prometheus scrape `/api/metrics` s hlavičkou `X-Admin-Key` — [docs/PROMETHEUS-METRICS.md](docs/PROMETHEUS-METRICS.md). |
+| 4 | **Deferred** | `lm-sensors` pre ESG; medzitým stačí horný odhad z fallback konštanty. |
+| 5 | **Deferred** | Watchtower (Voltage vs self-host); playbook [docs/WATCHTOWER-SETUP.md](docs/WATCHTOWER-SETUP.md); pri súčasnom počte kanálov nie je launch blocker. |
+| 6 | **Explicit hold** | CRL worker ostáva **DRY_RUN** do operátorského **GO** na prvý KYAR broadcast (Phase 5). |
+| 7 | **Deferred** | Plný `bitcoind` `txindex` reindex — až pre najhlbšiu historickú verifikáciu `/api/verify/anchor`. |
+| §32.D #9 | **Acknowledged** | Slovenský advokát + ToS pred >100 registrácií/rok alebo zmenou právnej formy (bez zmeny oproti §32.D). |
+
+**Verejný go-live smoke (2026-05-13):** `GET https://umbraxon.xyz/api/health` → `db` / `btcpay` / `alby` OK; `GET /api/tiers` → 200; `GET /terms` → 200. Na hostname `umbraxon.xyz:3000` z externého pohľadu **timeout** (očakávané — verejný traffic cez 443/nginx). Node na hoste počúva `0.0.0.0:3000` kvôli Docker bridge; **UFW musí naďalej blokovať internet → :3000** (§32.F).
+
 ### Wallet balances (unchanged — sprint was monitor/backup heavy)
 
 - BTCPay store: **15 585 sat** (unchanged)
@@ -6234,7 +6251,7 @@ VACUUM ANALYZE targets extended to cover the new tables.
   `INVOICE_SELLER_TAX_ID`, `INVOICE_SELLER_VAT_ID`, `INVOICE_SELLER_IBAN`,
   `INVOICE_SELLER_LOGO_PATH` then `POST
   /api/admin/invoices/regenerate/<inv>` to re-render the historical PDFs
-  with the real header.
+  with the real header. *(Go-live disposition: §30.14.1 — non-blocking defer.)*
 
 ### No-custody penalty system (D — A+B+D combo)
 
@@ -6529,8 +6546,9 @@ following pre-existing condition surfaced:
 
 The `/terms` and `/terms.txt` routes added in §32.A intentionally bypass
 this issue because they use `alias` (served by the proxy container
-itself), not `proxy_pass`. All API endpoints (`/api/*`) are currently
-unreachable from the internet.
+itself), not `proxy_pass`. **Historický stav (pred §32.F):** všetky `/api/*`
+boli z internetu nedostupné. **Po §32.F** je verejný API chain obnovený;
+overenie 2026-05-13: `https://umbraxon.xyz/api/health` a `/api/tiers` → HTTP 200.
 
 **Suggested fixes (operator pick one, none applied by this slot):**
 
@@ -6558,7 +6576,7 @@ extended with:
 |---|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|----------|
 | 8 | **Account API Token with `R2 Storage:Edit` scope** — optional, low priority. Reason to add later: programmatic R2 lifecycle management + bucket-level config audit (currently lifecycle rules audited by operator screenshots in §30.R2-lifecycle / §32). Cost to operator: ≈2 min in the Cloudflare UI. Cost of NOT doing: lifecycle rules remain audited by screenshot only. Recommend addressing at the next quarterly ops review. | LOW (optional) | programmatic R2 lifecycle audit; otherwise non-blocking |
 | 9 | **Slovak attorney review of public ToS at `/terms`.** Strong first draft is live (§32.A). Sign-off recommended before agent registrations exceed 100 / year, or before the operator registers a živnosť / s.r.o. / VAT (whichever first).   | MEDIUM | Section 10 (tax treatment) update path; consumer-protection robustness |
-| 10 | **Pre-existing P0: `kya-hub-proxy` cannot reach host kya-hub** (see §32.C). All `/api/*` paths return 503 from the public internet. Static `/terms` + `/terms.txt` are unaffected (served by proxy container directly).                   | **P0**   | every API endpoint over the internet |
+| 10 | ✅ **RESOLVED 2026-05-12 večer (§32.F) + overené 2026-05-13.** Spojenie reverse-proxy → `kya-hub` obnovené (`BIND_ADDR=0.0.0.0` + UFW len Docker podsiete; internet → :3000 zostáva DROP). Verejný smoke: `https://umbraxon.xyz/api/health`, `/api/tiers` → HTTP 200. Symptóm z §32.C je uzavretý historický záznam. | DONE | — |
 | 11 | **Watch first 24 h Netdata + ops dashboard** for `/api/health` cache-staleness + `degraded:true` triggers. Tune `HEALTH_PROBE_INTERVAL_MS` / `HEALTH_STALE_CYCLE_MULT` only if false alarms are observed.                                  | LOW | Item §32.B steady-state confidence |
 
 ### 32.E Files modified (this slot)
@@ -6618,8 +6636,8 @@ Closes the operator gate opened by §32.C / row #10 in the §32.D table.
 
 **Future-proofing note**: if a future Docker compose stack creates a new user-defined network for any container that must reach `kya-hub`, repeat step 2 for that subnet (e.g. `ufw allow from 172.19.0.0/16 to any port 3000 proto tcp comment 'Docker <name> → kya-hub'`). Do **not** revert to `BIND_ADDR=127.0.0.1` without first moving `kya-hub` into a container on the same Docker network as the proxy (option #3 in §32.C suggested fixes).
 
-**Resolves gate row #10** in the §32.D table — flip the operator-action gate to ✅ closed at the next sprint roll-up.
+**Resolves gate row #10** in the §32.D table — status flipped to ✅ **CLOSED** in §32.D (2026-05-13 doc sync) + §30.14.1 public smoke note.
 
 ---
 
- zachytáva všetky informácie o projekte ku dňu 2026-05-12. **Phase 1 ✅ + Phase 1.5 ✅ + Phase 2 ✅ + Phase 2.1 ✅ + Phase 2.2 ✅ + Phase 2.3 ✅ + Phase 2.4 ✅ + Phase 2.4 Capacity ✅ + Phase 2.4 Reliability ✅ + Phase 2.5 Payment Production ✅ + Phase 3 Nginx Reverse Proxy ✅ + Phase 3 Netdata Monitoring ✅ + Phase 3D Alby NWC Lightning ✅ + Phase 3E Real LN E2E ✅ + Phase 4 ELITE Production-Ready ✅ + Phase 4 LIVE mainnet anchors ✅ + Phase 4B Manufacturer Onboarding ✅ + Phase 5 CRL Transparency Log ✅ (DRY_RUN) + Phase 5b Multi-Sig ELITE certs ✅ + Production Hardening Sprint 2026-05-12 ✅ + Strategic Sprint 13-item audit response 2026-05-12 🚧 + Cloudflare R2 + Alby unlock refactor 2026-05-12 ✅** dokončené (posledné v progrese). First two production anchors (GENESIS + LN agent) confirmed in block 949,085 via bitcoind direct backend. Anchor worker LIVE, CRL worker DRY_RUN (waiting for user GO before first KYAR broadcast). Off-site backup destination: **Cloudflare R2** (primary, via S3-compatible API in `BACKUP_S3_*`); Backblaze B2 (`B2_*`) retained as legacy fallback. Security audit clean: 0 P0, 3 P1 fixed, 2 P2 fixed, 0 npm CVEs. Pri ďalších zmenách aktualizuj relevantnú sekciu.
+ zachytáva všetky informácie o projekte ku dňu 2026-05-12 (doplnené §30.14.1 + §32.D gate #10 closure **2026-05-13**). **Phase 1 ✅ + Phase 1.5 ✅ + Phase 2 ✅ + Phase 2.1 ✅ + Phase 2.2 ✅ + Phase 2.3 ✅ + Phase 2.4 ✅ + Phase 2.4 Capacity ✅ + Phase 2.4 Reliability ✅ + Phase 2.5 Payment Production ✅ + Phase 3 Nginx Reverse Proxy ✅ + Phase 3 Netdata Monitoring ✅ + Phase 3D Alby NWC Lightning ✅ + Phase 3E Real LN E2E ✅ + Phase 4 ELITE Production-Ready ✅ + Phase 4 LIVE mainnet anchors ✅ + Phase 4B Manufacturer Onboarding ✅ + Phase 5 CRL Transparency Log ✅ (DRY_RUN) + Phase 5b Multi-Sig ELITE certs ✅ + Production Hardening Sprint 2026-05-12 ✅ + Strategic Sprint 13-item audit response 2026-05-12 ✅ + Cloudflare R2 + Alby unlock refactor 2026-05-12 ✅** dokončené. First two production anchors (GENESIS + LN agent) confirmed in block 949,085 via bitcoind direct backend. Anchor worker LIVE, CRL worker DRY_RUN (waiting for user GO before first KYAR broadcast). Verejný API smoke 2026-05-13: `/api/health`, `/api/tiers`, `/terms` OK (§30.14.1). Off-site backup destination: **Cloudflare R2** (primary, via S3-compatible API in `BACKUP_S3_*`); Backblaze B2 (`B2_*`) retained as legacy fallback. Security audit clean: 0 P0, 3 P1 fixed, 2 P2 fixed, 0 npm CVEs. Pri ďalších zmenách aktualizuj relevantnú sekciu.

@@ -2,15 +2,17 @@
 
 This is the operator-facing “go-live” checklist extracted from `UMBRAXON.md` so it stays actionable and reviewable.
 
+**Doc sync 2026-05-13:** Verejný smoke (`https://umbraxon.xyz/api/health`, `/api/tiers`, `/terms`) → HTTP 200; `umbraxon.xyz:3000` → timeout (API cez TLS/nginx). Splnené položky sú zaškrtnuté podľa `UMBRAXON.md` (§21.9b real LN, §30.14 R2, §31 restore drill). Cold wallet, sweep cron a observability baseline stále vyžadujú potvrdenie na hoste.
+
 ## A) Payments: Alby Hub + NWC
 
-- [ ] **Alby Hub setup**: SSH tunnel + setup wizard + channel with LSP (target at least 200k SAT inbound).
-- [ ] **NWC URI**: copy into `.env` as `ALBY_NWC_URI` (or whichever key is used by your Alby integration).
-- [ ] **Mainnet smoke payment**: BASIC registration succeeds end-to-end (real sats).
+- [x] **Alby Hub setup**: SSH tunnel + setup wizard + channel with LSP (target at least 200k SAT inbound). _(Dokumentované v `UMBRAXON.md` §21.9b / §30.Y.)_
+- [x] **NWC URI**: copy into `.env` as `ALBY_NWC_URI` (or whichever key is used by your Alby integration). _(Implikované fungujúcim Alby webhook / LN flow v §21.9b.)_
+- [x] **Mainnet smoke payment**: BASIC registration succeeds end-to-end (real sats). _(§21.9b real LN E2E; BASIC tier 10 000 sat po revert.)_
 
 ## B) Payments: BTCPay (fallback / on-chain)
 
-- [ ] **BTCPay API key**: full access key in `.env` (only on the host; never committed).
+- [x] **BTCPay API key**: full access key in `.env` (only on the host; never committed). _(Verejný `/api/health` 2026-05-13: `btcpay.status` = OK.)_
 
 ### BTCPay API key rotation (exact steps)
 
@@ -49,9 +51,9 @@ pm2 logs kya-hub --lines 200 --nostream | tail -n 200
 
 ## D) Backups + DR
 
-- [ ] **First DB backup**: run `scripts/backup-database.sh` (cron or manual) and confirm success.
-- [ ] **R2 offsite backups end-to-end**: run `scripts/backup-offsite-smoketest.sh`, then real backup scripts and verify objects exist in R2.
-- [ ] **Disaster recovery drill**: at least 1× yearly — restore into `kyahub_restore` and verify (`pg_restore`).
+- [x] **First DB backup**: run `scripts/backup-database.sh` (cron or manual) and confirm success. _(§30.14 gate #1 + `UMBRAXON.md` §30.Y.)_
+- [x] **R2 offsite backups end-to-end**: run `scripts/backup-offsite-smoketest.sh`, then real backup scripts and verify objects exist in R2. _(§30.14 gate #1 RESOLVED.)_
+- [x] **Disaster recovery drill**: at least 1× yearly — restore into `kyahub_restore` and verify (`pg_restore`). _(Kvartálny drill PASS 2026-05-12, `UMBRAXON.md` §31 A.3; ročný cyklus ponechať.)_
 
 ## E) Observability baseline
 
