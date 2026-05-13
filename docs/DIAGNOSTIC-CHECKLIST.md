@@ -67,7 +67,7 @@ Na strane hubu rýchla kontrola dostupnosti API:
 curl -sS https://umbraxon.xyz/api/health | jq .
 ```
 
-Polia `btcpay`, `alby`, `db` musia byť v poriadku.
+Polia `btcpay`, `alby`, `db` musia byť v poriadku. Z Cursora alebo iného MCP hostiteľa rovnaké dáta vie vrátiť read-only server v [`mcp/README.md`](mcp/README.md) (nástroj `kya_health`).
 
 ## 4. Kód `/api/register/initiate` — „tiché“ chyby
 

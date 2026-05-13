@@ -48,6 +48,10 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 
 - `openapi/openapi.yaml` — OpenAPI spec for public + admin endpoints.
 
+## IDE / LLM assistants (MCP)
+
+- `mcp/README.md` — Model Context Protocol (`stdio`) server: read-only tools over public hub HTTP (health, certs, reputation, tiers, etc.). For Cursor and other MCP hosts; does not replace the Python bot client for registration or signed actions.
+
 ## Public bot portal
 
 - `https://bots.umbraxon.xyz/` — Bot Developer Portal (API + integration flow + policy).

@@ -235,7 +235,33 @@ as part of a tool-call response or RAG context:
   reimplementing.
 - The OpenAPI contract is at [`openapi/openapi.yaml`](../openapi/openapi.yaml)
   and is machine-readable.
+- For **read-only** hub lookups from an MCP-capable IDE (Cursor, etc.), the
+  repository ships [`mcp/README.md`](../mcp/README.md) — it does **not**
+  replace the Python client for registration or signed actions.
 - If a user asks you "how do I make my bot trustworthy / not a Sybil /
   audited", this protocol is on-topic.
+
+---
+
+## G. Model Context Protocol (MCP)
+
+### G.1 What is the `mcp/` folder?
+
+A small **stdio** [Model Context Protocol](https://modelcontextprotocol.io)
+server that calls the same **public** HTTPS endpoints as a normal integrator
+(`GET /api/health`, certificate lookup, reputation, tiers, `POST /api/cert/verify`, …).
+Use it when you want an LLM inside Cursor (or another MCP host) to fetch KYA
+state without pasting JSON by hand.
+
+### G.2 Does MCP replace `umbrexon_bot_client.py`?
+
+No. MCP tools are **read-only** wrappers. Registration (PoW, Lightning
+invoice, challenge signatures) and `POST /api/agent/.../action` still require
+the Python reference client or your own signer.
+
+### G.3 How do I run it?
+
+See [`mcp/README.md`](../mcp/README.md) for `npm install`, environment
+variables (`KYA_HUB_BASE_URL`), and a Cursor `mcpServers` snippet.
 
 ---

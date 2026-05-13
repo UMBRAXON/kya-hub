@@ -25,7 +25,8 @@ and emits no bearer tokens.
 > [`UMBRAXON.md`](UMBRAXON.md) if you are a human operator.
 
 **Reference clients:** [Python SDK](scripts/umbrexon_bot_client.py) (byte-exact
-with the Node backend). **Public portal:** <https://bots.umbraxon.xyz/>
+with the Node backend); [MCP server](mcp/README.md) (read-only hub tools for
+Cursor / MCP hosts). **Public portal:** <https://bots.umbraxon.xyz/>
 (fallback: <https://umbraxon.xyz/bots/>).
 **API contract:** [`openapi/openapi.yaml`](openapi/openapi.yaml).
 **FAQ for integrators:** [`docs/FAQ-FOR-BOT-DEVELOPERS.md`](docs/FAQ-FOR-BOT-DEVELOPERS.md).
@@ -87,6 +88,9 @@ without a SaaS dependency. Concretely:
 - **`scripts/`** — operator tools (anchor worker, backups, restore drills,
   DAC8 export, channel state backup, cold-wallet generator) plus the
   **Python reference bot client** (`umbrexon_bot_client.py`).
+- **`mcp/`** — [Model Context Protocol](https://modelcontextprotocol.io) server
+  (`stdio`) exposing public KYA-Hub HTTP endpoints as MCP tools; see
+  [`mcp/README.md`](mcp/README.md).
 - **`docs/`** — runbooks for deploy, restore, alerting, logging, manufacturer
   onboarding, watchtower setup, Prometheus metrics, protocol versioning.
 - **`public/bots/`** — static, JS-free [Bot Developer Portal](https://bots.umbraxon.xyz/)
@@ -234,6 +238,7 @@ The operator-facing entry points (in order of how often you'll touch them):
 - **Bot Developer Portal (public)**: <https://bots.umbraxon.xyz/> — temporary
   fallback path while DNS propagates: <https://umbraxon.xyz/bots/>
 - **Reference bot client (Python SDK)**: [`scripts/umbrexon_bot_client.py`](scripts/umbrexon_bot_client.py)
+- **MCP server (IDE / read-only hub tools)**: [`mcp/README.md`](mcp/README.md)
 - **OpenAPI spec**: [`openapi/openapi.yaml`](openapi/openapi.yaml)
 - **Deploy checklist**: [`docs/DEPLOY-CHECKLIST.md`](docs/DEPLOY-CHECKLIST.md)
 - **Restore / DR**: [`docs/RESTORE-PROCEDURES.md`](docs/RESTORE-PROCEDURES.md)

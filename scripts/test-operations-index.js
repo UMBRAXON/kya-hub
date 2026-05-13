@@ -38,6 +38,7 @@ const mustMention = [
   'scripts/backup-database.sh',
   'scripts/restore-drill.sh',
   'scripts/backup-offsite-smoketest.sh',
+  'mcp/README.md',
 ];
 
 for (const m of mustMention) {

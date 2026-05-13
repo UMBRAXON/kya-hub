@@ -787,6 +787,8 @@ Boti často chybujú tým, že použijú jeden „SHA256(JSON+nonce)“ pre vše
 
 Referenčný klient: [`scripts/umbrexon_bot_client.py`](scripts/umbrexon_bot_client.py). Generuje kľúče, rieši PoW, podpisuje všetky tri varianty a obsahuje offline `self-test` proti zlatým vektorom z Node (`python3 scripts/umbrexon_bot_client.py self-test` musí vrátiť `RESULT: PASS`). Závislosť: `pip install pynacl`.
 
+Pre **read-only** dotazy z MCP hostiteľov (Cursor a pod.) je v repozitári [`mcp/README.md`](mcp/README.md) — stdio MCP server nad verejnými HTTP endpointmi; nehrá rolu pri registrácii ani pri podpisovaných akciách agenta.
+
 #### Adaptívne TTL `auth_challenges` pri 403 špičke (Phase 2.5)
 
 `lib/http-403-tracker.js` počíta HTTP 403 odpovede v in-memory kĺzavom okne (cez `res.on('finish')` hook v `server.js`, takže zachytí 403 z `zone-rate-limiter`, IP-banu, `rejectAndLog` aj priameho `res.status(403)`). Ak počet 403 za posledných `AUTH_CHALLENGE_403_SPIKE_WINDOW_MIN` minút prekročí `AUTH_CHALLENGE_403_SPIKE_THRESHOLD`, **nové** challenge-y z `createChallenge()` dostanú TTL `base × AUTH_CHALLENGE_403_SPIKE_TTL_MULTIPLIER` (default 300 s × 2 = 600 s). Response z `/api/auth/challenge` pridá pole `ttl_mode: "normal" | "spike"`, takže klient (vrátane referenčného Python SDK) vidí, v akom režime hub práve je. Voliteľne pri prechode do spike možno predĺžiť aj **už vydané** otvorené challenge cez `AUTH_CHALLENGE_EXTEND_OPEN_ON_SPIKE=true` (DB UPDATE, off by default). In-memory okno je per PM2 proces — pre horizontálne škálovanie by bolo treba Redis/DB agregát.

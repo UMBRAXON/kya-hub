@@ -91,6 +91,14 @@ spec](openapi/openapi.yaml) and [protocol
 documentation](UMBRAXON.md#13-podpisové-pravidlá) let you implement it
 yourself; the script is the canonical reference, not a hard dependency.
 
+**MCP (IDE / LLM hosts):** this repository ships a read-only
+[Model Context Protocol](https://modelcontextprotocol.io) server under
+[`mcp/`](mcp/README.md). It exposes public `GET` (and `POST /api/cert/verify`)
+surfaces as MCP tools so assistants can query health, tiers, certificates,
+reputation, and CRL metadata without re-implementing HTTP. It does **not**
+perform paid registration, PoW, or Ed25519-signed agent actions; use the
+Python client or direct HTTP for those.
+
 ---
 
 ## 4. Signing rules — the part that breaks everyone
@@ -136,6 +144,7 @@ with golden vectors on every CI run.
 - `GET /crl/latest.json` — current certificate revocation list (signed by hub).
 - `GET /api/agent/{kya_id}` — public certificate by KYA-ID, no auth required.
 - `GET /api/auth/challenge?pubkey=...` — challenge nonce + TTL + ttl_mode.
+- **MCP** — local [`mcp/README.md`](mcp/README.md): stdio MCP server wrapping the same public HTTP API for Cursor and compatible hosts (no admin routes, no registration secrets).
 
 ---
 

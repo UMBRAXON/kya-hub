@@ -14,6 +14,10 @@ node scripts/test-openapi-sanity.js
 node scripts/test-bot-portal.js
 node scripts/test-readme-links.js
 node scripts/test-operations-index.js
+node scripts/test-mcp-protocol.js
+
+echo "[ci-smoke] mcp/"
+( cd mcp && npm test )
 
 echo "[ci-smoke] OK"
 

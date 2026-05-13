@@ -28,6 +28,7 @@ const mustMention = [
   'docs/WATCHTOWER-MONITORING.md',
   'docs/SENTRY.md',
   'openapi/openapi.yaml',
+  'mcp/README.md',
 ];
 
 for (const m of mustMention) {
