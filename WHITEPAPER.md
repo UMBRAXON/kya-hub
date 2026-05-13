@@ -1,6 +1,6 @@
 # UMBRAXON KYA-Hub — Whitepaper / Public ToS overview
 
-> Living document. Operator: Umbraxon. Last revision: 2026-05-13.
+> Living document. Operator: Umbraxon. Last revision: 2026-05-14.
 > The canonical engineering/runbook reference is `UMBRAXON.md`; this file is
 > the public-facing summary of pricing, penalty, and disclaimer language.
 
@@ -126,6 +126,4 @@ Bot's pubkey is `K`. Both bans below are for fraud.
 - Restore procedures: `docs/RESTORE-PROCEDURES.md`.
 - Security audit (current): `SECURITY-AUDIT-2026-05-12-EVENING.md`.
 
-Public ToS will be published at `https://umbraxon.xyz/terms` (operator
-follow-up). Until then, the disclaimer in §4 of this document is the
-authoritative summary.
+Public ToS are served at **`https://umbraxon.xyz/terms`** (nginx static; see `UMBRAXON.md` §32). The disclaimer in §4 of this document remains the high-level summary; the HTML ToS is the public-facing legal text draft.

@@ -22,6 +22,7 @@ const mustMention = [
   'UMBRAXON.md',
   'docs/DEPLOY-CHECKLIST.md',
   'docs/BOOTSTRAP-CHECKLIST.md',
+  'docs/GO-LIVE-OPERATOR-WALKTHROUGH.md',
   'docs/RESTORE-PROCEDURES.md',
   'docs/ALERTING-RUNBOOK.md',
   'docs/NETDATA-ACCESS.md',

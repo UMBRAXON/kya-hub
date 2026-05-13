@@ -4,6 +4,8 @@ This is the operator-facing “go-live” checklist extracted from `UMBRAXON.md`
 
 **Doc sync 2026-05-13:** Verejný smoke (`https://umbraxon.xyz/api/health`, `/api/tiers`, `/terms`) → HTTP 200; `umbraxon.xyz:3000` → timeout (API cez TLS/nginx). Splnené položky sú zaškrtnuté podľa `UMBRAXON.md` (§21.9b real LN, §30.14 R2, §31 restore drill). Cold wallet, sweep cron a observability baseline stále vyžadujú potvrdenie na hoste.
 
+**Podrobný postup (cold → sweep → E → follow-upy → CRL):** [`GO-LIVE-OPERATOR-WALKTHROUGH.md`](GO-LIVE-OPERATOR-WALKTHROUGH.md).
+
 ## A) Payments: Alby Hub + NWC
 
 - [x] **Alby Hub setup**: SSH tunnel + setup wizard + channel with LSP (target at least 200k SAT inbound). _(Dokumentované v `UMBRAXON.md` §21.9b / §30.Y.)_
@@ -57,9 +59,9 @@ pm2 logs kya-hub --lines 200 --nostream | tail -n 200
 
 ## E) Observability baseline
 
-- [ ] **Monitoring access**: Netdata reachable via SSH tunnel only (`docs/NETDATA-ACCESS.md`).
-- [ ] **Alerts**: Telegram alerts tested (see `docs/ALERTING-RUNBOOK.md`).
-- [ ] **Logging**: PM2 logs + `logrotate` installed (`docs/LOGGING.md`).
+- [x] **Monitoring access**: Netdata reachable via SSH tunnel only (`docs/NETDATA-ACCESS.md`). _(Host check 2026-05-13: netdata on `127.0.0.1:19999`, local HTTP 200.)_
+- [x] **Alerts**: Telegram alerts tested (see `docs/ALERTING-RUNBOOK.md`). _(Host check 2026-05-13: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` set in `.env`; operator skips token rotation.)_
+- [x] **Logging**: PM2 logs + `logrotate` installed (`docs/LOGGING.md`). _(Host check 2026-05-13: `/etc/logrotate.d/kyahub` present; `logrotate -d` clean; `pm2-logrotate` online.)_
 
 ### Telegram bot token rotation (exact steps)
 

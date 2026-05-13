@@ -2736,7 +2736,7 @@ Aktuálny `BTCPAY_API_KEY` nemá `canmodifystoresettings` permission, takže aut
 
 ### 21.10 Production launch checklist
 
-Stav synchronizovaný s dokumentovanými dôkazmi v tejto príručke + verejným smoke testom **2026-05-13** (`https://umbraxon.xyz/api/health`, `/api/tiers`, `/terms` → HTTP 200; `umbraxon.xyz:3000` z internetu timeout — API ide cez 443/nginx). Položky označené `[ ]` vyžadujú ešte explicitné potvrdenie operátora (cold wallet / sweep / HW).
+Stav synchronizovaný s dokumentovanými dôkazmi v tejto príručke + verejným smoke testom **2026-05-13** (`https://umbraxon.xyz/api/health`, `/api/tiers`, `/terms` → HTTP 200; `umbraxon.xyz:3000` z internetu timeout — API ide cez 443/nginx). Položky označené `[ ]` vyžadujú ešte explicitné potvrdenie operátora (cold wallet / sweep / HW). **Krok za krokom:** [docs/GO-LIVE-OPERATOR-WALKTHROUGH.md](docs/GO-LIVE-OPERATOR-WALKTHROUGH.md).
 
 - [x] **Alby Hub setup**: SSH tunel + setup wizard + channel s LSP (200k SAT inbound) — viď §21.9b + §30.Y (MegaLith ~1M kanál, liquidity OK).
 - [x] **NWC URI**: skopírovaný do `.env` ako `ALBY_NWC_URI` — predpoklad potvrdený funkčným webhook flow v §21.9b.
@@ -5735,7 +5735,7 @@ Coverage:
 | 4 | **Install lm-sensors** on host for accurate ESG power figures (`apt install lm-sensors && sensors-detect --auto`).                                                                                                                                             | LOW      | Item 12 generated report numbers (fallback constant gives upper-bound figures)    |
 | 5 | **Pick a Lightning watchtower option** (Voltage / LL LiT / self-hosted) and either wait for Alby Hub UI support OR run the Option A2.b LDK config injection AFTER `pm2 stop alby-hub` (gated — operator brief flags this as risky).                            | LOW      | Item 13 active watchtower coverage                                                |
 | 6 | **First CRL broadcast** (Phase 5) — pre-existing, unchanged by this sprint.                                                                                                                                                                                    | LOW      | CRL transparency log "ready" → "live"                                             |
-| 7 | **bitcoind txindex reindex** — pre-existing, unchanged by this sprint.                                                                                                                                                                                         | LOW      | full historical anchor verification at the `/api/verify/anchor` endpoint          |
+| 7 | **bitcoind `txindex` reindex** — **voliteľné**, nie požiadavka pre bežné KYA anchor overenie. Implementácia `GET /api/verify/anchor/:txid` v [`lib/anchor.js`](lib/anchor.js) (`verifyAnchorOnChain`, `getTxStatus`): (1) **`gettransaction`** v peňaženke `BITCOIND_ANCHOR_WALLET` (default `kya-anchor`) — pokrýva **všetky anchor TX vysielané hubom** aj po potvrdení, **bez `txindex`**; (2) `getrawtransaction` — bez `-txindex` len mempool; (3) **mempool.space** — fallback pre potvrdené TX mimo wallet histórie. **`txindex=1`** dáva zmysel len pri cieli „všetko 100 % lokálne, bez tretej strany, ľubovoľný txid“ a vyžaduje **neprunovaný** full node (nepružné s aktuálnym prune setupom v §27 Step 2). | LOW (optional) | plne lokálny lookup ľubovoľného txid bez externého API |
 
 ### 30.14.1 Go-live gate disposition (2026-05-13)
 
@@ -5747,8 +5747,8 @@ Zatvorenie alebo zámerné odloženie zvyšných operátorských „gates“ z t
 | 4 | **Deferred** | `lm-sensors` pre ESG; medzitým stačí horný odhad z fallback konštanty. |
 | 5 | **Deferred** | Watchtower (Voltage vs self-host); playbook [docs/WATCHTOWER-SETUP.md](docs/WATCHTOWER-SETUP.md); pri súčasnom počte kanálov nie je launch blocker. |
 | 6 | **Explicit hold** | CRL worker ostáva **DRY_RUN** do operátorského **GO** na prvý KYAR broadcast (Phase 5). |
-| 7 | **Deferred** | Plný `bitcoind` `txindex` reindex — až pre najhlbšiu historickú verifikáciu `/api/verify/anchor`. |
-| §32.D #9 | **Acknowledged** | Slovenský advokát + ToS pred >100 registrácií/rok alebo zmenou právnej formy (bez zmeny oproti §32.D). |
+| 7 | **Nechávame bez `txindex` (odporúčané pre prevádzku)** | Štandardné overenie vlastných anchorov nevyžaduje reindex — pozri riadok gate **#7** v tabuľke §30.14 vyššie + `lib/anchor.js`. `txindex` + neprunovaný disk len pri požiadavke úplnej lokálnej archivácie ľubovoľného txid. |
+| §32.D #9 | **Vynechané do odvolania (operátor 2026-05-14)** | Právny review ToS / §32 — bez zmeny textu ToS; obnoviť pred vysokým objemom alebo zmenou právnej formy. |
 
 **Verejný go-live smoke (2026-05-13):** `GET https://umbraxon.xyz/api/health` → `db` / `btcpay` / `alby` OK; `GET /api/tiers` → 200; `GET /terms` → 200. Na hostname `umbraxon.xyz:3000` z externého pohľadu **timeout** (očakávané — verejný traffic cez 443/nginx). Node na hoste počúva `0.0.0.0:3000` kvôli Docker bridge; **UFW musí naďalej blokovať internet → :3000** (§32.F).
 

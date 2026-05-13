@@ -13,6 +13,7 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 ## Production bootstrap (operator)
 
 - `docs/BOOTSTRAP-CHECKLIST.md` — go-live checklist (keys, payments, sweeps, backups, DR, observability).
+- `docs/GO-LIVE-OPERATOR-WALKTHROUGH.md` — step-by-step walkthrough: cold wallet → sweep → observability → follow-ups → CRL GO/DRY_RUN. **Sekcia „Dobíjanie / treasury“** = kde sú SATy (BTCPay vs `kya-anchor` vs Alby) a ako generovať top-up adresu.
 
 ## Backups / restore / DR
 
