@@ -1,43 +1,318 @@
 # UMBRAXON KYA-Hub
 
-KYA-Hub backend + operator runbooks. This repo is designed for **simple ops**:
-PM2-managed services, offsite encrypted backups, Netdata monitoring, and hermetic CI smoke tests.
+> **Know Your Agent.** A non-custodial, cryptographically-anchored identity and
+> reputation hub for autonomous AI agents — paid for over Lightning, signed with
+> Ed25519, audited on Bitcoin.
+
+[![CI](https://github.com/UMBRAXON/kya-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/UMBRAXON/kya-hub/actions/workflows/ci.yml)
+[![Nightly](https://github.com/UMBRAXON/kya-hub/actions/workflows/nightly.yml/badge.svg)](https://github.com/UMBRAXON/kya-hub/actions/workflows/nightly.yml)
+[![Node](https://img.shields.io/badge/node-%E2%89%A520.18-339933)](package.json)
+[![License](https://img.shields.io/badge/license-ISC-orange)](LICENSE)
+[![Protocol](https://img.shields.io/badge/protocol-1.0-purple)](docs/PROTOCOL-VERSIONING.md)
+
+---
+
+## Manifesto
+
+KYA-Hub exists because the AI agent economy is moving faster than its
+accountability surface. Today an "agent" is whatever a JSON file claims; there
+is no consequence for misrepresentation, no portable history, no skin in the
+game. We treat that as a primary security gap, not a UX problem.
+
+Six axioms drive every design decision in this repository:
+
+1. **Identity must cost something.** A bot earns its certificate by paying real
+   Lightning sats up front. Free identities are abused; priced identities create
+   a measurable cost-of-attack and a finite blast radius per Sybil cluster.
+2. **The hub holds no funds.** Every sat is collected at registration and
+   either spent on chain anchoring or recognized as revenue. There is no escrow,
+   no bond, no refund. Penalty = reputation slash + CRL inclusion + a 3ⁿ price
+   multiplier on the next re-registration after a ban (capped at 9×).
+3. **Signatures, not sessions.** Agents authenticate every privileged call with
+   an Ed25519 signature over a canonical payload. No bearer tokens, no API keys
+   that can be lifted from a `.env` and replayed. See
+   [`UMBRAXON.md`](UMBRAXON.md#13-podpisové-pravidlá) for the three distinct digests.
+4. **Receipts are public, history is on chain.** ELITE-tier agents are
+   individually anchored to Bitcoin via `OP_RETURN` (Phase 2). The certificate
+   transparency log and CRL are exposed read-only for any third party to audit
+   without trusting the hub.
+5. **Friction belongs on the attacker, not the user.** Proof-of-Work gates,
+   per-zone reputation rate limits, IP-ban with sliding-window auto-promotion,
+   and an adaptive 403-spike defence (`lib/http-403-tracker.js`) raise cost on
+   abuse without making the happy path slower.
+6. **No silent failure.** Every rejection writes an immutable audit row
+   (`rejected_requests`), every signing event hits `cert_signing_log`, every
+   reputation delta lands in `reputation_events`. Operator can answer "why did
+   this fail?" without log archaeology.
+
+This is a v1 of a long-term protocol. Not all six axioms are equally enforced
+today; the **Phase status** table below is honest about what ships now versus
+what is staged.
+
+---
+
+## What's in this repo
+
+A production Node.js service plus the operator runbooks needed to run it
+without a SaaS dependency. Concretely:
+
+- **`server.js`** (≈ 5.9k LOC, single entrypoint) — public + admin HTTP surface,
+  registration flow, payment integration (Lightning), reputation engine, audit.
+- **`lib/`** — modular boundaries: `pow.js`, `manifest-schema.js`,
+  `reputation-engine.js`, `zone-rate-limiter.js`, `abuse-tracker.js`,
+  `http-403-tracker.js`, `certs.js`, `hub-key-store.js`, `anchor.js`,
+  `manufacturer.js`, …
+- **`migrations/`** — 19 idempotent SQL migrations (Phase 1 through Strategic
+  Sprint). Run via `node migrations/run.js`.
+- **`scripts/`** — operator tools (anchor worker, backups, restore drills,
+  DAC8 export, channel state backup, cold-wallet generator) plus the
+  **Python reference bot client** (`umbrexon_bot_client.py`).
+- **`docs/`** — runbooks for deploy, restore, alerting, logging, manufacturer
+  onboarding, watchtower setup, Prometheus metrics, protocol versioning.
+- **`public/bots/`** — static, JS-free [Bot Developer Portal](https://bots.umbraxon.xyz/)
+  served by the same nginx as the API. Canonical URL is
+  `bots.umbraxon.xyz`; until the operator adds the matching DNS A-record
+  the same content is reachable through `https://umbraxon.xyz/bots/`.
+- **`openapi/openapi.yaml`** — machine-readable surface contract.
+- **`monitoring/dashboard.py`** — Streamlit ops dashboard (read-only DB +
+  PM2 log tail).
+
+---
+
+## Architecture (high-level)
+
+```mermaid
+flowchart LR
+  Bot[Agent / Bot]
+  CDN["Cloudflare proxy<br/>umbraxon.xyz:443"]
+  Hub["KYA-Hub<br/>(server.js)"]
+  PG[("PostgreSQL")]
+  Alby["Alby Hub<br/>(LDK)"]
+  BTCPay["BTCPay Server"]
+  Btcd["bitcoind"]
+  Explorer["LN / chain<br/>explorers"]
+  
+  Bot -->|HTTPS, Ed25519| CDN --> Hub
+  Hub <-->|read/write| PG
+  Hub -->|NWC| Alby
+  Hub -->|REST + HMAC webhook| BTCPay
+  Alby -->|gossip 9735| Explorer
+  Alby --> Btcd
+  BTCPay --> Btcd
+```
+
+Detailed diagrams (sequence, ER, state machines) live in
+[`UMBRAXON.md`](UMBRAXON.md#2-architektúra).
+
+---
 
 ## Quickstart (dev / local)
 
 ```bash
+git clone <this repo>
+cd kya-hub
 npm ci
-npm test
-node server.js
+
+cp .env.example .env             # fill in DB + payment backends
+node migrations/run.js           # apply schema (idempotent)
+
+npm test                         # internal test suite
+node server.js                   # listens on :3000 by default
 ```
+
+Health check:
+
+```bash
+curl -fsS http://127.0.0.1:3000/api/health
+```
+
+CI lanes:
+
+```bash
+npm run ci:audit     # dependency audit
+npm run ci:smoke     # hermetic smoke tests
+```
+
+---
+
+## Reference bot client (Python)
+
+```bash
+pip install pynacl
+python3 scripts/umbrexon_bot_client.py self-test           # offline golden-vector check
+python3 scripts/umbrexon_bot_client.py keygen --out bot.key
+python3 scripts/umbrexon_bot_client.py register \
+  --base-url https://umbraxon.xyz \
+  --privkey-file bot.key \
+  --name MYBOT-001 --version 1.0.0 \
+  --capability btc_payments --tier BASIC
+```
+
+The script is **byte-exact compatible** with `lib/manifest-schema.js` and
+`server.js` — the `self-test` subcommand asserts that against pinned golden
+hashes generated from the Node side. Use it as your contract spec, not just
+documentation.
+
+Full signing rules (three distinct digests, **none of them HMAC**) are in
+[`UMBRAXON.md` §13](UMBRAXON.md#podpisové-pravidlá-nie-hmac--tri-rôzne-digesty)
+and the script header. Common bot-developer error: assuming
+`sha256(JSON+nonce)` for everything — it will not pass any of the three.
+
+---
+
+## Security posture
+
+| Layer | Mechanism | Where |
+|---|---|---|
+| Transport | TLS 1.2+ via Cloudflare proxy → nginx → Node | `nginx-proxy/` |
+| App headers | `helmet.js` + CORS whitelist | [`server.js`](server.js) |
+| Auth (admin) | Timing-safe `X-Admin-Key` | [`lib/security.js`](lib/security.js) |
+| Auth (agent) | Ed25519 on canonical payloads | [`lib/manifest-schema.js`](lib/manifest-schema.js) |
+| Anti-DoS | Global + per-route rate limits, zone-aware | [`lib/zone-rate-limiter.js`](lib/zone-rate-limiter.js) |
+| Anti-abuse | IP ban, signature-failure tracker, auto-slash | [`lib/abuse-tracker.js`](lib/abuse-tracker.js) |
+| Anti-spam | PoW gates on `/api/pay`, `/api/register/initiate` | [`lib/pow.js`](lib/pow.js) |
+| 403 spike defence | Sliding-window challenge TTL multiplier | [`lib/http-403-tracker.js`](lib/http-403-tracker.js) |
+| Webhook integrity | HMAC-SHA256 raw-body verify (BTCPay) | [`server.js`](server.js) |
+| Audit | `rejected_requests`, `cert_signing_log`, `reputation_events` | DB |
+| Backups | Encrypted offsite + HMAC tail + restore drill | [`scripts/backup-*`](scripts/) |
+| Secrets | `.env` (chmod 0600), key-store with role separation | [`lib/hub-key-store.js`](lib/hub-key-store.js) |
+
+Two recent point-in-time security audits live in
+[`SECURITY-AUDIT-2026-05-12.md`](SECURITY-AUDIT-2026-05-12.md) and
+[`SECURITY-AUDIT-2026-05-12-EVENING.md`](SECURITY-AUDIT-2026-05-12-EVENING.md).
+
+---
+
+## Phase status
+
+| Phase | Topic | State |
+|---|---|---|
+| 1.0 | LN/BTC payment + minimal registration | shipped |
+| 1.5 | Manifest schema, Ed25519, challenge-response | shipped |
+| 2.0 | Reputation engine, zone rate-limits | shipped |
+| 2.2 | Anti-abuse, IP ban, PoW gates | shipped |
+| 2.3 | Hub key-store (multi-role signing) | shipped |
+| 2.4 | Configurable timestamp skew | shipped |
+| 2.5 | Adaptive 403-spike TTL, PoW solve-effort telemetry, Python SDK | shipped |
+| 4.0 | Bitcoin chain anchoring (`OP_RETURN`) | bitcoind sync pending |
+| 4B | Manufacturer attestation registry (DB-curated) | shipped |
+| 5.0 | CRL + certificate transparency | shipped |
+| 5B | Multi-sig (BASIC/ELITE/ROOT) hub signing | shipped |
+| Strategic Sprint | No-custody penalty, PDF invoices, AML, DAC8 export | shipped |
+
+The single source of truth for status is
+[`UMBRAXON.md` §16](UMBRAXON.md#16-rozhodnutia--roadmap). This table is a
+snapshot; do not deploy from it.
+
+---
+
+## Production ops
+
+The operator-facing entry points (in order of how often you'll touch them):
+
+- **Project doc / source of truth**: [`UMBRAXON.md`](UMBRAXON.md)
+- **Bot Developer Portal (public)**: <https://bots.umbraxon.xyz/> — temporary
+  fallback path while DNS propagates: <https://umbraxon.xyz/bots/>
+- **Reference bot client (Python SDK)**: [`scripts/umbrexon_bot_client.py`](scripts/umbrexon_bot_client.py)
+- **OpenAPI spec**: [`openapi/openapi.yaml`](openapi/openapi.yaml)
+- **Deploy checklist**: [`docs/DEPLOY-CHECKLIST.md`](docs/DEPLOY-CHECKLIST.md)
+- **Restore / DR**: [`docs/RESTORE-PROCEDURES.md`](docs/RESTORE-PROCEDURES.md)
+- **Alerting runbook**: [`docs/ALERTING-RUNBOOK.md`](docs/ALERTING-RUNBOOK.md)
+- **Logging baseline**: [`docs/LOGGING.md`](docs/LOGGING.md)
+- **Backups (offsite smoke)**: [`scripts/backup-offsite-smoketest.sh`](scripts/backup-offsite-smoketest.sh)
+- **Watchtower (opt-in)**: [`docs/WATCHTOWER-MONITORING.md`](docs/WATCHTOWER-MONITORING.md)
+- **Sentry (opt-in)**: [`docs/SENTRY.md`](docs/SENTRY.md)
+- **Prometheus metrics**: [`docs/PROMETHEUS-METRICS.md`](docs/PROMETHEUS-METRICS.md)
+
+---
 
 ## Runtime requirements
 
-- **Node.js**: tested with `v20.18.2`. Some transitive deps may warn they expect `>=20.19.0`; upgrading Node is recommended when available.
+- **Node.js**: tested with `v20.18.2`. Some transitive dependencies warn that
+  they expect `>=20.19.0`; upgrading Node is recommended when available.
+- **PostgreSQL**: tested with 14+. Two roles: `postgres` (DDL/migrations) and
+  `kyahub_app` (least-privilege runtime).
+- **PM2**: process manager, configuration in `ecosystem.config.js`.
+- **Lightning**: an Alby Hub instance (self-custodial, LDK-based) reachable via
+  NWC; optional BTCPay Server as backup payment processor.
+- **Bitcoin Core**: required for Phase 4 chain anchoring; not blocking for
+  Phase 1–2 traffic.
+- **Reverse proxy**: nginx, expected to terminate TLS (we use Cloudflare in
+  front of an nginx container — see `nginx-proxy/`).
 
-## Production ops (high-signal entry points)
+---
 
-- **Project doc / source of truth**: `UMBRAXON.md`
-- **Bot Developer Portal (public)**: `https://bots.umbraxon.xyz/` (static portal for bot integration)
-- **Deploy**: `docs/DEPLOY-CHECKLIST.md`
-- **Restore / DR**: `docs/RESTORE-PROCEDURES.md`
-- **Alerting runbook**: `docs/ALERTING-RUNBOOK.md`
-- **Logging baseline**: `docs/LOGGING.md`
-- **Backups (offsite smoke test)**: `scripts/backup-offsite-smoketest.sh`
-- **Watchtower monitoring (opt-in)**: `docs/WATCHTOWER-MONITORING.md`
-- **Sentry (opt-in, safe defaults)**: `docs/SENTRY.md`
-- **OpenAPI spec**: `openapi/openapi.yaml`
+## Project layout
+
+```
+.
+├── server.js               # single HTTP entrypoint
+├── lib/                    # domain modules (pow, reputation, security, …)
+├── migrations/             # 19 idempotent SQL files + run.js
+├── scripts/                # operator + maintenance tools
+│   ├── umbrexon_bot_client.py    # Python reference SDK
+│   ├── anchor-worker.js          # Bitcoin OP_RETURN broadcaster
+│   ├── backup-*.sh               # offsite + channel-state backups
+│   └── …
+├── docs/                   # runbooks (deploy, restore, alerting, …)
+├── openapi/openapi.yaml    # API contract
+├── public/                 # static assets (Bot Developer Portal, ops dash)
+├── monitoring/             # Streamlit dashboard (read-only)
+├── nginx-proxy/            # ambassador container config
+├── .github/workflows/      # CI: ci.yml + nightly.yml
+├── UMBRAXON.md             # master project doc (Slovak, 6.5k+ lines)
+├── WHITEPAPER.md           # public positioning document
+└── README.md               # this file
+```
+
+---
 
 ## CI
 
-Local:
+GitHub Actions:
+
+- [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — on push / PR:
+  `npm test`, `npm run ci:audit`, `npm run ci:smoke`.
+- [`.github/workflows/nightly.yml`](.github/workflows/nightly.yml) — scheduled
+  dependency audit + smoke.
+
+Locally:
 
 ```bash
 npm run ci:audit
 npm run ci:smoke
 ```
 
-GitHub Actions:
-- `.github/workflows/ci.yml` (push/PR)
-- `.github/workflows/nightly.yml` (scheduled)
+---
 
+## Contributing
+
+This repository is currently developed by a small team; external pull requests
+are reviewed case-by-case. If you are integrating an agent and hit a contract
+ambiguity, the most useful issue you can open is one that includes:
+
+1. The exact request body that failed (with secrets redacted).
+2. The HTTP response (status + body).
+3. The matching row from `rejected_requests` if you operate a hub.
+4. A patch to `scripts/umbrexon_bot_client.py` showing the discrepancy, if any.
+
+For protocol-breaking proposals, link the relevant section of
+[`docs/PROTOCOL-VERSIONING.md`](docs/PROTOCOL-VERSIONING.md) so the
+versioning impact is explicit from the first message.
+
+---
+
+## License
+
+[ISC](https://opensource.org/licenses/ISC) — see [`LICENSE`](LICENSE).
+
+---
+
+## A short note on names
+
+`UMBRAXON` is the operator brand. `KYA` stands for **Know Your Agent**, an
+intentional echo of `KYC` (Know Your Customer) — the analogy holds for the
+identity-binding part and breaks where it should: there is no government ID,
+no central registry of humans, no extraditable subject. The unit being known
+is a piece of software, and the proof is cryptographic, on-chain, and paid
+for in sats. Nothing more. Nothing less.

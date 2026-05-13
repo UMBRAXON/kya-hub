@@ -1,17 +1,27 @@
-# Secrets / local env
+# =========================================================================
+# UMBRAXON KYA-Hub — .gitignore
+# Rule of thumb: source + runbooks + tests = tracked.
+# Operator state (env, wallets, logs, backups, exports) = ignored.
+# =========================================================================
+
+# --- Secrets / local env -------------------------------------------------
 .env
 .env.*
+# template MUST ship in the repo:
+!.env.example
+*.env.bak.*
+*.env.backup.*
 .secrets/
 .backup/
 
-# Wallet artifacts (public or not) should not be committed
+# --- Wallet artifacts (public or not) should not be committed -----------
 .cold-wallet-public.json
 
-# Generated media artifacts
+# --- Generated media artifacts ------------------------------------------
 qr-*.png
 .invoice-qr-*.png
 
-# Alby Hub runtime artifacts / binaries (operator-installed; not source)
+# --- Alby Hub runtime artifacts / binaries (operator-installed) ---------
 albyhub/workdir/
 albyhub/bin/
 albyhub/lib/
@@ -24,13 +34,13 @@ albyhub/*.db
 albyhub/*.db-*
 albyhub/*.sqlite
 
-# Node
+# --- Node ----------------------------------------------------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Runtime logs / exports / local data
+# --- Runtime logs / exports / local data --------------------------------
 *.log
 output.log
 server.log
@@ -40,9 +50,14 @@ invoices/
 data-exports/
 .dac8-rate-cache/
 .tmp-ssh/
+*.pid
 
-# OS / editor
+# --- Python (monitoring dashboard local venv + caches) ------------------
+monitoring/.venv/
+**/__pycache__/
+*.pyc
+
+# --- OS / editor ---------------------------------------------------------
 .DS_Store
 .idea/
 .vscode/
-

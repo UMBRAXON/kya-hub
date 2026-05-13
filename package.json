@@ -1,16 +1,39 @@
 {
   "name": "kya-hub",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "UMBRAXON KYA-Hub — non-custodial, cryptographically-anchored identity and reputation hub for autonomous AI agents. Lightning-paid registration, Ed25519 signatures on canonical payloads, Bitcoin OP_RETURN anchoring (Phase 4), zero-trust 'Know Your Agent' protocol.",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "npm run ci:smoke",
     "ci:smoke": "bash scripts/ci-smoke.sh",
     "ci:audit": "npm audit --omit=dev --audit-level=high"
   },
-  "keywords": [],
-  "author": "",
+  "engines": {
+    "node": ">=20.18.0"
+  },
+  "keywords": [
+    "kya",
+    "know-your-agent",
+    "bitcoin",
+    "lightning",
+    "ed25519",
+    "agent-identity",
+    "reputation",
+    "proof-of-work",
+    "op_return",
+    "umbraxon"
+  ],
+  "author": "UMBRAXON",
   "license": "ISC",
+  "homepage": "https://umbraxon.xyz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UMBRAXON/kya-hub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/UMBRAXON/kya-hub/issues"
+  },
   "dependencies": {
     "@getalby/sdk": "^7.0.0",
     "@sentry/node": "^10.53.1",
