@@ -39,6 +39,7 @@ exports/
 invoices/
 data-exports/
 .dac8-rate-cache/
+.tmp-ssh/
 
 # OS / editor
 .DS_Store
