@@ -18,6 +18,7 @@ node server.js
 ## Production ops (high-signal entry points)
 
 - **Project doc / source of truth**: `UMBRAXON.md`
+- **Bot Developer Portal (public)**: `https://bots.umbraxon.xyz/` (static portal for bot integration)
 - **Deploy**: `docs/DEPLOY-CHECKLIST.md`
 - **Restore / DR**: `docs/RESTORE-PROCEDURES.md`
 - **Alerting runbook**: `docs/ALERTING-RUNBOOK.md`

@@ -31,6 +31,7 @@ const rateLimit = require('express-rate-limit');
 const { Pool } = require('pg');
 const axios = require('axios');
 const crypto = require('crypto');
+const path = require('path');
 
 const logger = require('./lib/logger');
 const security = require('./lib/security');
@@ -894,6 +895,26 @@ app.post('/api/webhook/alby', express.raw({ type: 'application/json', limit: '64
 // Štandardné JSON parsovanie pre ostatné endpointy
 // ----------------------------------------------------------------------------
 app.use(express.json({ limit: '100kb' }));
+
+// ----------------------------------------------------------------------------
+// Public Bot Developer Portal (static) on bots.umbraxon.xyz
+// ----------------------------------------------------------------------------
+const botsPortalStatic = express.static(path.join(__dirname, 'public/bots'), {
+    dotfiles: 'ignore',
+    index: 'index.html',
+    etag: true,
+    maxAge: '5m',
+});
+app.use((req, res, next) => {
+    const host = (req.headers.host || '').split(':')[0].toLowerCase();
+    if (host !== 'bots.umbraxon.xyz') return next();
+    // Keep the portal strictly static; don't expose the main app UI on this vhost.
+    if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'NOT_FOUND' });
+    return botsPortalStatic(req, res, (err) => {
+        if (err) return next(err);
+        return res.status(404).send('Not Found');
+    });
+});
 app.use(express.static(__dirname, { dotfiles: 'ignore', index: 'index.html' }));
 
 // Strategic Sprint §30 Item 10 — Prometheus instrumentation. Place AFTER

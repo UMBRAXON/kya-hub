@@ -11,6 +11,7 @@ node scripts/test-item7-log-redaction.js
 node scripts/test-item13-watchtower-doc.js
 node scripts/test-ci-hermetic.js
 node scripts/test-openapi-sanity.js
+node scripts/test-bot-portal.js
 node scripts/test-readme-links.js
 node scripts/test-operations-index.js
 

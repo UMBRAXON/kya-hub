@@ -2899,6 +2899,18 @@ Plánovaná Prometheus metrika `nginx_429_total` cez nginx-prometheus-exporter
 3. `docker compose up -d --force-recreate`
 4. Let's Encrypt vystaví combined SAN cert do ~60s.
 
+### 22.9b Bot Developer Portal `bots.umbraxon.xyz`
+
+V repozitári je statický “Bot Developer Portal” pre integráciu botov.
+Server ho servuje len pre host `bots.umbraxon.xyz` (bez dynamiky; low attack surface).
+
+1. DNS A record: `bots.umbraxon.xyz → 46.225.170.80`
+2. V `nginx-proxy/docker-compose.yml` doplň do `VIRTUAL_HOST` + `LETSENCRYPT_HOST` aj `bots.umbraxon.xyz`
+3. Redeploy proxy: `docker compose up -d --force-recreate`
+4. Overenie:
+   - `curl -fsSI https://bots.umbraxon.xyz/ | head`
+   - `curl -fsSI https://umbraxon.xyz/api/health | head`
+
 ### 22.10 Out-of-scope (Phase 3B+)
 
 - **Per-bot rate limit** (kya_id + zone-aware) — implementované v Node.js

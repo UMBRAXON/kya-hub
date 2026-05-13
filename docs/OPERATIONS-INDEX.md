@@ -45,6 +45,10 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 
 - `openapi/openapi.yaml` — OpenAPI spec for public + admin endpoints.
 
+## Public bot portal
+
+- `https://bots.umbraxon.xyz/` — Bot Developer Portal (API + integration flow + policy).
+
 ## Edge gateway (public ingress)
 
 - `nginx-proxy/README.md` — Nginx “ambassador” proxy setup, TLS, rate limits, Cloudflare notes.

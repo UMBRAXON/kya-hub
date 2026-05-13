@@ -70,6 +70,22 @@ Trigger: HTTP 429 with JSON `{"error":"rate_limited","retry_after_seconds":60}`.
 3. `docker compose up -d --force-recreate`
 4. Let's Encrypt will issue a new combined cert within ~60s.
 
+## Add `bots.umbraxon.xyz` (Bot Developer Portal)
+
+This repo serves a **static** Bot Developer Portal when the request host is `bots.umbraxon.xyz`.
+The simplest way is to route that vhost to the same `kya-hub-proxy` container.
+
+1. Create DNS A record: `bots.umbraxon.xyz → 46.225.170.80`.
+2. Edit `docker-compose.yml`:
+   ```yaml
+   VIRTUAL_HOST: "umbraxon.xyz,bots.umbraxon.xyz"
+   LETSENCRYPT_HOST: "umbraxon.xyz,bots.umbraxon.xyz"
+   ```
+3. `docker compose up -d --force-recreate`
+4. Verify:
+   - `curl -fsSI https://bots.umbraxon.xyz/ | head`
+   - `curl -fsSI https://umbraxon.xyz/api/health | head`
+
 ## Optional: Cloudflare proxy + origin firewall
 
 If DNS uses Cloudflare **Proxied** (orange cloud) with SSL mode **Full (strict)**,
