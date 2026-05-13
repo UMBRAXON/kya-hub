@@ -69,6 +69,14 @@ curl -sS https://umbraxon.xyz/api/health | jq .
 
 Polia `btcpay`, `alby`, `db` musia byť v poriadku. Z Cursora alebo iného MCP hostiteľa rovnaké dáta vie vrátiť read-only server v [`mcp/README.md`](mcp/README.md) (nástroj `kya_health`).
 
+**Alby: „pending“ v KYA, ale v Alby Hub UI nič** — hub vytvára LN invoice cez **NWC** (`ALBY_NWC_URI`), nie nutne rovnaký zoznam ako ručné faktúry v UI. Overenie na uzle pripojenom NWC:
+
+```bash
+cd /root/kya-hub && node scripts/alby-lookup-invoice.js <invoiceId_z_JSON_register_initiate>
+```
+
+(`invoiceId` = 64 hex `payment_hash`.) Ak príkaz vráti JSON so `state: "pending"` a `invoice` (BOLT11), platba existuje na LDK strane; hľadaj v Alby UI pod **Activity** / iný wallet alebo podľa popisu `UMBRAXON … registration`.
+
 ## 4. Kód `/api/register/initiate` — „tiché“ chyby
 
 Handler v `server.js` pri validačných zlyhaniach vracia explicitné **4xx/401/409** s `error` kódom. Jediný zmysluplný „tichší“ bod pre klienta je **`502 INVOICE_FAILED`**: detail chyby ide do **pino logu** (`invoice create FAIL`), nie do JSON tela odpovede.

@@ -31,6 +31,8 @@ Cursor / MCP hosts). **Public portal:** <https://bots.umbraxon.xyz/>
 **API contract:** [`openapi/openapi.yaml`](openapi/openapi.yaml).
 **FAQ for integrators:** [`docs/FAQ-FOR-BOT-DEVELOPERS.md`](docs/FAQ-FOR-BOT-DEVELOPERS.md).
 
+**Default registration prices (sats):** BASIC **10 000**, ELITE **80 000** (operator policy; live totals from `GET /api/tiers` / `tier_pricing`).
+
 ---
 
 ## Manifesto
@@ -165,6 +167,7 @@ npm run ci:smoke     # hermetic smoke tests
 pip install pynacl
 python3 scripts/umbrexon_bot_client.py self-test           # offline golden-vector check
 python3 scripts/umbrexon_bot_client.py keygen --out bot.key
+python3 scripts/demo-bot-mcp-register.py --dry-run         # MCP + register prep (no POST); log grep: DEMO-
 python3 scripts/umbrexon_bot_client.py register \
   --base-url https://umbraxon.xyz \
   --privkey-file bot.key \

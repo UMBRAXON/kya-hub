@@ -123,7 +123,7 @@ async function run(name, fn) {
                     const res = await axios.get(`${LOCAL_SERVER}/api/tiers`, { timeout: 5000, validateStatus: () => true });
                     if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
                     if (res.data.BASIC.total !== 10000) throw new Error(`BASIC.total = ${res.data.BASIC.total}, očakávané 10000`);
-                    if (res.data.ELITE.total !== 50000) throw new Error(`ELITE.total = ${res.data.ELITE.total}, očakávané 50000`);
+                    if (res.data.ELITE.total !== 80000) throw new Error(`ELITE.total = ${res.data.ELITE.total}, očakávané 80000`);
                     ok('tiers endpoint', `(BASIC=${res.data.BASIC.total}, ELITE=${res.data.ELITE.total})`);
                 });
 

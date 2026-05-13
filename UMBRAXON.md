@@ -307,7 +307,7 @@ PRICING_POLL_MS=60000
 TIER_BASIC_SATS=10000                     # fallback ak tier_pricing tabuľka prázdna
 TIER_BASIC_GRADE=B
 TIER_BASIC_DURATION_MONTHS=12
-TIER_ELITE_SATS=50000
+TIER_ELITE_SATS=80000
 TIER_ELITE_GRADE=S
 TIER_ELITE_REQUIRES_ANCHOR=true
 
@@ -729,7 +729,7 @@ Zobrazuje:
 ### ELITE Individual OP_RETURN Anchor
 
 ```
-Krok 1: Bot zaplatí 50k SATS cez Lightning (Phase 1 flow)
+Krok 1: Bot zaplatí ELITE tier (80 000 SATS) cez Lightning (Phase 1 flow)
 Krok 2: Agent zapísaný do DB so status = PENDING_ANCHOR
 Krok 3: Anchor worker (cron alebo job queue):
         ├─ SELECT * FROM pending_anchors WHERE status='PENDING' LIMIT 1
@@ -745,7 +745,7 @@ Krok 3: Anchor worker (cron alebo job queue):
             ├─ UPDATE pending_anchors SET status='CONFIRMED'
             └─ UPDATE agents SET anchor_txid=..., anchor_status='CONFIRMED'
 
-Náklady: ~1000-3000 SATS poplatok / ELITE agent (z 50000 SATS receipt)
+Náklady: ~1000-3000 SATS poplatok / ELITE agent (z 80 000 SATS receipt)
 ```
 
 ### Merkle Batch Anchor (real, nahradiť simuláciu v anchor.js)
@@ -1159,7 +1159,7 @@ Aktuálny stav: **16/16 testov passed**.
 | Tier | Base score | Zóna | Dôvod |
 |---|---|---|---|
 | **BASIC** | **500** | NEUTRAL | Stredná dôvera; identita lacná (10k SATS) |
-| **ELITE** | **900** | ELITE_TIER | Vyššia investícia (50k SATS), Bitcoin anchor v Phase 2 |
+| **ELITE** | **900** | ELITE_TIER | Vyššia investícia (80k SATS), Bitcoin anchor v Phase 2 |
 
 **Manufacturer bonus:** 0 – 100 (per-mfr nastavenie v `.env` `TRUSTED_MANUFACTURERS=ID:pubkey:bonus`). Bonus sa pripočíta k base score, výsledok je capped na 1000.
 
@@ -2178,7 +2178,7 @@ PRICING_POLL_MS=60000
 TIER_BASIC_SATS=10000
 TIER_BASIC_GRADE=B
 TIER_BASIC_DURATION_MONTHS=12
-TIER_ELITE_SATS=50000
+TIER_ELITE_SATS=80000
 TIER_ELITE_GRADE=S
 TIER_ELITE_REQUIRES_ANCHOR=true
 
@@ -2371,7 +2371,7 @@ Operatívne doplnenie Phase 2.4 — odolnosť proti výpadkom upstream služieb,
 |---|---|---|
 | BTCPay padne → noví boti dostanú 500 | Stratené registrácie, zlý UX | **Circuit breaker** v `lib/circuit-breaker.js` + `/api/pay` vracia `503 PAYMENT_SYSTEM_UNAVAILABLE` s `Retry-After` header |
 | Hub padne v piatok večer | Strata 3 dní registrácií kým si všimneš | **Health monitor** v server.js (60s tick) + `lib/notifications.js` → Telegram alert pri DB/BTCPay výpadku |
-| ELITE registrácia uniknutá | Vysokohodnotný event sa stratí v logoch | Telegram `ℹ️ ELITE agent registered` push po každej úspešnej ELITE registrácii |
+| ELITE registrácia uniknutá | Vysokohodnotný event sa stratí v logoch | Telegram PING `PING: Registration paid (ELITE)` po každej úspešnej ELITE registrácii (rovnako BASIC — všetky tiery) |
 | Žiadny disclaimer | Právna zodpovednosť za správanie certifikovaných botov | `termsOfUse[].disclaimer` v každom signed certifikáte + env `CERT_DISCLAIMER` |
 | Žiadne zálohy | Hardware crash → strata všetkých agentov | `scripts/backup-db.sh` (denne 03:15) + 7 daily + 4 weekly rotácia + SHA-256 checksum |
 | Nekonečné logy | Disk plný za týždne | `pm2-logrotate` (50 MB/14d/gzip) + `/etc/logrotate.d/kyahub` pre projekt logy |
@@ -2399,7 +2399,7 @@ Registry: lazy `breaker.get('btcpay')` / `breaker.get('alby')`. Stav vidno cez *
 Spoločný helper pre Telegram + Discord (oboje voliteľné cez env). Fire-and-forget (`Promise.allSettled`), 3 s timeout, in-memory dedupe 5 min.
 
 **Vstavané helpers:**
-- `notifyEliteRegistered({agentName, axisId, paymentMethod, amountSats})`
+- `notifyRegistrationPaid({tier, agentName, axisId, paymentMethod, amountSats})` — Telegram/Discord PING po každej zaplatenej registrácii (BASIC aj ELITE). `notifyEliteRegistered(...)` je tenký alias s `tier: 'ELITE'`.
 - `notifyBtcpayOutage({error, httpStatus})`
 - `notifyDbDown({error})`
 - `notifyHmacFailureSpike({source, count, window_min})`
@@ -2725,7 +2725,7 @@ Aktuálny `BTCPAY_API_KEY` nemá `canmodifystoresettings` permission, takže aut
    - Webhook prišiel (`pm2 logs kya-hub | grep webhook`)
    - Agent vytvorený (`/api/dashboard`)
    - Cert obsahuje disclaimer (`/api/cert/<kya_id>`)
-   - Telegram alert prišiel (pre ELITE) alebo log info (pre BASIC)
+   - Telegram PING prišiel (`PING: Registration paid (BASIC)` alebo `(ELITE)`) ak sú `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`
 4. Cleanup: `DELETE FROM agents WHERE agent_name = 'MAINNET-TEST-001'`
 
 ### 21.9b Real LN payment test (Alby NWC end-to-end) ✅ 2026-05-12

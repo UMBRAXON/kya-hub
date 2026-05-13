@@ -217,7 +217,7 @@
         <input type="text" id="agentName" placeholder="AGENT_SERIAL_ID">
         <select id="tierSelect" style="width:100%;background:#000;border:1px solid var(--border);padding:15px;color:var(--gold);margin-bottom:20px;font-family:monospace;font-size:13px;">
             <option value="10000">BASIC — 10 000 SATS (12 mesiacov)</option>
-            <option value="50000">ELITE — 50 000 SATS (neobmedzene)</option>
+            <option value="80000">ELITE — 80 000 SATS (neobmedzene)</option>
         </select>
         <button class="btn-action" onclick="initiateKYA()" data-lang="btn_init">Initialize Agent</button>
         
@@ -294,8 +294,8 @@ async function initiateKYA() {
         alert("CHYBA: Zadajte ID Agenta.");
         return;
     }
-    if (![10000, 50000].includes(amount)) {
-        alert("CHYBA: Neplatný tier. Povolené: 10000 (BASIC) alebo 50000 (ELITE).");
+    if (![10000, 80000].includes(amount)) {
+        alert("CHYBA: Neplatný tier. Povolené: 10000 (BASIC) alebo 80000 (ELITE).");
         return;
     }
 

@@ -52,6 +52,10 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 
 - `mcp/README.md` — Model Context Protocol (`stdio`) server: read-only tools over public hub HTTP (health, certs, reputation, tiers, etc.). For Cursor and other MCP hosts; does not replace the Python bot client for registration or signed actions.
 
+- **Simulate bot (MCP + register, log correlation):** [`scripts/demo-bot-mcp-register.py`](scripts/demo-bot-mcp-register.py) — unique `DEMO-xxxxxxxx` name; use `--dry-run` to avoid `POST /api/register/initiate`; requires Node + `python3-nacl` / `pip install pynacl`.
+
+- **Alby invoice lookup (NWC vs UI):** [`scripts/alby-lookup-invoice.js`](scripts/alby-lookup-invoice.js) — `node scripts/alby-lookup-invoice.js <payment_hash>` na stroji s hub `.env` overí `lookupInvoice` cez rovnaké NWC ako `register/initiate`.
+
 ## Public bot portal
 
 - `https://bots.umbraxon.xyz/` — Bot Developer Portal (API + integration flow + policy).

@@ -81,7 +81,7 @@ async function registerBot(tierRequested = 'BASIC') {
     });
     
     // Simuluj webhook InvoiceSettled
-    const amount = tierRequested === 'ELITE' ? 50000 : 10000;
+    const amount = tierRequested === 'ELITE' ? 80000 : 10000;
     const webhookBody = JSON.stringify({
         type: 'InvoiceSettled',
         invoiceId: initRes.data.invoiceId,

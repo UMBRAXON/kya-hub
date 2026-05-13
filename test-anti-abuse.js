@@ -92,7 +92,7 @@ async function registerBot(tierRequested = 'BASIC') {
     }, { headers: { 'X-Admin-Key': ADMIN_KEY } });
     
     // Simulate webhook
-    const amount = tierRequested === 'ELITE' ? 50000 : 10000;
+    const amount = tierRequested === 'ELITE' ? 80000 : 10000;
     const webhookBody = JSON.stringify({
         type: 'InvoiceSettled', invoiceId: initRes.data.invoiceId,
         metadata: { registrationId: initRes.data.registration_id, agentName, pubkey: bot.pubHex, amount },

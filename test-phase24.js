@@ -78,7 +78,7 @@ async function registerBot(tierRequested = 'BASIC') {
         manifest, manifest_signature: mSig,
         challenge_id: ch.data.challenge_id, challenge_response: chResp,
     });
-    const amount = tierRequested === 'ELITE' ? 50000 : 10000;
+    const amount = tierRequested === 'ELITE' ? 80000 : 10000;
     const webhookBody = JSON.stringify({
         type: 'InvoiceSettled', invoiceId: initRes.data.invoiceId,
         metadata: { registrationId: initRes.data.registration_id, agentName, pubkey: bot.pubHex, amount },

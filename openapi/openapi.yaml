@@ -99,8 +99,8 @@ components:
           type: object
           properties:
             name: { type: string, example: ELITE }
-            grade: { type: string, example: A }
-            total: { type: integer, example: 10000 }
+            grade: { type: string, example: S }
+            total: { type: integer, example: 80000 }
       additionalProperties: true
 
     RegisterInitiateRequest:

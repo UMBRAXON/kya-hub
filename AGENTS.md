@@ -86,6 +86,8 @@ The script will:
 5. Pay (out-of-band or via your Lightning agent of choice).
 6. Poll `register/confirm` for the issued KYA certificate.
 
+Invoice amounts follow the hub’s active `tier_pricing` (defaults: BASIC **10 000** sats, ELITE **80 000** sats). Confirm with `GET /api/tiers` on your target `base-url`.
+
 If your runtime cannot install `pynacl`, the [OpenAPI
 spec](openapi/openapi.yaml) and [protocol
 documentation](UMBRAXON.md#13-podpisové-pravidlá) let you implement it

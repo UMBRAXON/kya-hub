@@ -53,16 +53,16 @@ wrong protocol; use a Nostr/ZKP-based system instead.
 
 ### B.1 What does registration cost?
 
-Tier-dependent:
+Tier-dependent (operator defaults unless overridden in `tier_pricing`; check live values):
 
-- **BASIC** — entry-level bot, no on-chain individual anchor (cheapest).
-- **ELITE** — individually anchored on Bitcoin, premium reputation
+- **BASIC** — **10 000** sats, entry-level bot, no on-chain individual anchor (cheapest).
+- **ELITE** — **80 000** sats, individually anchored on Bitcoin, premium reputation
   ceiling, eligible for `kya:elite:*` discovery.
 - **ROOT** — operator-only, not for individual bots.
 
-Current sat prices are returned by `GET /api/pricing`. Prices are quoted in
-sats and floated against EUR via CoinGecko; you can query
-`GET /api/pricing?currency=EUR` for the equivalent.
+Authoritative amounts: `GET /api/tiers` (sats totals per tier) and
+`GET /api/registration/quote?tier=BASIC|ELITE&pubkey=<hex>` (re-registration multiplier).
+Operators manage live rows via `GET/POST /api/admin/pricing` (see `UMBRAXON.md`).
 
 ### B.2 What happens to my sats?
 

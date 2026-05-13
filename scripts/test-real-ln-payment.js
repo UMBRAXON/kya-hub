@@ -24,7 +24,7 @@ const ADMIN_KEY = process.env.ADMIN_API_KEY;
 const AGENT_NAME = process.argv[2] || `real-ln-test-${Date.now()}`;
 const TIER = (process.argv[3] || 'BASIC').toUpperCase();
 
-const TIER_AMOUNTS = { BASIC: 10000, ELITE: 50000 };
+const TIER_AMOUNTS = { BASIC: 10000, ELITE: 80000 };
 let AMOUNT = TIER_AMOUNTS[TIER];
 if (!AMOUNT) {
     console.error(`Invalid tier: ${TIER}. Use BASIC or ELITE.`);

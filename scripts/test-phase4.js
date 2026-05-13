@@ -118,7 +118,7 @@ async function main() {
         await client.query('BEGIN');
         // Cleanup any prior test row
         await client.query(`DELETE FROM agents WHERE kya_id = $1`, [safeKyaId]);
-        const seal = crypto.createHash('sha256').update(`${TEST_NAME}:${safeKyaId}:50000`).digest('hex');
+        const seal = crypto.createHash('sha256').update(`${TEST_NAME}:${safeKyaId}:80000`).digest('hex');
         const ins = await client.query(
             `INSERT INTO agents (
                 kya_id, agent_name, status, reputation_score, agent_pubkey,
@@ -130,9 +130,9 @@ async function main() {
             ) VALUES (
                 $1, $2, 'PENDING_ANCHOR', 900, $3,
                 $4, 'phase4-test', 'S', 'ELITE',
-                50000, 50000, '{}'::jsonb,
+                80000, 80000, '{}'::jsonb,
                 NULL, TRUE, NOW(),
-                $5, 'phase4-test', 50000, NOW(),
+                $5, 'phase4-test', 80000, NOW(),
                 'PENDING'
             )
             ON CONFLICT (agent_name) DO UPDATE SET agent_name = EXCLUDED.agent_name

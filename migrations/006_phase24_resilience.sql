@@ -173,7 +173,7 @@ SELECT 'BASIC', 10000, 'B', 12, FALSE, 500, 'Initial seed from Phase 2.4 migrati
 WHERE NOT EXISTS (SELECT 1 FROM tier_pricing WHERE tier_name = 'BASIC' AND effective_until IS NULL);
 
 INSERT INTO tier_pricing (tier_name, amount_sats, grade, duration_months, requires_anchor, base_reputation, change_reason)
-SELECT 'ELITE', 50000, 'S', NULL, TRUE, 900, 'Initial seed from Phase 2.4 migration'
+SELECT 'ELITE', 80000, 'S', NULL, TRUE, 900, 'Initial seed from Phase 2.4 migration (ELITE 80k per Strategic Sprint §31 D)'
 WHERE NOT EXISTS (SELECT 1 FROM tier_pricing WHERE tier_name = 'ELITE' AND effective_until IS NULL);
 
 

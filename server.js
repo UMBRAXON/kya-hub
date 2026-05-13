@@ -709,15 +709,14 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
             zone: repInfo.zone,
         }, 'Agent zaregistrovaný');
 
-        // Fire-and-forget Telegram alert pre ELITE registráciu (operator-facing).
-        if (tier.name === 'ELITE') {
-            notifications.notifyEliteRegistered({
-                agentName,
-                axisId: newAgent.kya_id,
-                paymentMethod: paymentMethod || 'unknown',
-                amountSats: amountSats || tier.total,
-            }).catch(() => { /* notifikácia nikdy nezhorí registráciu */ });
-        }
+        // Fire-and-forget Telegram/Discord PING po každej zaplatenej registrácii (BASIC + ELITE).
+        notifications.notifyRegistrationPaid({
+            tier: tier.name,
+            agentName,
+            axisId: newAgent.kya_id,
+            paymentMethod: paymentMethod || 'unknown',
+            amountSats: amountSats || tier.total,
+        }).catch(() => { /* notifikácia nikdy nezhorí registráciu */ });
 
         return {
             duplicate: false,
