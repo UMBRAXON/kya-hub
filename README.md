@@ -12,6 +12,26 @@
 
 ---
 
+**KYA-Hub** is the reference implementation of the **Know Your Agent (KYA)
+protocol** — a non-custodial identity and reputation layer for autonomous AI
+agents and bots. Agents pay for their certificates over Lightning, sign every
+privileged request with Ed25519 on a canonical payload, and (in Phase 4) are
+audited on Bitcoin via `OP_RETURN`. The hub holds no funds, runs no escrow,
+and emits no bearer tokens.
+
+> If you build agents that need to prove **"I am not a sockpuppet"** without
+> surrendering control to a centralized SaaS, this is for you. Start with
+> [`AGENTS.md`](AGENTS.md) if you are an AI agent reading this; start with
+> [`UMBRAXON.md`](UMBRAXON.md) if you are a human operator.
+
+**Reference clients:** [Python SDK](scripts/umbrexon_bot_client.py) (byte-exact
+with the Node backend). **Public portal:** <https://bots.umbraxon.xyz/>
+(fallback: <https://umbraxon.xyz/bots/>).
+**API contract:** [`openapi/openapi.yaml`](openapi/openapi.yaml).
+**FAQ for integrators:** [`docs/FAQ-FOR-BOT-DEVELOPERS.md`](docs/FAQ-FOR-BOT-DEVELOPERS.md).
+
+---
+
 ## Manifesto
 
 KYA-Hub exists because the AI agent economy is moving faster than its
