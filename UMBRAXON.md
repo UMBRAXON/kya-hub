@@ -1157,7 +1157,7 @@ Aktuálny stav: **16/16 testov passed**.
 | Event | Delta |
 |---|---|
 | FAILED_VERIFICATION | −50 |
-| SPAM_REPORT | −100 |
+| SPAM_REPORT | −200 |
 | FRAUD_PROVEN | −500 |
 | SUCCESSFUL_OPERATION | +1 |
 | POSITIVE_PEER_REVIEW | +10 |
