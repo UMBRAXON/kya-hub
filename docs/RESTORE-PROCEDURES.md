@@ -44,6 +44,14 @@ Hetzner images. The two constructions are equivalent in our threat model
 
 ## 2. Restoring the Lightning channel state (Item 1)
 
+> **Alby Hub (LDK) vs classic LND.** This production stack uses **Alby Hub**
+> with an embedded **LDK** node. Off-site channel-related state is archived by
+> **`scripts/backup-channel-state.sh`** (encrypted tarball of the Alby
+> `workdir`, including `ldk/` and `nwc.db`). There is **no** LND-style
+> `channel.backup` file from `lncli` in this deployment. If you also run a
+> separate LND elsewhere, manage its SCB and seed according to that node’s
+> docs — not this section.
+
 > ⚠️ **Read this entire section before doing ANY restore.** Restoring an
 > *old* LDK channel store while the on-chain channels have moved forward
 > can cause **toxic-channel force-close** with a justice tx that may

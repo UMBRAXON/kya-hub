@@ -31,7 +31,8 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 
 ## Logging
 
-- `docs/LOGGING.md` — baseline logging strategy (PM2 file logs + `logrotate`, secure defaults).
+- `docs/LOGGING.md` — baseline logging strategy (PM2 file logs + `logrotate`, secure defaults) + Bitcoin Core / LND / Docker notes (§4).
+- `config/logrotate-btcpay-bitcoin-lnd.example` — optional host `logrotate` template for large `debug.log` paths (edit `PLACEHOLDER_*` before use; see `LOGGING.md` §4).
 - `docs/DIAGNOSTIC-CHECKLIST.md` — live API traffic (`nginx` / PM2), self-test `node test-protocol.js`, payment UI pointers, `/api/register/initiate` notes.
 - `scripts/diagnostic-tail-api.sh` — `tail -f` helper: nginx access log if readable, else PM2 `kya-hub-out.log`.
 

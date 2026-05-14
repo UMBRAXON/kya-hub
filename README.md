@@ -95,6 +95,9 @@ without a SaaS dependency. Concretely:
   [`mcp/README.md`](mcp/README.md).
 - **`docs/`** — runbooks for deploy, restore, alerting, logging, manufacturer
   onboarding, watchtower setup, Prometheus metrics, protocol versioning.
+- **`config/`** — `logrotate-kya-hub` (PM2 + `/var/log/kya-*.log`) and
+  `logrotate-btcpay-bitcoin-lnd.example` (optional host template for large
+  Bitcoin Core / LND `debug.log` when paths are known; see `docs/LOGGING.md` §4).
 - **`public/bots/`** — static, JS-free [Bot Developer Portal](https://bots.umbraxon.xyz/)
   served by the same nginx as the API. Canonical URL is
   `bots.umbraxon.xyz`; until the operator adds the matching DNS A-record
@@ -237,6 +240,7 @@ snapshot; do not deploy from it.
 
 The operator-facing entry points (in order of how often you'll touch them):
 
+- **Ops index (single page)**: [`docs/OPERATIONS-INDEX.md`](docs/OPERATIONS-INDEX.md)
 - **Project doc / source of truth**: [`UMBRAXON.md`](UMBRAXON.md)
 - **Bot Developer Portal (public)**: <https://bots.umbraxon.xyz/> — temporary
   fallback path while DNS propagates: <https://umbraxon.xyz/bots/>
@@ -246,7 +250,8 @@ The operator-facing entry points (in order of how often you'll touch them):
 - **Deploy checklist**: [`docs/DEPLOY-CHECKLIST.md`](docs/DEPLOY-CHECKLIST.md)
 - **Restore / DR**: [`docs/RESTORE-PROCEDURES.md`](docs/RESTORE-PROCEDURES.md)
 - **Alerting runbook**: [`docs/ALERTING-RUNBOOK.md`](docs/ALERTING-RUNBOOK.md)
-- **Logging baseline**: [`docs/LOGGING.md`](docs/LOGGING.md)
+- **Logging baseline**: [`docs/LOGGING.md`](docs/LOGGING.md) (PM2 + `logrotate-kya-hub`; §4 for **BTCPay / bitcoind / LND** `debug.log` and Docker log limits; optional [`config/logrotate-btcpay-bitcoin-lnd.example`](config/logrotate-btcpay-bitcoin-lnd.example))
+- **Lightning channel state (encrypted, off-site)**: [`scripts/backup-channel-state.sh`](scripts/backup-channel-state.sh) — see [`docs/RESTORE-PROCEDURES.md`](docs/RESTORE-PROCEDURES.md) (Alby Hub / LDK, not LND `channel.backup`).
 - **Backups (offsite smoke)**: [`scripts/backup-offsite-smoketest.sh`](scripts/backup-offsite-smoketest.sh)
 - **Watchtower (opt-in)**: [`docs/WATCHTOWER-MONITORING.md`](docs/WATCHTOWER-MONITORING.md)
 - **Sentry (opt-in)**: [`docs/SENTRY.md`](docs/SENTRY.md)
@@ -284,6 +289,7 @@ The operator-facing entry points (in order of how often you'll touch them):
 │   └── …
 ├── docs/                   # runbooks (deploy, restore, alerting, …)
 ├── openapi/openapi.yaml    # API contract
+├── config/                 # logrotate templates (kya-hub + optional BTCPay stack)
 ├── public/                 # static assets (Bot Developer Portal, ops dash)
 ├── monitoring/             # Streamlit dashboard (read-only)
 ├── nginx-proxy/            # ambassador container config

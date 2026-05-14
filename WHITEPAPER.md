@@ -124,6 +124,7 @@ Bot's pubkey is `K`. Both bans below are for fraud.
 - AML / volumetric limits: `docs/AML-VOLUMETRIC-LIMITS.md`.
 - ESG statement: `docs/ESG-STATEMENT.md`.
 - Restore procedures: `docs/RESTORE-PROCEDURES.md`.
+- Logging and disk baseline (PM2, optional BTCPay / bitcoind / LND `debug.log`): `docs/LOGGING.md`.
 - Security audit (current): `SECURITY-AUDIT-2026-05-12-EVENING.md`.
 
 Public ToS are served at **`https://umbraxon.xyz/terms`** (nginx static; see `UMBRAXON.md` §32). The disclaimer in §4 of this document remains the high-level summary; the HTML ToS is the public-facing legal text draft.

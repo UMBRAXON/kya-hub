@@ -602,3 +602,27 @@ for the current scope** (Phase 4 LIVE anchors + Phase 4B mfr API + Phase 5
 CRL transparency log in DRY_RUN + Phase 5b multi-sig ELITE). The three P1
 items above should land within the week to harden against compromise
 scenarios; none of them is a blocker for ongoing operation.
+
+---
+
+## 9. Addendum (2026-05-14) — Operational resilience documentation
+
+**Classification:** OK — documentation + hermetic CI assertions only; no change
+to application threat model or trust boundaries.
+
+**Summary**
+
+- `docs/LOGGING.md` §4 states explicitly that **Bitcoin Core / LND `debug.log`**
+  (typically inside **BTCPay Docker** stacks) is **not** covered by
+  `config/logrotate-kya-hub`, and documents **Docker `json-file` log limits**
+  plus an optional host **`logrotate`** path via
+  `config/logrotate-btcpay-bitcoin-lnd.example` (operator must fill real paths).
+- `docs/BOOTSTRAP-CHECKLIST.md`, `docs/RESTORE-PROCEDURES.md`, and
+  `docs/OPERATIONS-INDEX.md` clarify **Alby Hub (LDK)** vs classic **LND**
+  (`channel.backup`) and **recovery material off-server**.
+- `scripts/test-ci-hermetic.js` pins sentinel strings for the new example file;
+  `README.md` and `scripts/test-readme-links.js` link the ops surface.
+
+**Audit relevance:** Reduces risk of **disk exhaustion** from unbounded node logs
+and **mis-identified backup** expectations; host-specific configuration remains
+the operator’s responsibility.

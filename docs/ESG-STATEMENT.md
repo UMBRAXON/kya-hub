@@ -151,7 +151,10 @@ the Hetzner-renewable baseline sufficient.
 
 - Lightning channel state: hourly off-Hetzner encrypted backups (§30
   Item 1), AES-256-CBC + HMAC-SHA256 integrity. Restore procedure in
-  `docs/RESTORE-PROCEDURES.md`.
+  `docs/RESTORE-PROCEDURES.md` (Alby Hub / LDK; not LND `channel.backup`).
+- Log volume / disk: baseline PM2 + project logs in `docs/LOGGING.md`;
+  Bitcoin Core / LND `debug.log` (often Docker) covered in §4 and
+  `config/logrotate-btcpay-bitcoin-lnd.example` — operator must enable on host.
 - PostgreSQL: daily 02:00 UTC encrypted backups (§30 Item 2).
 - DAC8 accounting export: daily 01:00 UTC encrypted archive (§30
   Item 11).

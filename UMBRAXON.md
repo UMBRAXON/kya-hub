@@ -888,8 +888,9 @@ p.query('SELECT * FROM schema_migrations').then(r=>{console.log(r.rows); p.end()
   - `.github/workflows/nightly.yml` (schedule)
   - Lokálne: `npm run ci:audit` + `npm run ci:smoke`
 - [x] **Logy + rotácia (baseline)**: PM2 file logs + `logrotate` policy:
-  - `docs/LOGGING.md`
+  - `docs/LOGGING.md` (§4 = BTCPay / bitcoind / LND `debug.log` + Docker limity; nie je súčasťou `logrotate-kya-hub`)
   - `config/logrotate-kya-hub`
+  - voliteľná šablóna pre host rotáciu veľkých `debug.log`: `config/logrotate-btcpay-bitcoin-lnd.example` (po vyplnení ciest)
 - [ ] **Watchtower (operator action)**: nakonfigurovať watchtower podľa `docs/WATCHTOWER-SETUP.md` a následne (voliteľne) zapnúť monitoring `WATCHTOWER_MONITOR_ENABLED=true` (viď `docs/WATCHTOWER-MONITORING.md`). **Go-live 2026-05-13:** zámerne odložené — §30.14.1 gate #5.
 
 ### Plán dokončenia infra (priorita → postupne)
@@ -909,6 +910,7 @@ p.query('SELECT * FROM schema_migrations').then(r=>{console.log(r.rows); p.end()
 - [x] **Logging rozhodnutie**
   - DoD: je jasné “kde sú logy”, ako dlho sa držia, a ako sa z nich dá robiť incident review.
   - Baseline: PM2 file logs (`/root/.pm2/logs/*.log`) + `logrotate` policy v `config/logrotate-kya-hub`. Dokumentácia: `docs/LOGGING.md`.
+  - Follow-up (prevádzka): veľké `debug.log` z Bitcoin Core / LND v Dockeri (BTCPay) — §4 v `docs/LOGGING.md` + šablóna `config/logrotate-btcpay-bitcoin-lnd.example` (operátor doplní reálne cesty alebo Docker `max-size`/`max-file`).
 - [x] **Monitoring SLO / alert policy**
   - DoD: definované kritické alerty (p99 `/api/pay`, anchor backlog, low liquidity, disk pressure) + kto ich dostáva a ako reaguje (mini-runbook).
   - Runbook: `docs/ALERTING-RUNBOOK.md`
@@ -2374,7 +2376,7 @@ Operatívne doplnenie Phase 2.4 — odolnosť proti výpadkom upstream služieb,
 | ELITE registrácia uniknutá | Vysokohodnotný event sa stratí v logoch | Telegram PING `PING: Registration paid (ELITE)` po každej úspešnej ELITE registrácii (rovnako BASIC — všetky tiery) |
 | Žiadny disclaimer | Právna zodpovednosť za správanie certifikovaných botov | `termsOfUse[].disclaimer` v každom signed certifikáte + env `CERT_DISCLAIMER` |
 | Žiadne zálohy | Hardware crash → strata všetkých agentov | `scripts/backup-db.sh` (denne 03:15) + 7 daily + 4 weekly rotácia + SHA-256 checksum |
-| Nekonečné logy | Disk plný za týždne | `pm2-logrotate` (50 MB/14d/gzip) + `/etc/logrotate.d/kyahub` pre projekt logy |
+| Nekonečné logy | Disk plný za týždne | `pm2-logrotate` (50 MB/14d/gzip) + `/etc/logrotate.d/kyahub` pre projekt logy; veľké `debug.log` (bitcoind/LND v Dockeri) — `docs/LOGGING.md` §4 + `config/logrotate-btcpay-bitcoin-lnd.example` |
 | Žiadny ľahký liveness check | UptimeRobot atď. potrebuje fast 200 | `GET /api/status` (žiadny DB call, len uptime + ts) |
 
 ### 20.2 Circuit breaker

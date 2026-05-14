@@ -103,7 +103,7 @@ Príklad crontabu (4× denne — uprav podľa `UMBRAXON.md` §21.5):
 |------|----------|
 | Netdata cez SSH tunel | [`NETDATA-ACCESS.md`](NETDATA-ACCESS.md) |
 | Telegram alerty | [`ALERTING-RUNBOOK.md`](ALERTING-RUNBOOK.md) |
-| PM2 logy + logrotate | [`LOGGING.md`](LOGGING.md), šablóna `config/logrotate-kya-hub` |
+| PM2 logy + logrotate | [`LOGGING.md`](LOGGING.md) §2–3, šablóna `config/logrotate-kya-hub`; §4 + `config/logrotate-btcpay-bitcoin-lnd.example` pre veľké `debug.log` (BTCPay / bitcoind / LND) |
 
 **Checkpoint:** `[ ]` Netdata UI · `[ ]` test Telegram · `[ ]` logrotate bez chýb (`logrotate -d` …)
 

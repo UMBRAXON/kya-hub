@@ -70,6 +70,15 @@ mustInclude('docs/LOGGING.md', [
   '/root/.pm2/logs/',
   'logrotate',
   'Do not `source .env`',
+  'debug.log',
+  'logrotate-btcpay-bitcoin-lnd.example',
+]);
+mustExist('config/logrotate-btcpay-bitcoin-lnd.example');
+mustInclude('config/logrotate-btcpay-bitcoin-lnd.example', [
+  'PLACEHOLDER_BITCOIND',
+  'copytruncate',
+  'debug.log',
+  'docker inspect',
 ]);
 
 console.log('=== 4) Alerting runbook artifacts ===');

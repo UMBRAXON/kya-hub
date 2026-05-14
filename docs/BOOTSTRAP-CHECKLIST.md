@@ -56,12 +56,15 @@ pm2 logs kya-hub --lines 200 --nostream | tail -n 200
 - [x] **First DB backup**: run `scripts/backup-database.sh` (cron or manual) and confirm success. _(§30.14 gate #1 + `UMBRAXON.md` §30.Y.)_
 - [x] **R2 offsite backups end-to-end**: run `scripts/backup-offsite-smoketest.sh`, then real backup scripts and verify objects exist in R2. _(§30.14 gate #1 RESOLVED.)_
 - [x] **Disaster recovery drill**: at least 1× yearly — restore into `kyahub_restore` and verify (`pg_restore`). _(Kvartálny drill PASS 2026-05-12, `UMBRAXON.md` §31 A.3; ročný cyklus ponechať.)_
+- [ ] **Lightning channel state off-site**: hourly cron for `scripts/backup-channel-state.sh` (see `docs/RESTORE-PROCEDURES.md`) and at least one verified object in `BACKUP_S3_*` (or B2). This hub uses **Alby Hub (LDK)** — not classic **LND**; there is no `lncli channel.backup` file in this stack.
+- [ ] **Lightning / wallet recovery secrets off-server**: store Alby (and any other wallet) recovery material and cold-wallet seed **off the hub host** (paper, hardware wallet, encrypted vault). The repo never automates seed export.
 
 ## E) Observability baseline
 
 - [x] **Monitoring access**: Netdata reachable via SSH tunnel only (`docs/NETDATA-ACCESS.md`). _(Host check 2026-05-13: netdata on `127.0.0.1:19999`, local HTTP 200.)_
 - [x] **Alerts**: Telegram alerts tested (see `docs/ALERTING-RUNBOOK.md`). _(Host check 2026-05-13: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` set in `.env`; operator skips token rotation.)_
 - [x] **Logging**: PM2 logs + `logrotate` installed (`docs/LOGGING.md`). _(Host check 2026-05-13: `/etc/logrotate.d/kyahub` present; `logrotate -d` clean; `pm2-logrotate` online.)_
+- [ ] **BTCPay / Bitcoin Core / LND log volume**: confirm Docker log limits (`max-size` / `max-file`) and/or host rotation for large `debug.log` paths per [`docs/LOGGING.md`](LOGGING.md) §4 and `config/logrotate-btcpay-bitcoin-lnd.example` (baseline `logrotate-kya-hub` does not cover those).
 
 ### Telegram bot token rotation (exact steps)
 

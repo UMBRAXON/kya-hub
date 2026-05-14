@@ -1,0 +1,32 @@
+# =============================================================================
+# EXAMPLE ONLY — do not install verbatim.
+# Bitcoin Core / LND debug.log rotation on the HOST (bind-mounted datadir).
+#
+# 1) Discover real paths: docker inspect <container> | jq '.[0].Mounts'
+#    or BTCPay-generated volume layout for your version.
+# 2) Replace PLACEHOLDER_* below with absolute paths to debug.log files.
+# 3) Validate: sudo logrotate -d /etc/logrotate.d/btcpay-bitcoin-lnd
+# 4) Install:   sudo install -m 0644 /root/kya-hub/config/logrotate-btcpay-bitcoin-lnd.example \
+#                  /etc/logrotate.d/btcpay-bitcoin-lnd
+#
+# If debug.log lives ONLY inside an unmounted Docker volume, host logrotate
+# cannot see it — use Docker log limits, lower debug levels, or mount the
+# datadir. See docs/LOGGING.md section 4.
+# =============================================================================
+
+# PLACEHOLDER_BITCOIND_DEBUG_LOG=/var/lib/docker/volumes/.../_data/debug.log
+# PLACEHOLDER_LND_DEBUG_LOG=/var/lib/docker/volumes/.../_data/logs/bitcoin/testnet/lnd.log
+
+# Uncomment ONE block per file after replacing paths (logrotate needs real paths).
+
+# /PLACEHOLDER_BITCOIND_DEBUG_LOG /PLACEHOLDER_LND_DEBUG_LOG {
+#     weekly
+#     rotate 8
+#     missingok
+#     notifempty
+#     compress
+#     delaycompress
+#     copytruncate
+#     su root root
+#     create 0640 root root
+# }

@@ -307,3 +307,11 @@ internet; only the two Docker bridges can reach it.
 - **Optional UFW hardening** after Cloudflare proxy is enabled: `scripts/ufw-restrict-http-to-cloudflare.sh`
   — documented in `UMBRAXON.md` §22.12–22.13 (`--dry-run` first).
 
+---
+
+## 8. Documentation addendum (2026-05-14)
+
+Operational docs and CI hermetics now explicitly cover **BTCPay / bitcoind /
+LND log volume** (outside baseline PM2 `logrotate`) and **Alby Hub (LDK) vs LND**
+backup naming. See **`SECURITY-AUDIT-2026-05-12.md` §9** for the canonical
+addendum text and file list.
