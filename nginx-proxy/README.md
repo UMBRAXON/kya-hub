@@ -70,14 +70,19 @@ Trigger: HTTP 429 with JSON `{"error":"rate_limited","retry_after_seconds":60}`.
 
 ## Adding `www.umbraxon.xyz` later
 
-1. Create DNS A record: `www.umbraxon.xyz → 46.225.170.80`.
+Production `docker-compose.yml` in this repo already includes **`www.umbraxon.xyz`**
+in `VIRTUAL_HOST` and `LETSENCRYPT_HOST` together with apex and `bots`.
+
+If you are **adding** `www` on a clone that still lacks it:
+
+1. Create DNS A record: `www.umbraxon.xyz →` your origin IP (or CNAME `www` → `@` in Cloudflare).
 2. Edit `docker-compose.yml`:
    ```yaml
-   VIRTUAL_HOST: "umbraxon.xyz,www.umbraxon.xyz"
-   LETSENCRYPT_HOST: "umbraxon.xyz,www.umbraxon.xyz"
+   VIRTUAL_HOST: "umbraxon.xyz,www.umbraxon.xyz,bots.umbraxon.xyz"
+   LETSENCRYPT_HOST: "umbraxon.xyz,www.umbraxon.xyz,bots.umbraxon.xyz"
    ```
-3. `docker compose up -d --force-recreate`
-4. Let's Encrypt will issue a new combined cert within ~60s.
+3. `docker-compose up -d --force-recreate`
+4. Let's Encrypt will issue or extend the cert within ~60s (wait if Cloudflare showed **526** until origin presents a valid cert for `www`).
 
 ## Add `bots.umbraxon.xyz` (Bot Developer Portal)
 
@@ -87,8 +92,8 @@ The simplest way is to route that vhost to the same `kya-hub-proxy` container.
 1. Create DNS A record: `bots.umbraxon.xyz → 46.225.170.80`.
 2. Edit `docker-compose.yml`:
    ```yaml
-   VIRTUAL_HOST: "umbraxon.xyz,bots.umbraxon.xyz"
-   LETSENCRYPT_HOST: "umbraxon.xyz,bots.umbraxon.xyz"
+   VIRTUAL_HOST: "umbraxon.xyz,www.umbraxon.xyz,bots.umbraxon.xyz"
+   LETSENCRYPT_HOST: "umbraxon.xyz,www.umbraxon.xyz,bots.umbraxon.xyz"
    ```
 3. `docker compose up -d --force-recreate`
 4. Verify:

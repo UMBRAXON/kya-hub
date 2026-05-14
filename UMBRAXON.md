@@ -2813,8 +2813,8 @@ INTERNET
 BTCPay používa **jwilder/nginx-proxy** systém (containers s `VIRTUAL_HOST` env var sú
 automaticky vystavené externe so SSL). kya-hub beží natívne na host-e (pm2), nie v Dockeri.
 Riešenie: pridáme malý `nginx:alpine` container, ktorý:
-- má správne env vars (`VIRTUAL_HOST_NAME=kyahub`, `VIRTUAL_HOST=umbraxon.xyz`,
-  `LETSENCRYPT_HOST=umbraxon.xyz`)
+- má správne env vars (`VIRTUAL_HOST_NAME=kyahub`, `VIRTUAL_HOST=umbraxon.xyz,www.umbraxon.xyz,bots.umbraxon.xyz`,
+  `LETSENCRYPT_HOST=umbraxon.xyz,www.umbraxon.xyz,bots.umbraxon.xyz`)
 - forwarduje traffic na `host.docker.internal:3000` (kya-hub)
 - aplikuje rate limits a hard L4 limits PRED dosiahnutím kya-hub
 
@@ -2921,25 +2921,23 @@ Pre future Phase 3 monitoring — `429` vo veľkých objemoch je signál:
 Plánovaná Prometheus metrika `nginx_429_total` cez nginx-prometheus-exporter
 (Phase 3B — Netdata setup).
 
-### 22.9 Pridanie `www.umbraxon.xyz` (later)
+### 22.9 `www.umbraxon.xyz` + Bot portal hostnames
 
-1. DNS A record: `www.umbraxon.xyz → 46.225.170.80`
-2. Edit `docker-compose.yml`:
-   ```yaml
-   VIRTUAL_HOST: "umbraxon.xyz,www.umbraxon.xyz"
-   LETSENCRYPT_HOST: "umbraxon.xyz,www.umbraxon.xyz"
-   ```
-3. `docker compose up -d --force-recreate`
-4. Let's Encrypt vystaví combined SAN cert do ~60s.
+V `nginx-proxy/docker-compose.yml` sú v `VIRTUAL_HOST` / `LETSENCRYPT_HOST` naraz
+**apex**, **`www`** a **`bots`** (aby Cloudflare **Full (strict)** nevracal `526` pre `www`).
 
-### 22.9b Bot Developer Portal `bots.umbraxon.xyz`
+1. DNS: `www` (A alebo CNAME) a `bots` (A alebo CNAME) → rovnaký origin ako apex.
+2. Po zmene env: `cd nginx-proxy && docker-compose up -d --force-recreate`
+3. Overenie: `curl -fsSI https://www.umbraxon.xyz/api/health` a `https://bots.umbraxon.xyz/`
+
+### 22.9b Bot Developer Portal `bots.umbraxon.xyz` (detail)
 
 V repozitári je statický “Bot Developer Portal” pre integráciu botov.
 Server ho servuje len pre host `bots.umbraxon.xyz` (bez dynamiky; low attack surface).
 
 1. DNS A record: `bots.umbraxon.xyz → 46.225.170.80`
-2. V `nginx-proxy/docker-compose.yml` doplň do `VIRTUAL_HOST` + `LETSENCRYPT_HOST` aj `bots.umbraxon.xyz`
-3. Redeploy proxy: `docker compose up -d --force-recreate`
+2. Host `bots.umbraxon.xyz` musí byť v `VIRTUAL_HOST` + `LETSENCRYPT_HOST` spolu s apexom a `www` (pozri §22.9).
+3. Redeploy proxy: `docker-compose up -d --force-recreate` (v `nginx-proxy/`)
 4. Overenie:
    - `curl -fsSI https://bots.umbraxon.xyz/ | head`
    - `curl -fsSI https://umbraxon.xyz/api/health | head`
