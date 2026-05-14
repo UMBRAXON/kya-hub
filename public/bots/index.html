@@ -6,90 +6,104 @@
     <title>UMBRAXON — Bot Developer Portal</title>
     <meta name="robots" content="index,follow" />
     <meta name="description" content="Verejný portál pre bot developerov: API, integračný flow, bezpečnostné pravidlá, rate limits a reputačný/slashing model." />
+    <meta name="theme-color" content="#070a12" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="UMBRAXON — KYA Bot Developer Portal" />
+    <meta property="og:description" content="Public integration guide for UMBRAXON KYA-Hub: API, registration flow, signing rules, rate limits." />
+    <meta property="og:url" content="https://www.umbraxon.xyz/bots/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="UMBRAXON — KYA Bot Developer Portal" />
+    <meta name="twitter:description" content="Public integration guide for UMBRAXON KYA-Hub." />
     <link rel="canonical" href="https://www.umbraxon.xyz/bots/" />
     <link rel="stylesheet" href="/bots/style.css" />
   </head>
   <body>
-    <a class="skip" href="#main">Preskočiť na obsah</a>
+    <a class="skip" href="#main" data-i18n="skip">Preskočiť na obsah</a>
     <main id="main" class="wrap">
       <div class="topbar">
         <strong>KYA-Hub</strong>
-        <span>Ľudský portál · API zostáva na <span class="kya">umbraxon.xyz</span></span>
+        <div class="topbar-right">
+          <span id="topbarSub" class="topbar-sub">Ľudský portál · API zostáva na <span class="kya">umbraxon.xyz</span></span>
+          <div id="langToggleGroup" class="lang-toggle" role="group" aria-label="Language">
+            <button type="button" id="lang-sk" class="lang-btn active" aria-pressed="true">SK</button>
+            <button type="button" id="lang-en" class="lang-btn" aria-pressed="false">EN</button>
+          </div>
+        </div>
       </div>
       <div class="card">
         <div class="hero">
           <div>
-            <h1>Bot Developer Portal <span class="pill kya">KYA‑Hub</span></h1>
-            <p>
+            <h1><span data-i18n="heroTitle">Bot Developer Portal</span> <span class="pill kya">KYA‑Hub</span></h1>
+            <p id="heroLead" class="hero-lead">
               Verejné informácie pre integráciu botov s <span class="kya">UMBRAXON KYA‑Hub</span>:
               API, flow registrácie/platby/certu, pravidlá a limity.
             </p>
           </div>
-          <div class="muted">
-            <div><span class="kya">Kanonická URL</span>: <a href="https://www.umbraxon.xyz/bots/">www.umbraxon.xyz/bots</a></div>
-            <div><span class="kya">Technický alias</span>: <span class="kya">bots.umbraxon.xyz</span> → 301 sem</div>
-            <div><span class="kya">Base API</span>: <a href="https://umbraxon.xyz/">umbraxon.xyz</a></div>
+          <div class="muted hero-meta">
+            <div><span class="kya" data-i18n="metaCanon">Kanonická URL</span>: <a href="https://www.umbraxon.xyz/bots/">www.umbraxon.xyz/bots</a></div>
+            <div><span class="kya" data-i18n="metaAlias">Technický alias</span>: <span class="kya">bots.umbraxon.xyz</span> <span data-i18n="metaAlias301">→ 301 sem</span></div>
+            <div><span class="kya" data-i18n="metaApi">Base API</span>: <a href="https://umbraxon.xyz/">umbraxon.xyz</a></div>
             <div><span class="kya">OpenAPI</span>: <a href="https://umbraxon.xyz/openapi/openapi.yaml">openapi.yaml</a></div>
           </div>
         </div>
 
         <div class="nav-sticky">
-        <nav aria-label="Sekcie">
-          <a href="#live">Stav hubu</a>
-          <a href="#assistant">Registrácia</a>
-          <a href="#quickstart">Quickstart</a>
-          <a href="#api">API</a>
-          <a href="#flow">Integrácia</a>
-          <a href="#policy">Pravidlá</a>
-          <a href="#reputation">Reputácia</a>
-          <a href="#security">Bezpečnosť</a>
-          <a href="#support">Support</a>
+        <nav id="mainNav" aria-label="Sekcie">
+          <a href="#live" data-i18n="navLive">Stav hubu</a>
+          <a href="#assistant" data-i18n="navAssistant">Registrácia</a>
+          <a href="#quickstart" data-i18n="navQuick">Quickstart</a>
+          <a href="#api" data-i18n="navApi">API</a>
+          <a href="#flow" data-i18n="navFlow">Integrácia</a>
+          <a href="#policy" data-i18n="navPolicy">Pravidlá</a>
+          <a href="#reputation" data-i18n="navRep">Reputácia</a>
+          <a href="#security" data-i18n="navSec">Bezpečnosť</a>
+          <a href="#support" data-i18n="navSupport">Support</a>
         </nav>
         </div>
       </div>
 
-      <h2 id="live">Stav hubu (live)</h2>
+      <h2 id="live" data-i18n="h2Live">Stav hubu (live)</h2>
       <div class="card">
-        <p class="muted">Údaje sa načítajú priamo z verejného API (žiadne tajné kľúče v prehliadači).</p>
+        <p class="muted" data-i18n="liveIntro">Údaje sa načítajú priamo z verejného API (žiadne tajné kľúče v prehliadači).</p>
         <div class="live-grid">
           <div class="live-card">
-            <h3>Health <span id="pill-health" class="status-pill loading">…</span></h3>
+            <h3><span data-i18n="h3Health">Health</span> <span id="pill-health" class="status-pill loading">…</span></h3>
             <div id="live-health-summary" class="value">—</div>
             <div id="live-health-detail" class="sub">—</div>
           </div>
           <div class="live-card">
-            <h3>Tiers <span id="pill-tiers" class="status-pill loading">…</span></h3>
+            <h3><span data-i18n="h3Tiers">Tiers</span> <span id="pill-tiers" class="status-pill loading">…</span></h3>
             <div id="live-tiers-summary" class="value">—</div>
             <div id="live-tiers-detail" class="sub">—</div>
           </div>
         </div>
       </div>
 
-      <h2 id="assistant">Asistent: príkazy na registráciu bota</h2>
+      <h2 id="assistant" data-i18n="h2Assistant">Asistent: príkazy na registráciu bota</h2>
       <div class="card">
-        <p class="muted">
+        <p id="assistantIntro" class="muted">
           Privátny kľúč vzniká lokálne v súbore <span class="kya">bot.key</span> — portál ho nikdy nevidí.
           Po vygenerovaní príkazov ich spusti v kópii kya-hub repozitára (kde je <span class="kya">scripts/umbrexon_bot_client.py</span>).
         </p>
         <div class="assistant-form">
           <div class="assistant-row">
             <div class="field">
-              <label for="assistant-name">Meno bota (agent name)</label>
+              <label for="assistant-name" data-i18n="labelName">Meno bota (agent name)</label>
               <input id="assistant-name" type="text" maxlength="64" placeholder="MOJBOT-001" autocomplete="off" />
-              <div class="hint">3–64 znakov: písmená, číslice, <span class="kya">._-</span></div>
+              <div class="hint" id="hintName"></div>
             </div>
             <div class="field">
-              <label for="assistant-base">Base URL API</label>
+              <label for="assistant-base" data-i18n="labelBase">Base URL API</label>
               <input id="assistant-base" type="url" value="https://umbraxon.xyz" autocomplete="off" />
             </div>
           </div>
           <div class="assistant-row">
             <div class="field">
-              <label for="assistant-version">Verzia manifestu</label>
+              <label for="assistant-version" data-i18n="labelVersion">Verzia manifestu</label>
               <input id="assistant-version" type="text" value="1.0.0" maxlength="32" />
             </div>
             <div class="field">
-              <label for="assistant-tier">Tier</label>
+              <label for="assistant-tier" data-i18n="labelTier">Tier</label>
               <select id="assistant-tier">
                 <option value="BASIC">BASIC</option>
                 <option value="ELITE">ELITE</option>
@@ -97,13 +111,15 @@
             </div>
           </div>
           <div class="btn-row">
-            <button type="button" class="btn" id="assistant-generate">Vygenerovať príkazy</button>
-            <button type="button" class="btn btn-secondary" id="assistant-copy">Kopírovať</button>
+            <button type="button" class="btn" id="assistant-generate" data-i18n="btnGen">Vygenerovať príkazy</button>
+            <button type="button" class="btn btn-secondary" id="assistant-copy" data-i18n="btnCopy">Kopírovať</button>
           </div>
           <p id="assistant-error" class="err-msg" aria-live="polite"></p>
           <pre id="assistant-output" class="value" style="margin:0;white-space:pre-wrap;min-height:4em;"></pre>
         </div>
       </div>
+
+      <h2 id="quickstart" data-i18n="h2Quick">Quickstart</h2>
       <div class="card">
         <ul>
           <li><b>Prečítaj API</b>: <a href="https://umbraxon.xyz/openapi/openapi.yaml">OpenAPI špecifikácia</a>.</li>
@@ -128,7 +144,7 @@ python3 umbrexon_bot_client.py register \
   --capability btc_payments --tier BASIC</code></pre>
       </div>
 
-      <h2 id="api">API (public vs admin)</h2>
+      <h2 id="api" data-i18n="h2Api">API (public vs admin)</h2>
       <div class="card">
         <p class="muted">Verejné endpointy sú dostupné bez admin kľúča. Admin endpointy vyžadujú <span class="kya">X-Admin-Key</span> a nie sú určené pre bot klientov.</p>
 
@@ -156,7 +172,7 @@ python3 umbrexon_bot_client.py register \
         </div>
       </div>
 
-      <h2 id="flow">Integrácia: registrácia → cert</h2>
+      <h2 id="flow" data-i18n="h2Flow">Integrácia: registrácia → cert</h2>
       <div class="card">
         <ol>
           <li><b>Registrácia</b>: priprav manifest + podpisy podľa OpenAPI a pošli <span class="kya">POST /api/register/initiate</span>.</li>
@@ -173,7 +189,7 @@ python3 umbrexon_bot_client.py register \
         </ul>
       </div>
 
-      <h2 id="policy">Pravidlá a limity</h2>
+      <h2 id="policy" data-i18n="h2Policy">Pravidlá a limity</h2>
       <div class="card">
         <ul>
           <li><b>Rate limiting</b> je zónovo-riadený (PROBATION je extrémne prísny).</li>
@@ -182,7 +198,7 @@ python3 umbrexon_bot_client.py register \
         </ul>
       </div>
 
-      <h2 id="reputation">Reputácia a slashing (sprísnené)</h2>
+      <h2 id="reputation" data-i18n="h2Rep">Reputácia a slashing (sprísnené)</h2>
       <div class="card">
         <p class="muted">
           Reputácia je clamped na rozsah <span class="kya">[0, 1000]</span>. Zóny ovplyvňujú limity a povolené operácie.
@@ -209,7 +225,7 @@ python3 umbrexon_bot_client.py register \
         </p>
       </div>
 
-      <h2 id="security">Bezpečnosť</h2>
+      <h2 id="security" data-i18n="h2Sec">Bezpečnosť</h2>
       <div class="card">
         <ul>
           <li><b>Podpisy</b>: používaj správny canonical payload a unikátny nonce.</li>
@@ -247,14 +263,14 @@ python3 umbrexon_bot_client.py register \
         </p>
       </div>
 
-      <h2 id="support">Support / ďalšie odkazy</h2>
+      <h2 id="support" data-i18n="h2Support">Support / ďalšie odkazy</h2>
       <div class="card">
         <ul>
           <li><b>OpenAPI</b>: <a href="https://umbraxon.xyz/openapi/openapi.yaml">openapi.yaml</a></li>
           <li><b>Status</b>: <a href="https://umbraxon.xyz/api/health">/api/health</a></li>
           <li><b>Project doc</b>: (interné) <span class="kya">UMBRAXON.md</span></li>
         </ul>
-        <footer>
+        <footer id="portalFooter">
           Obsah je statický; malý JavaScript len načíta verejné <span class="kya">/api/health</span> a
           <span class="kya">/api/tiers</span> a skladá príkazy pre CLI — žiadne ukladanie kľúčov.
           Kanonická adresa: <span class="kya">https://www.umbraxon.xyz/bots/</span>;

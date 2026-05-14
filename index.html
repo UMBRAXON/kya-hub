@@ -92,6 +92,61 @@
             border-color: var(--gold);
         }
 
+        .portal-dev-link--primary {
+            padding: 8px 16px;
+            background: rgba(242, 169, 0, 0.12);
+            border-color: var(--gold);
+        }
+
+        /* Upozornenie: nový vývojársky portál je na /bots/ (domovská stránka ostáva pre platby) */
+        .dev-portal-banner {
+            max-width: 1600px;
+            margin: 0 auto 28px;
+            padding: 0 30px;
+        }
+
+        .dev-portal-banner-inner {
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--gold);
+            background: linear-gradient(90deg, rgba(242, 169, 0, 0.06), transparent 55%);
+            padding: 18px 22px 20px;
+        }
+
+        .dev-portal-banner-kicker {
+            margin: 0 0 8px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        .dev-portal-banner-text {
+            margin: 0 0 14px;
+            font-size: 13px;
+            line-height: 1.55;
+            color: var(--text-bright);
+            max-width: 72ch;
+        }
+
+        .portal-banner-cta {
+            display: inline-block;
+            padding: 10px 18px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #000;
+            background: var(--gold);
+            text-decoration: none;
+            border: none;
+        }
+
+        .portal-banner-cta:hover {
+            filter: brightness(1.08);
+            text-decoration: none;
+        }
+
         /* TABS / SECTIONS NAVIGATION */
         .nav-tabs {
             display: flex;
@@ -215,12 +270,22 @@
     </div>
     
     <div class="lang-switch">
-        <a class="portal-dev-link" href="/bots/">KYA — vývojári</a>
+        <a class="portal-dev-link portal-dev-link--primary" href="/bots/" data-lang="portal_header_link">KYA — vývojári (/bots/)</a>
         <button class="lang-btn active" onclick="setLang('sk')">SK</button>
         <button class="lang-btn" onclick="setLang('en')">EN</button>
         <button class="lang-btn" onclick="setLang('de')">DE</button>
     </div>
 </header>
+
+<div class="dev-portal-banner" role="region" aria-label="Developer portal">
+    <div class="dev-portal-banner-inner">
+        <p class="dev-portal-banner-kicker" data-lang="portal_banner_kicker">Nový vývojársky portál</p>
+        <p class="dev-portal-banner-text" data-lang="portal_banner_text">
+            Táto domovská stránka slúži na Lightning registráciu a prehľad agentov. Kompletná dokumentácia API, pravidlá podpisov, rate limity, CLI asistent a živý stav hubu sú na /bots/ — tam je aktualizovaný portál z repozitára.
+        </p>
+        <a class="portal-banner-cta" href="/bots/" data-lang="portal_banner_cta">Otvoriť Bot Developer Portal →</a>
+    </div>
+</div>
 
 <div class="nav-tabs">
     <div class="nav-item active" data-lang="nav_agents">AI Agents</div>
@@ -277,18 +342,30 @@
 <script>
     const i18n = {
         sk: {
+            portal_header_link: "KYA — vývojári (/bots/)",
+            portal_banner_kicker: "Nový vývojársky portál",
+            portal_banner_text: "Táto domovská stránka slúži na Lightning registráciu a prehľad agentov. Kompletná dokumentácia API, pravidlá podpisov, rate limity, CLI asistent a živý stav hubu sú na /bots/ — tam je aktualizovaný portál z repozitára.",
+            portal_banner_cta: "Otvoriť Bot Developer Portal →",
             nav_agents: "AI Agenti", nav_lnet: "L-Net", nav_integrity: "Integrity",
             title_reg: "Registrácia", title_ledger: "Aktívny Ledger", title_status: "Systémový Status",
             btn_init: "Inicializovať Agenta", waiting: "Čakám na Lightning spojenie...",
             th_id: "IDENTIFIKÁTOR", th_score: "REPUTÁCIA", th_status: "STAV"
         },
         en: {
+            portal_header_link: "KYA — developers (/bots/)",
+            portal_banner_kicker: "New developer portal",
+            portal_banner_text: "This home page is for Lightning registration and the agent overview. Full API docs, signing rules, rate limits, a CLI command assistant, and live hub status live at /bots/ — that is where the repo changes ship.",
+            portal_banner_cta: "Open Bot Developer Portal →",
             nav_agents: "AI Agents", nav_lnet: "L-Net", nav_integrity: "Integrity",
             title_reg: "Registration", title_ledger: "Active Ledger", title_status: "System Status",
             btn_init: "Initialize Agent", waiting: "Waiting for Lightning Uplink...",
             th_id: "ID", th_score: "REPUTATION", th_status: "STATUS"
         },
         de: {
+            portal_header_link: "KYA — Entwickler (/bots/)",
+            portal_banner_kicker: "Neues Entwickler-Portal",
+            portal_banner_text: "Diese Startseite ist für Lightning-Registrierung und die Agentenübersicht. Vollständige API-Doku, Signaturregeln, Rate Limits, CLI-Assistent und Live-Status findest du unter /bots/.",
+            portal_banner_cta: "Bot Developer Portal öffnen →",
             nav_agents: "KI Agenten", nav_lnet: "L-Net", nav_integrity: "Integrität",
             title_reg: "Registrierung", title_ledger: "Aktives Ledger", title_status: "Systemstatus",
             btn_init: "Agent Initialisieren", waiting: "Warten na Lightning-Verbindung...",

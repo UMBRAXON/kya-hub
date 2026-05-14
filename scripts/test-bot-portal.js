@@ -44,14 +44,16 @@ mustInclude(html, 'PROTOCOL_VIOLATION', 'protocol escalation');
 mustInclude(html, '24h', 'escalation window');
 
 mustInclude(html, 'id="live"', 'live status section');
-mustInclude(html, 'id="assistant"', 'registration assistant section');
+mustInclude(html, 'id="quickstart"', 'quickstart anchor heading');
+mustInclude(html, 'langToggleGroup', 'language toggle group');
+mustInclude(html, 'property="og:title"', 'Open Graph title');
 mustInclude(html, 'umbrexon_bot_client.py', 'python client path in HTML');
 
 mustInclude(js, 'https://umbraxon.xyz', 'API base in client');
 mustInclude(js, '/api/health', 'health fetch');
 mustInclude(js, '/api/tiers', 'tiers fetch');
 mustInclude(js, 'umbrexon_bot_client.py', 'register command');
-mustInclude(js, 'navigator.clipboard', 'copy helper');
+mustInclude(js, 'kyahub_portal_lang', 'language preference key');
 
 console.log('[test-bot-portal] OK');
 

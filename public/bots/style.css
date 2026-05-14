@@ -116,6 +116,50 @@ a:hover {
   text-transform: uppercase;
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.lang-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.lang-btn {
+  margin: 0;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.lang-btn:hover {
+  color: var(--text);
+}
+
+.lang-btn.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.lang-btn:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -139,7 +183,8 @@ a:hover {
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
-.hero p {
+.hero p,
+.hero-lead {
   margin: 0;
   color: var(--muted);
   max-width: 52ch;
