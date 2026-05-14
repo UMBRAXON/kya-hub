@@ -2928,19 +2928,18 @@ V `nginx-proxy/docker-compose.yml` sú v `VIRTUAL_HOST` / `LETSENCRYPT_HOST` nar
 
 1. DNS: `www` (A alebo CNAME) a `bots` (A alebo CNAME) → rovnaký origin ako apex.
 2. Po zmene env: `cd nginx-proxy && docker-compose up -d --force-recreate`
-3. Overenie: `curl -fsSI https://www.umbraxon.xyz/api/health` a `https://bots.umbraxon.xyz/`
+3. Overenie: `curl -fsSI https://www.umbraxon.xyz/api/health` a `curl -fsSI https://www.umbraxon.xyz/bots/`
 
-### 22.9b Bot Developer Portal `bots.umbraxon.xyz` (detail)
+### 22.9b Bot Developer Portal — kanonická URL + alias `bots.umbraxon.xyz`
 
-V repozitári je statický “Bot Developer Portal” pre integráciu botov.
-Server ho servuje len pre host `bots.umbraxon.xyz` (bez dynamiky; low attack surface).
+Statický **Bot Developer Portal** (súbory v `public/bots/`) sa servuje **kanonicky** na hlavnej doméne pod cestou **`/bots/`** (napr. `https://www.umbraxon.xyz/bots/`). Hostname **`bots.umbraxon.xyz`** je **technický alias**: HTTP **301** na rovnakú cestu pod `https://www.umbraxon.xyz/bots/…` (záložky a staré linky fungujú). TLS pre alias zostáva v `LETSENCRYPT_HOST` spolu s apexom a `www`.
 
-1. DNS A record: `bots.umbraxon.xyz → 46.225.170.80`
+1. DNS A (alebo CNAME): `bots.umbraxon.xyz` → rovnaký origin ako apex.
 2. Host `bots.umbraxon.xyz` musí byť v `VIRTUAL_HOST` + `LETSENCRYPT_HOST` spolu s apexom a `www` (pozri §22.9).
-3. Redeploy proxy: `docker-compose up -d --force-recreate` (v `nginx-proxy/`)
+3. Redeploy proxy: `docker-compose up -d --force-recreate` (v `nginx-proxy/`).
 4. Overenie:
-   - `curl -fsSI https://bots.umbraxon.xyz/ | head`
-   - `curl -fsSI https://umbraxon.xyz/api/health | head`
+   - `curl -fsSI https://bots.umbraxon.xyz/ | head -n 8` → očakávaj **301** na `Location: https://www.umbraxon.xyz/bots/`
+   - `curl -fsSI https://www.umbraxon.xyz/bots/ | head`
 
 ### 22.10 Out-of-scope (Phase 3B+)
 

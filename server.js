@@ -4,6 +4,7 @@
 // Beží pod PM2 (ecosystem.config.js). Konfigurácia v .env.
 // Endpointy:
 //   GET  /api/health                  — server/DB/BTCPay/Alby health
+//   GET  /bots/                       — Bot Developer Portal (canonical on www; bots.* → 301)
 //   GET  /api/tiers                   — zoznam tierov
 //   POST /api/pay                     — vytvorenie LN/onchain faktúry
 //   GET  /api/check-status/:invoiceId — polling stavu faktúry
@@ -1015,24 +1016,49 @@ app.post('/api/webhook/alby', express.raw({ type: 'application/json', limit: '64
 app.use(express.json({ limit: '100kb' }));
 
 // ----------------------------------------------------------------------------
-// Public Bot Developer Portal (static) on bots.umbraxon.xyz
+// Bot Developer Portal — canonical on www, technical alias on bots.* 
 // ----------------------------------------------------------------------------
+// Human-readable portal files live in public/bots/ and are served at
+//   https://www.umbraxon.xyz/bots/   (and apex / localhost for dev).
+// Host bots.umbraxon.xyz is a permanent redirect alias (301) to the canonical
+// URL so bookmarks and old links keep working. ACME /.well-known/ passes
+// through to later handlers (typically answered by outer nginx before Node).
+// Optional override: BOTS_PORTAL_PUBLIC_BASE (no trailing slash), e.g.
+//   https://www.umbraxon.xyz/bots
+const BOTS_ALIAS_HOST = 'bots.umbraxon.xyz';
+const BOTS_PORTAL_PUBLIC_BASE = String(process.env.BOTS_PORTAL_PUBLIC_BASE || 'https://www.umbraxon.xyz/bots').replace(/\/$/, '');
+const MAIN_WEB_HOSTS = new Set(['umbraxon.xyz', 'www.umbraxon.xyz', 'localhost', '127.0.0.1']);
+
 const botsPortalStatic = express.static(path.join(__dirname, 'public/bots'), {
     dotfiles: 'ignore',
     index: 'index.html',
     etag: true,
     maxAge: '5m',
 });
+
 app.use((req, res, next) => {
     const host = (req.headers.host || '').split(':')[0].toLowerCase();
-    if (host !== 'bots.umbraxon.xyz') return next();
-    // Keep the portal strictly static; don't expose the main app UI on this vhost.
+    if (host !== BOTS_ALIAS_HOST) return next();
+    if (req.path.startsWith('/.well-known/')) return next();
     if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'NOT_FOUND' });
-    return botsPortalStatic(req, res, (err) => {
-        if (err) return next(err);
-        return res.status(404).send('Not Found');
-    });
+    let u;
+    try {
+        u = new URL(req.originalUrl || '/', 'https://internal.local');
+    } catch (_) {
+        return res.redirect(301, `${BOTS_PORTAL_PUBLIC_BASE}/`);
+    }
+    const tail = u.pathname === '/' ? '' : u.pathname;
+    return res.redirect(301, `${BOTS_PORTAL_PUBLIC_BASE}${tail}${u.search}`);
 });
+
+app.use('/bots', (req, res, next) => {
+    const host = (req.headers.host || '').split(':')[0].toLowerCase();
+    if (!MAIN_WEB_HOSTS.has(host)) {
+        return res.status(404).type('text/plain').send('Not Found');
+    }
+    return botsPortalStatic(req, res, next);
+});
+
 app.use(express.static(__dirname, { dotfiles: 'ignore', index: 'index.html' }));
 
 // Strategic Sprint §30 Item 10 — Prometheus instrumentation. Place AFTER

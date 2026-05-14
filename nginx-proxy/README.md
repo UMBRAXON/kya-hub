@@ -84,21 +84,24 @@ If you are **adding** `www` on a clone that still lacks it:
 3. `docker-compose up -d --force-recreate`
 4. Let's Encrypt will issue or extend the cert within ~60s (wait if Cloudflare showed **526** until origin presents a valid cert for `www`).
 
-## Add `bots.umbraxon.xyz` (Bot Developer Portal)
+## Add `bots.umbraxon.xyz` (Bot Developer Portal alias)
 
-This repo serves a **static** Bot Developer Portal when the request host is `bots.umbraxon.xyz`.
-The simplest way is to route that vhost to the same `kya-hub-proxy` container.
+The portal HTML lives in **`public/bots/`** and is served **canonically** at:
 
-1. Create DNS A record: `bots.umbraxon.xyz → 46.225.170.80`.
-2. Edit `docker-compose.yml`:
+- `https://www.umbraxon.xyz/bots/` (and `https://umbraxon.xyz/bots/`)
+
+The hostname **`bots.umbraxon.xyz`** answers with **HTTP 301** to the same path under `https://www.umbraxon.xyz/bots/…` so old bookmarks keep working. TLS for the alias remains in `LETSENCRYPT_HOST` alongside apex and `www`.
+
+1. Create DNS A (or CNAME) record: `bots.umbraxon.xyz` → same origin as apex.
+2. Edit `docker-compose.yml` (already includes all three hosts):
    ```yaml
    VIRTUAL_HOST: "umbraxon.xyz,www.umbraxon.xyz,bots.umbraxon.xyz"
    LETSENCRYPT_HOST: "umbraxon.xyz,www.umbraxon.xyz,bots.umbraxon.xyz"
    ```
-3. `docker compose up -d --force-recreate`
+3. `docker-compose up -d --force-recreate`
 4. Verify:
-   - `curl -fsSI https://bots.umbraxon.xyz/ | head`
-   - `curl -fsSI https://umbraxon.xyz/api/health | head`
+   - `curl -fsSI https://bots.umbraxon.xyz/ | head -n 5` → expect **301** to `www…/bots/`
+   - `curl -fsSI https://www.umbraxon.xyz/bots/ | head`
 
 ## Optional: Cloudflare proxy + origin firewall
 

@@ -12,7 +12,7 @@ Tento súbor je **odkladací** — skopírovaný postup s konkrétnymi doménami
 | Alby webhook do hubu | https://umbraxon.xyz/api/webhook/alby |
 | BTCPay Server (UI) | https://pay.umbraxon.xyz (`BTCPAY_URL` v `.env`) |
 | Redirect po platbe (príklad) | https://umbraxon.xyz/dashboard |
-| Bot developer portal (ak nasadené) | https://bots.umbraxon.xyz |
+| Bot developer portal (ak nasadené) | https://www.umbraxon.xyz/bots/ (alias https://bots.umbraxon.xyz → 301) |
 
 Webhook **vždy** na hub (`umbraxon.xyz`), nie na `pay.umbraxon.xyz`.
 

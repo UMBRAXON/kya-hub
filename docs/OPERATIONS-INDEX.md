@@ -59,7 +59,7 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 
 ## Public bot portal
 
-- `https://bots.umbraxon.xyz/` — Bot Developer Portal (API + integration flow + policy).
+- `https://www.umbraxon.xyz/bots/` — Bot Developer Portal (API + integration flow + policy); `https://bots.umbraxon.xyz/` is a **301 alias** to the same content.
 
 ## Edge gateway (public ingress)
 

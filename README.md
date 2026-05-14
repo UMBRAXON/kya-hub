@@ -26,7 +26,7 @@ and emits no bearer tokens.
 
 **Reference clients:** [Python SDK](scripts/umbrexon_bot_client.py) (byte-exact
 with the Node backend); [MCP server](mcp/README.md) (read-only hub tools for
-Cursor / MCP hosts). **Public portal:** <https://bots.umbraxon.xyz/>
+Cursor / MCP hosts). **Bot Developer Portal (canonical):** <https://www.umbraxon.xyz/bots/> — alias <https://bots.umbraxon.xyz/> (301 redirect).
 (fallback: <https://umbraxon.xyz/bots/>).
 **API contract:** [`openapi/openapi.yaml`](openapi/openapi.yaml).
 **FAQ for integrators:** [`docs/FAQ-FOR-BOT-DEVELOPERS.md`](docs/FAQ-FOR-BOT-DEVELOPERS.md).
@@ -98,10 +98,8 @@ without a SaaS dependency. Concretely:
 - **`config/`** — `logrotate-kya-hub` (PM2 + `/var/log/kya-*.log`) and
   `logrotate-btcpay-bitcoin-lnd.example` (optional host template for large
   Bitcoin Core / LND `debug.log` when paths are known; see `docs/LOGGING.md` §4).
-- **`public/bots/`** — static, JS-free [Bot Developer Portal](https://bots.umbraxon.xyz/)
-  served by the same nginx as the API. Canonical URL is
-  `bots.umbraxon.xyz`; until the operator adds the matching DNS A-record
-  the same content is reachable through `https://umbraxon.xyz/bots/`.
+- **`public/bots/`** — static, JS-free [Bot Developer Portal](https://www.umbraxon.xyz/bots/)
+  (served under `/bots/` on the main web hosts; `bots.umbraxon.xyz` is a **301 alias**). The same content is also at `https://umbraxon.xyz/bots/`.
 - **`openapi/openapi.yaml`** — machine-readable surface contract.
 - **`monitoring/dashboard.py`** — Streamlit ops dashboard (read-only DB +
   PM2 log tail).
@@ -242,8 +240,7 @@ The operator-facing entry points (in order of how often you'll touch them):
 
 - **Ops index (single page)**: [`docs/OPERATIONS-INDEX.md`](docs/OPERATIONS-INDEX.md)
 - **Project doc / source of truth**: [`UMBRAXON.md`](UMBRAXON.md)
-- **Bot Developer Portal (public)**: <https://bots.umbraxon.xyz/> — temporary
-  fallback path while DNS propagates: <https://umbraxon.xyz/bots/>
+- **Bot Developer Portal (public)**: <https://www.umbraxon.xyz/bots/> — `https://bots.umbraxon.xyz/` redirects here (301).
 - **Reference bot client (Python SDK)**: [`scripts/umbrexon_bot_client.py`](scripts/umbrexon_bot_client.py)
 - **MCP server (IDE / read-only hub tools)**: [`mcp/README.md`](mcp/README.md)
 - **OpenAPI spec**: [`openapi/openapi.yaml`](openapi/openapi.yaml)

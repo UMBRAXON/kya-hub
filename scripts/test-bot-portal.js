@@ -24,7 +24,8 @@ mustExist(cssPath);
 const html = fs.readFileSync(indexPath, 'utf8');
 
 // URL + identity
-mustInclude(html, 'bots.umbraxon.xyz', 'primary host');
+mustInclude(html, 'www.umbraxon.xyz/bots', 'canonical portal URL');
+mustInclude(html, 'bots.umbraxon.xyz', 'technical alias mentioned');
 mustInclude(html, 'Bot Developer Portal', 'title');
 
 // Must reference OpenAPI and at least one API endpoint

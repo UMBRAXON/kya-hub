@@ -75,6 +75,23 @@
             border-color: var(--gold);
         }
 
+        .portal-dev-link {
+            display: inline-block;
+            margin-right: 16px;
+            padding: 4px 12px;
+            border: 1px solid var(--border);
+            color: var(--gold);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .portal-dev-link:hover {
+            border-color: var(--gold);
+        }
+
         /* TABS / SECTIONS NAVIGATION */
         .nav-tabs {
             display: flex;
@@ -198,6 +215,7 @@
     </div>
     
     <div class="lang-switch">
+        <a class="portal-dev-link" href="/bots/">KYA — vývojári</a>
         <button class="lang-btn active" onclick="setLang('sk')">SK</button>
         <button class="lang-btn" onclick="setLang('en')">EN</button>
         <button class="lang-btn" onclick="setLang('de')">DE</button>
