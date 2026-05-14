@@ -16,12 +16,15 @@ const repoRoot = path.join(__dirname, '..');
 const portalDir = path.join(repoRoot, 'public', 'bots');
 const indexPath = path.join(portalDir, 'index.html');
 const cssPath = path.join(portalDir, 'style.css');
+const jsPath = path.join(portalDir, 'main.js');
 
 mustExist(portalDir);
 mustExist(indexPath);
 mustExist(cssPath);
+mustExist(jsPath);
 
 const html = fs.readFileSync(indexPath, 'utf8');
+const js = fs.readFileSync(jsPath, 'utf8');
 
 // URL + identity
 mustInclude(html, 'www.umbraxon.xyz/bots', 'canonical portal URL');
@@ -39,6 +42,16 @@ mustInclude(html, 'Rate limiting', 'rate limit section');
 mustInclude(html, 'SPAM_REPORT', 'reputation slashing');
 mustInclude(html, 'PROTOCOL_VIOLATION', 'protocol escalation');
 mustInclude(html, '24h', 'escalation window');
+
+mustInclude(html, 'id="live"', 'live status section');
+mustInclude(html, 'id="assistant"', 'registration assistant section');
+mustInclude(html, 'umbrexon_bot_client.py', 'python client path in HTML');
+
+mustInclude(js, 'https://umbraxon.xyz', 'API base in client');
+mustInclude(js, '/api/health', 'health fetch');
+mustInclude(js, '/api/tiers', 'tiers fetch');
+mustInclude(js, 'umbrexon_bot_client.py', 'register command');
+mustInclude(js, 'navigator.clipboard', 'copy helper');
 
 console.log('[test-bot-portal] OK');
 

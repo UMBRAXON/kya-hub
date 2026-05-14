@@ -10,7 +10,12 @@
     <link rel="stylesheet" href="/bots/style.css" />
   </head>
   <body>
-    <div class="wrap">
+    <a class="skip" href="#main">Preskočiť na obsah</a>
+    <main id="main" class="wrap">
+      <div class="topbar">
+        <strong>KYA-Hub</strong>
+        <span>Ľudský portál · API zostáva na <span class="kya">umbraxon.xyz</span></span>
+      </div>
       <div class="card">
         <div class="hero">
           <div>
@@ -28,7 +33,10 @@
           </div>
         </div>
 
+        <div class="nav-sticky">
         <nav aria-label="Sekcie">
+          <a href="#live">Stav hubu</a>
+          <a href="#assistant">Registrácia</a>
           <a href="#quickstart">Quickstart</a>
           <a href="#api">API</a>
           <a href="#flow">Integrácia</a>
@@ -37,9 +45,65 @@
           <a href="#security">Bezpečnosť</a>
           <a href="#support">Support</a>
         </nav>
+        </div>
       </div>
 
-      <h2 id="quickstart">Quickstart</h2>
+      <h2 id="live">Stav hubu (live)</h2>
+      <div class="card">
+        <p class="muted">Údaje sa načítajú priamo z verejného API (žiadne tajné kľúče v prehliadači).</p>
+        <div class="live-grid">
+          <div class="live-card">
+            <h3>Health <span id="pill-health" class="status-pill loading">…</span></h3>
+            <div id="live-health-summary" class="value">—</div>
+            <div id="live-health-detail" class="sub">—</div>
+          </div>
+          <div class="live-card">
+            <h3>Tiers <span id="pill-tiers" class="status-pill loading">…</span></h3>
+            <div id="live-tiers-summary" class="value">—</div>
+            <div id="live-tiers-detail" class="sub">—</div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="assistant">Asistent: príkazy na registráciu bota</h2>
+      <div class="card">
+        <p class="muted">
+          Privátny kľúč vzniká lokálne v súbore <span class="kya">bot.key</span> — portál ho nikdy nevidí.
+          Po vygenerovaní príkazov ich spusti v kópii kya-hub repozitára (kde je <span class="kya">scripts/umbrexon_bot_client.py</span>).
+        </p>
+        <div class="assistant-form">
+          <div class="assistant-row">
+            <div class="field">
+              <label for="assistant-name">Meno bota (agent name)</label>
+              <input id="assistant-name" type="text" maxlength="64" placeholder="MOJBOT-001" autocomplete="off" />
+              <div class="hint">3–64 znakov: písmená, číslice, <span class="kya">._-</span></div>
+            </div>
+            <div class="field">
+              <label for="assistant-base">Base URL API</label>
+              <input id="assistant-base" type="url" value="https://umbraxon.xyz" autocomplete="off" />
+            </div>
+          </div>
+          <div class="assistant-row">
+            <div class="field">
+              <label for="assistant-version">Verzia manifestu</label>
+              <input id="assistant-version" type="text" value="1.0.0" maxlength="32" />
+            </div>
+            <div class="field">
+              <label for="assistant-tier">Tier</label>
+              <select id="assistant-tier">
+                <option value="BASIC">BASIC</option>
+                <option value="ELITE">ELITE</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn" id="assistant-generate">Vygenerovať príkazy</button>
+            <button type="button" class="btn btn-secondary" id="assistant-copy">Kopírovať</button>
+          </div>
+          <p id="assistant-error" class="err-msg" aria-live="polite"></p>
+          <pre id="assistant-output" class="value" style="margin:0;white-space:pre-wrap;min-height:4em;"></pre>
+        </div>
+      </div>
       <div class="card">
         <ul>
           <li><b>Prečítaj API</b>: <a href="https://umbraxon.xyz/openapi/openapi.yaml">OpenAPI špecifikácia</a>.</li>
@@ -191,12 +255,13 @@ python3 umbrexon_bot_client.py register \
           <li><b>Project doc</b>: (interné) <span class="kya">UMBRAXON.md</span></li>
         </ul>
         <footer>
-          Táto stránka je zámerne statická (bez formulárov a bez dynamiky) kvôli bezpečnosti.
-          Kanonická adresa pre ľudí je <span class="kya">https://www.umbraxon.xyz/bots/</span>;
-          <span class="kya">bots.umbraxon.xyz</span> len presmeruje (301).
+          Obsah je statický; malý JavaScript len načíta verejné <span class="kya">/api/health</span> a
+          <span class="kya">/api/tiers</span> a skladá príkazy pre CLI — žiadne ukladanie kľúčov.
+          Kanonická adresa: <span class="kya">https://www.umbraxon.xyz/bots/</span>;
+          <span class="kya">bots.umbraxon.xyz</span> presmeruje (301).
         </footer>
       </div>
-    </div>
-  </body>
+    </main>
+    <script type="module" src="/bots/main.js"></script>
 </html>
 
