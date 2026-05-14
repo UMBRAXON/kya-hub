@@ -23,10 +23,14 @@ const html = fs.readFileSync(indexPath, 'utf8');
 const js = fs.readFileSync(jsPath, 'utf8');
 
 mustInclude(html, 'https://www.umbraxon.xyz/', 'canonical www URL');
-mustInclude(html, 'bots.umbraxon.xyz', 'alias mentioned');
+mustInclude(js, 'bots.umbraxon.xyz', 'alias in i18n');
 mustInclude(html, '/site/app.js', 'site bundle');
 mustInclude(html, 'cdn.tailwindcss.com', 'Tailwind CDN');
 mustInclude(html, 'alpinejs', 'Alpine CDN');
+mustInclude(html, 'lottie-web', 'Lottie library');
+mustInclude(html, 'hero-canvas', 'hero canvas');
+mustInclude(js, 'brand-ambient.json', 'lottie json path');
+mustInclude(html, '/logo.png', 'logo path');
 
 mustInclude(js, '/api/health', 'health fetch path');
 mustInclude(js, '/api/tiers', 'tiers fetch path');

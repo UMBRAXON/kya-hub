@@ -41,12 +41,20 @@
   </script>
   <style>
     [x-cloak] { display: none !important; }
-    html { color-scheme: dark; }
+    html { color-scheme: dark; --orb-amber: 42; --orb-cyan: 190; }
     .mesh-bg {
       background:
-        radial-gradient(900px 420px at 12% -8%, rgba(251, 191, 36, 0.14), transparent 55%),
-        radial-gradient(700px 380px at 88% 8%, rgba(34, 211, 238, 0.1), transparent 50%),
+        radial-gradient(900px 420px at 12% -8%, hsla(var(--orb-amber), 85%, 55%, 0.16), transparent 55%),
+        radial-gradient(700px 380px at 88% 8%, hsla(var(--orb-cyan), 80%, 52%, 0.11), transparent 50%),
         linear-gradient(180deg, #020617 0%, #0f172a 42%, #020617 100%);
+    }
+    .logo-ring {
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.25), 0 0 40px -8px rgba(251, 191, 36, 0.35);
+      animation: logo-pulse 4s ease-in-out infinite;
+    }
+    @keyframes logo-pulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.25), 0 0 36px -10px rgba(251, 191, 36, 0.3); }
+      50% { box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35), 0 0 48px -6px rgba(34, 211, 238, 0.25); }
     }
   </style>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
@@ -64,11 +72,20 @@
 
     <header class="sticky top-0 z-50 border-b border-white/5 bg-slate-950/75 backdrop-blur-xl">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <a href="/" class="group flex items-center gap-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-sm font-black text-slate-950 shadow-lg shadow-amber-500/20">U</span>
-          <div>
-            <div class="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90">Umbraxon</div>
-            <div class="text-sm font-semibold text-slate-100">KYA Hub</div>
+        <a href="/" class="group flex min-w-0 items-center gap-3">
+          <div class="logo-ring relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl bg-slate-900/80 ring-1 ring-white/10">
+            <img
+              src="/logo.png"
+              alt=""
+              width="48"
+              height="48"
+              class="h-full w-full object-contain p-1 opacity-95 transition group-hover:opacity-100"
+              onerror="this.onerror=null;this.src='https://cdn-icons-png.flaticon.com/512/2806/2806253.png'"
+            />
+          </div>
+          <div class="min-w-0">
+            <div class="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90 truncate" data-i18n="brandWord">Umbraxon</div>
+            <div class="text-sm font-semibold text-slate-100 truncate" data-i18n="brandSub">KYA Hub</div>
           </div>
         </a>
 
@@ -86,7 +103,7 @@
             <button type="button" id="lang-en" class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white">EN</button>
           </div>
           <button type="button" class="rounded-lg border border-white/10 p-2 text-slate-200 md:hidden" @click="open = !open" :aria-expanded="open" aria-controls="mobile-nav">
-            <span class="sr-only">Menu</span>
+            <span class="sr-only" data-i18n="menuOpen">Menu</span>
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
         </div>
@@ -120,20 +137,22 @@
             <a href="#pay" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10" data-i18n="heroCtaPay">Zaplatiť registráciu</a>
           </div>
         </div>
-        <div class="relative rounded-2xl border border-white/10 bg-slate-900/40 p-6 shadow-2xl shadow-black/40 backdrop-blur-sm">
-          <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-500/5 to-cyan-500/5 pointer-events-none"></div>
-          <dl class="relative space-y-4 text-sm">
+        <div class="relative min-h-[14rem] overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 shadow-2xl shadow-black/40 backdrop-blur-sm">
+          <canvas id="hero-canvas" class="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-90" aria-hidden="true"></canvas>
+          <div id="lottie-hero" class="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-0 transition-opacity duration-700" aria-hidden="true"></div>
+          <div class="pointer-events-none absolute inset-0 z-[2] rounded-2xl bg-gradient-to-br from-amber-500/10 via-slate-950/40 to-cyan-500/10"></div>
+          <dl class="relative z-10 space-y-4 p-6 text-sm">
             <div class="flex justify-between gap-4 border-b border-white/5 pb-3">
-              <dt class="text-slate-500">OpenAPI</dt>
+              <dt class="text-slate-500" data-i18n="dtOpenApi">OpenAPI</dt>
               <dd><a class="font-mono text-cyan-400 hover:text-cyan-300" href="/openapi/openapi.yaml">/openapi/openapi.yaml</a></dd>
             </div>
             <div class="flex justify-between gap-4 border-b border-white/5 pb-3">
-              <dt class="text-slate-500">API</dt>
-              <dd class="font-mono text-slate-300">same-origin <span class="text-slate-500">/api/*</span></dd>
+              <dt class="text-slate-500" data-i18n="dtApi">API</dt>
+              <dd id="dd-api-line" class="font-mono text-slate-300 text-right text-xs sm:text-sm"></dd>
             </div>
             <div class="flex justify-between gap-4">
-              <dt class="text-slate-500">Alias</dt>
-              <dd class="text-right text-slate-400">bots.umbraxon.xyz → <span class="text-amber-400/90">301</span> → www</dd>
+              <dt class="text-slate-500" data-i18n="dtAlias">Alias</dt>
+              <dd id="dd-alias-line" class="text-right text-xs text-slate-400 sm:text-sm"></dd>
             </div>
           </dl>
         </div>
@@ -205,7 +224,7 @@
           </div>
           <div id="qr-container" class="hidden rounded-2xl border border-amber-500/20 bg-slate-900/50 p-6 text-center">
             <div id="qrcode" class="inline-block rounded-xl bg-white p-3"></div>
-            <p id="status-msg" class="mt-4 text-sm text-amber-200/90" data-i18n="payWait">Čakám na platbu…</p>
+            <p id="status-msg" class="mt-4 text-sm text-amber-200/90">…</p>
             <p id="invoice-link" class="mt-2 text-xs text-slate-500"></p>
           </div>
         </div>
@@ -253,44 +272,34 @@
 
         <details class="group rounded-2xl border border-white/10 bg-slate-900/30 open:bg-slate-900/45">
           <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 marker:content-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
-            Quickstart
+            <span data-i18n="docSumQuick">Quickstart</span>
             <span class="text-slate-500 group-open:rotate-180 transition">▼</span>
           </summary>
-          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-3 leading-relaxed">
-            <p>Prečítaj <a class="text-cyan-400 hover:text-cyan-300" href="/openapi/openapi.yaml">OpenAPI</a>. Flow: registrácia → invoice → polling → cert → verify.</p>
-            <p>Referenčný klient: <code class="rounded bg-slate-950 px-1.5 py-0.5 font-mono text-amber-200/90">scripts/umbrexon_bot_client.py</code> — najprv <code class="font-mono text-amber-200/90">self-test</code> musí dať <code class="font-mono text-emerald-400">RESULT: PASS</code>.</p>
-            <pre class="overflow-x-auto rounded-xl bg-slate-950/90 p-4 font-mono text-xs text-slate-300">curl -fsS /api/health</pre>
-          </div>
+          <div id="doc-body-quick" class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-3 leading-relaxed"></div>
         </details>
 
         <details class="group rounded-2xl border border-white/10 bg-slate-900/30">
-          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between">Public API <span class="text-slate-500">▼</span></summary>
-          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400">
-            <ul class="list-inside list-disc space-y-1 font-mono text-xs text-cyan-200/80">
-              <li>GET /api/health</li>
-              <li>GET /api/tiers</li>
-              <li>GET /api/whitelist</li>
-              <li>POST /api/register/initiate</li>
-              <li>POST /api/pay</li>
-              <li>GET /api/check-status/{invoiceId}</li>
-              <li>GET /api/cert/&lt;KYA_ID&gt;</li>
-            </ul>
-          </div>
+          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between">
+            <span data-i18n="docSumApi">Public API</span>
+            <span class="text-slate-500">▼</span>
+          </summary>
+          <div id="doc-body-api" class="border-t border-white/5 px-5 py-4 text-sm text-slate-400"></div>
         </details>
 
         <details class="group rounded-2xl border border-white/10 bg-slate-900/30">
-          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between">Integrácia a limity <span class="text-slate-500">▼</span></summary>
-          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-2">
-            <p>429 → rešpektuj <code class="font-mono text-slate-300">Retry-After</code>. 409 REPLAY → neopakuj payload. 401/403 → podpisy / suspend / policy.</p>
-            <p>Rate limiting je zónovo-riadený. Zakázané: replay, falšovanie podpisov, abuse obchádzanie.</p>
-          </div>
+          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between">
+            <span data-i18n="docSumLimits">Integrácia a limity</span>
+            <span class="text-slate-500">▼</span>
+          </summary>
+          <div id="doc-body-limits" class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-2"></div>
         </details>
 
         <details class="group rounded-2xl border border-white/10 bg-slate-900/30">
-          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between">Reputácia <span class="text-slate-500">▼</span></summary>
-          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-2">
-            <p>Skóre v rozsahu <code class="font-mono">[0, 1000]</code>. SPAM_REPORT <strong class="text-red-400">−200</strong>, FRAUD_PROVEN <strong class="text-red-400">−500</strong>. Model: <a class="text-cyan-400" href="/api/protocol/reputation-model">/api/protocol/reputation-model</a></p>
-          </div>
+          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between">
+            <span data-i18n="docSumRep">Reputácia</span>
+            <span class="text-slate-500">▼</span>
+          </summary>
+          <div id="doc-body-rep" class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-2"></div>
         </details>
 
         <details class="group rounded-2xl border border-white/10 bg-slate-900/30">
@@ -298,14 +307,7 @@
             <span data-i18n="signingH3">Podpisy (tri digesty)</span>
             <span class="text-slate-500 shrink-0">▼</span>
           </summary>
-          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-2 leading-relaxed">
-            <p>Hub validuje <strong class="text-white">tri rôzne digesty</strong> — nie jeden univerzálny HMAC. Python referenčný klient ich správne skladá.</p>
-            <ul class="list-inside list-disc space-y-2 text-slate-400">
-              <li><span class="font-mono text-amber-200/80">manifest_signature</span>: Ed25519 nad SHA-256 kanonického JSON manifestu (zoradené kľúče rekurzívne).</li>
-              <li><span class="font-mono text-amber-200/80">challenge_response</span>: Ed25519 nad <strong class="text-white">raw</strong> bajtmi nonce z <span class="font-mono">/api/auth/challenge</span>.</li>
-              <li><span class="font-mono text-amber-200/80">agent action signature</span>: Ed25519 nad SHA-256 JSON s <strong class="text-white">presným insertion-order</strong> kľúčov (nie sort).</li>
-            </ul>
-          </div>
+          <div id="doc-body-sign" class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-2 leading-relaxed"></div>
         </details>
       </section>
 
@@ -315,9 +317,7 @@
     </main>
   </div>
 
-  <script>
-    document.getElementById('assistant-base').value = window.location.origin;
-  </script>
-  <script type="module" src="/site/app.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="/site/app.js"></script>
 </body>
 </html>

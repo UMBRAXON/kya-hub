@@ -159,7 +159,7 @@ mustInclude('server.js', [
   "res.redirect(301",
   "app.use('/bots'",
 ]);
-mustInclude('index.html', ['/site/app.js', 'cdn.tailwindcss.com', 'alpinejs']);
+mustInclude('index.html', ['/site/app.js', 'cdn.tailwindcss.com', 'alpinejs', 'lottie-web']);
 
 console.log(`\nSUMMARY: ${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);
