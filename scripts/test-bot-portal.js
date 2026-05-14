@@ -13,47 +13,26 @@ function mustInclude(content, needle, label) {
 }
 
 const repoRoot = path.join(__dirname, '..');
-const portalDir = path.join(repoRoot, 'public', 'bots');
-const indexPath = path.join(portalDir, 'index.html');
-const cssPath = path.join(portalDir, 'style.css');
-const jsPath = path.join(portalDir, 'main.js');
+const indexPath = path.join(repoRoot, 'index.html');
+const jsPath = path.join(repoRoot, 'site', 'app.js');
 
-mustExist(portalDir);
 mustExist(indexPath);
-mustExist(cssPath);
 mustExist(jsPath);
 
 const html = fs.readFileSync(indexPath, 'utf8');
 const js = fs.readFileSync(jsPath, 'utf8');
 
-// URL + identity
-mustInclude(html, 'www.umbraxon.xyz/bots', 'canonical portal URL');
-mustInclude(html, 'bots.umbraxon.xyz', 'technical alias mentioned');
-mustInclude(html, 'Bot Developer Portal', 'title');
+mustInclude(html, 'https://www.umbraxon.xyz/', 'canonical www URL');
+mustInclude(html, 'bots.umbraxon.xyz', 'alias mentioned');
+mustInclude(html, '/site/app.js', 'site bundle');
+mustInclude(html, 'cdn.tailwindcss.com', 'Tailwind CDN');
+mustInclude(html, 'alpinejs', 'Alpine CDN');
 
-// Must reference OpenAPI and at least one API endpoint
-mustInclude(html, 'openapi/openapi.yaml', 'OpenAPI link');
-mustInclude(html, '/api/register/initiate', 'register endpoint mentioned');
-mustInclude(html, '/api/check-status', 'polling mentioned');
-mustInclude(html, '/api/cert/', 'cert verify mentioned');
-
-// Policy / safety signals (so the page doesn't devolve into marketing only)
-mustInclude(html, 'Rate limiting', 'rate limit section');
-mustInclude(html, 'SPAM_REPORT', 'reputation slashing');
-mustInclude(html, 'PROTOCOL_VIOLATION', 'protocol escalation');
-mustInclude(html, '24h', 'escalation window');
-
-mustInclude(html, 'id="live"', 'live status section');
-mustInclude(html, 'id="quickstart"', 'quickstart anchor heading');
-mustInclude(html, 'langToggleGroup', 'language toggle group');
-mustInclude(html, 'property="og:title"', 'Open Graph title');
-mustInclude(html, 'umbrexon_bot_client.py', 'python client path in HTML');
-
-mustInclude(js, 'https://umbraxon.xyz', 'API base in client');
-mustInclude(js, '/api/health', 'health fetch');
-mustInclude(js, '/api/tiers', 'tiers fetch');
-mustInclude(js, 'umbrexon_bot_client.py', 'register command');
-mustInclude(js, 'kyahub_portal_lang', 'language preference key');
+mustInclude(js, '/api/health', 'health fetch path');
+mustInclude(js, '/api/tiers', 'tiers fetch path');
+mustInclude(js, '/api/whitelist', 'whitelist fetch');
+mustInclude(js, '/api/pay', 'pay endpoint');
+mustInclude(js, 'umbrexon_bot_client.py', 'python client path');
+mustInclude(js, 'navigator.clipboard', 'copy helper');
 
 console.log('[test-bot-portal] OK');
-

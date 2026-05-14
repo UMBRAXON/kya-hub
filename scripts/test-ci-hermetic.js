@@ -152,15 +152,14 @@ mustInclude('docs/SENTRY.md', [
   'beforeSend',
 ]);
 
-console.log('=== 10) Bot portal: canonical /bots + alias redirect wiring ===');
+console.log('=== 10) Bot portal: www root + legacy /bots redirect + alias ===');
 mustInclude('server.js', [
   'BOTS_ALIAS_HOST',
   'BOTS_PORTAL_PUBLIC_BASE',
-  'MAIN_WEB_HOSTS',
   "res.redirect(301",
   "app.use('/bots'",
-  'public/bots',
 ]);
+mustInclude('index.html', ['/site/app.js', 'cdn.tailwindcss.com', 'alpinejs']);
 
 console.log(`\nSUMMARY: ${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

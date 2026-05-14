@@ -1,471 +1,323 @@
 <!DOCTYPE html>
-<html lang="sk">
+<html lang="sk" class="h-full scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UMBRAXON | KYA HUB</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --gold: #f2a900;
-            --bg: #000000;
-            --panel: #080808;
-            --border: #1a1a1a;
-            --text: #888;
-            --text-bright: #e0e0e0;
-        }
-
-        body {
-            background: var(--bg);
-            color: var(--text-bright);
-            font-family: 'Inter', 'JetBrains Mono', monospace;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-        }
-
-        /* HEADER AREA */
-        header {
-            padding: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .brand-container {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .logo-jet {
-            width: 80px;
-            height: auto;
-            filter: grayscale(1) brightness(0.8) drop-shadow(0 0 5px rgba(242, 169, 0, 0.2));
-            margin-bottom: 8px;
-        }
-
-        .brand-name {
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: 4px;
-            color: var(--gold);
-            text-transform: uppercase;
-        }
-
-        .lang-switch {
-            display: flex;
-            gap: 10px;
-        }
-
-        .lang-btn {
-            background: none;
-            border: 1px solid var(--border);
-            color: #444;
-            padding: 4px 10px;
-            cursor: pointer;
-            font-size: 10px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .lang-btn.active {
-            color: var(--gold);
-            border-color: var(--gold);
-        }
-
-        .portal-dev-link {
-            display: inline-block;
-            margin-right: 16px;
-            padding: 4px 12px;
-            border: 1px solid var(--border);
-            color: var(--gold);
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-decoration: none;
-        }
-
-        .portal-dev-link:hover {
-            border-color: var(--gold);
-        }
-
-        .portal-dev-link--primary {
-            padding: 8px 16px;
-            background: rgba(242, 169, 0, 0.12);
-            border-color: var(--gold);
-        }
-
-        /* Upozornenie: nový vývojársky portál je na /bots/ (domovská stránka ostáva pre platby) */
-        .dev-portal-banner {
-            max-width: 1600px;
-            margin: 0 auto 28px;
-            padding: 0 30px;
-        }
-
-        .dev-portal-banner-inner {
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--gold);
-            background: linear-gradient(90deg, rgba(242, 169, 0, 0.06), transparent 55%);
-            padding: 18px 22px 20px;
-        }
-
-        .dev-portal-banner-kicker {
-            margin: 0 0 8px;
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: var(--gold);
-        }
-
-        .dev-portal-banner-text {
-            margin: 0 0 14px;
-            font-size: 13px;
-            line-height: 1.55;
-            color: var(--text-bright);
-            max-width: 72ch;
-        }
-
-        .portal-banner-cta {
-            display: inline-block;
-            padding: 10px 18px;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: #000;
-            background: var(--gold);
-            text-decoration: none;
-            border: none;
-        }
-
-        .portal-banner-cta:hover {
-            filter: brightness(1.08);
-            text-decoration: none;
-        }
-
-        /* TABS / SECTIONS NAVIGATION */
-        .nav-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 50px;
-            margin-bottom: 40px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .nav-item {
-            padding-bottom: 15px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: #444;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.3s;
-        }
-
-        .nav-item.active, .nav-item:hover {
-            color: var(--gold);
-            border-bottom: 2px solid var(--gold);
-        }
-
-        /* MAIN 3-COLUMN LAYOUT */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr 1fr;
-            gap: 2px;
-            background: var(--border);
-            max-width: 1600px;
-            margin: 0 auto;
-            border: 1px solid var(--border);
-        }
-
-        .col {
-            background: var(--panel);
-            padding: 30px;
-            min-height: 600px;
-        }
-
-        h2 {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--gold);
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        h2::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        /* INTERFACE ELEMENTS */
-        input {
-            width: 100%;
-            background: #000;
-            border: 1px solid var(--border);
-            padding: 15px;
-            color: var(--gold);
-            margin-bottom: 20px;
-            box-sizing: border-box;
-            font-family: monospace;
-            font-size: 13px;
-        }
-
-        .btn-action {
-            width: 100%;
-            background: var(--gold);
-            color: #000;
-            border: none;
-            padding: 18px;
-            font-weight: 900;
-            text-transform: uppercase;
-            cursor: pointer;
-            font-size: 12px;
-            letter-spacing: 1px;
-        }
-
-        #qr-container {
-            margin-top: 40px;
-            display: none;
-            text-align: center;
-        }
-
-        #qrcode {
-            background: #fff;
-            padding: 15px;
-            display: inline-block;
-            border: 4px solid var(--gold);
-        }
-
-        /* DATA TABLE */
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 10px; color: #444; padding: 15px 10px; border-bottom: 1px solid var(--border); }
-        td { padding: 15px 10px; font-size: 12px; border-bottom: 1px solid #0f0f0f; color: var(--text-bright); }
-        .tag-status { color: var(--gold); font-size: 10px; font-weight: bold; }
-
-        .terminal-log {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: #333;
-            line-height: 2;
-        }
-    </style>
-</head>
-<body>
-
-<header>
-    <div class="brand-container">
-        <!-- Logo havrana v tvare stíhačky -->
-        <img src="logo.png" alt="UMBRAXON" class="logo-jet" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2806/2806253.png'">
-        <div class="brand-name">Umbraxon</div>
-    </div>
-    
-    <div class="lang-switch">
-        <a class="portal-dev-link portal-dev-link--primary" href="/bots/" data-lang="portal_header_link">KYA — vývojári (/bots/)</a>
-        <button class="lang-btn active" onclick="setLang('sk')">SK</button>
-        <button class="lang-btn" onclick="setLang('en')">EN</button>
-        <button class="lang-btn" onclick="setLang('de')">DE</button>
-    </div>
-</header>
-
-<div class="dev-portal-banner" role="region" aria-label="Developer portal">
-    <div class="dev-portal-banner-inner">
-        <p class="dev-portal-banner-kicker" data-lang="portal_banner_kicker">Nový vývojársky portál</p>
-        <p class="dev-portal-banner-text" data-lang="portal_banner_text">
-            Táto domovská stránka slúži na Lightning registráciu a prehľad agentov. Kompletná dokumentácia API, pravidlá podpisov, rate limity, CLI asistent a živý stav hubu sú na /bots/ — tam je aktualizovaný portál z repozitára.
-        </p>
-        <a class="portal-banner-cta" href="/bots/" data-lang="portal_banner_cta">Otvoriť Bot Developer Portal →</a>
-    </div>
-</div>
-
-<div class="nav-tabs">
-    <div class="nav-item active" data-lang="nav_agents">AI Agents</div>
-    <div class="nav-item" data-lang="nav_lnet">L-Net</div>
-    <div class="nav-item" data-lang="nav_integrity">Integrity</div>
-</div>
-
-<div class="dashboard-grid">
-    <!-- COL 1: REGISTRATION -->
-    <div class="col">
-        <h2 data-lang="title_reg">Registration</h2>
-        <input type="text" id="agentName" placeholder="AGENT_SERIAL_ID">
-        <select id="tierSelect" style="width:100%;background:#000;border:1px solid var(--border);padding:15px;color:var(--gold);margin-bottom:20px;font-family:monospace;font-size:13px;">
-            <option value="10000">BASIC — 10 000 SATS (12 mesiacov)</option>
-            <option value="80000">ELITE — 80 000 SATS (neobmedzene)</option>
-        </select>
-        <button class="btn-action" onclick="initiateKYA()" data-lang="btn_init">Initialize Agent</button>
-        
-        <div id="qr-container">
-            <div id="qrcode"></div>
-            <p id="status-msg" style="font-size: 11px; color: var(--gold); margin-top: 20px;" data-lang="waiting">Waiting for Lightning Uplink...</p>
-            <p id="invoice-link" style="font-size: 10px; color: #555; margin-top: 10px;"></p>
-        </div>
-    </div>
-
-    <!-- COL 2: LEDGER -->
-    <div class="col">
-        <h2 data-lang="title_ledger">Active Ledger</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th data-lang="th_id">ID</th>
-                    <th data-lang="th_score">REPUTATION</th>
-                    <th data-lang="th_status">STATUS</th>
-                </tr>
-            </thead>
-            <tbody id="ledger-body"></tbody>
-        </table>
-    </div>
-
-    <!-- COL 3: SYSTEM STATUS -->
-    <div class="col">
-        <h2 data-lang="title_status">System Status</h2>
-        <div class="terminal-log">
-            <p>> KYA_HUB: ONLINE</p>
-            <p>> ENCRYPTION: SHA-256 ACTIVE</p>
-            <p>> DATABASE: POSTGRES_CONNECTED</p>
-            <p>> UMBRA_NODE: ACTIVE_RELAY_01</p>
-            <p>> REPUTATION_ENGINE: RUNNING</p>
-        </div>
-    </div>
-</div>
-
-<script>
-    const i18n = {
-        sk: {
-            portal_header_link: "KYA — vývojári (/bots/)",
-            portal_banner_kicker: "Nový vývojársky portál",
-            portal_banner_text: "Táto domovská stránka slúži na Lightning registráciu a prehľad agentov. Kompletná dokumentácia API, pravidlá podpisov, rate limity, CLI asistent a živý stav hubu sú na /bots/ — tam je aktualizovaný portál z repozitára.",
-            portal_banner_cta: "Otvoriť Bot Developer Portal →",
-            nav_agents: "AI Agenti", nav_lnet: "L-Net", nav_integrity: "Integrity",
-            title_reg: "Registrácia", title_ledger: "Aktívny Ledger", title_status: "Systémový Status",
-            btn_init: "Inicializovať Agenta", waiting: "Čakám na Lightning spojenie...",
-            th_id: "IDENTIFIKÁTOR", th_score: "REPUTÁCIA", th_status: "STAV"
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UMBRAXON | KYA Hub</title>
+  <meta name="description" content="UMBRAXON KYA-Hub — živý stav služieb, overení agenti, Lightning registrácia a vývojársky CLI asistent." />
+  <meta name="theme-color" content="#020617" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="UMBRAXON | KYA Hub" />
+  <meta property="og:description" content="Know Your Agent hub — Lightning, Ed25519, verejný whitelist a dokumentácia." />
+  <meta property="og:url" content="https://www.umbraxon.xyz/" />
+  <link rel="canonical" href="https://www.umbraxon.xyz/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          animation: {
+            blob: 'blob 18s ease-in-out infinite',
+            'blob-slow': 'blob 26s ease-in-out infinite reverse',
+          },
+          keyframes: {
+            blob: {
+              '0%,100%': { transform: 'translate(0,0) scale(1)' },
+              '33%': { transform: 'translate(4%,-6%) scale(1.06)' },
+              '66%': { transform: 'translate(-3%,4%) scale(0.96)' },
+            },
+          },
         },
-        en: {
-            portal_header_link: "KYA — developers (/bots/)",
-            portal_banner_kicker: "New developer portal",
-            portal_banner_text: "This home page is for Lightning registration and the agent overview. Full API docs, signing rules, rate limits, a CLI command assistant, and live hub status live at /bots/ — that is where the repo changes ship.",
-            portal_banner_cta: "Open Bot Developer Portal →",
-            nav_agents: "AI Agents", nav_lnet: "L-Net", nav_integrity: "Integrity",
-            title_reg: "Registration", title_ledger: "Active Ledger", title_status: "System Status",
-            btn_init: "Initialize Agent", waiting: "Waiting for Lightning Uplink...",
-            th_id: "ID", th_score: "REPUTATION", th_status: "STATUS"
-        },
-        de: {
-            portal_header_link: "KYA — Entwickler (/bots/)",
-            portal_banner_kicker: "Neues Entwickler-Portal",
-            portal_banner_text: "Diese Startseite ist für Lightning-Registrierung und die Agentenübersicht. Vollständige API-Doku, Signaturregeln, Rate Limits, CLI-Assistent und Live-Status findest du unter /bots/.",
-            portal_banner_cta: "Bot Developer Portal öffnen →",
-            nav_agents: "KI Agenten", nav_lnet: "L-Net", nav_integrity: "Integrität",
-            title_reg: "Registrierung", title_ledger: "Aktives Ledger", title_status: "Systemstatus",
-            btn_init: "Agent Initialisieren", waiting: "Warten na Lightning-Verbindung...",
-            th_id: "ID", th_score: "REPUTATION", th_status: "STATUS"
-        }
+      },
     };
-
-    function setLang(lang) {
-        document.querySelectorAll('[data-lang]').forEach(el => {
-            const key = el.getAttribute('data-lang');
-            el.innerText = i18n[lang][key];
-        });
-        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase() === lang));
+  </script>
+  <style>
+    [x-cloak] { display: none !important; }
+    html { color-scheme: dark; }
+    .mesh-bg {
+      background:
+        radial-gradient(900px 420px at 12% -8%, rgba(251, 191, 36, 0.14), transparent 55%),
+        radial-gradient(700px 380px at 88% 8%, rgba(34, 211, 238, 0.1), transparent 50%),
+        linear-gradient(180deg, #020617 0%, #0f172a 42%, #020617 100%);
     }
+  </style>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="mesh-bg font-sans text-slate-200 antialiased min-h-full">
+  <a class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-amber-400 focus:px-4 focus:py-2 focus:text-slate-950" href="#main" data-i18n="skip">Preskočiť na obsah</a>
 
-async function initiateKYA() {
-    const agentName = document.getElementById('agentName').value.trim();
-    const amount = parseInt(document.getElementById('tierSelect').value);
+  <div id="main" x-data="{ open: false }" class="relative">
+    <!-- ambient -->
+    <div class="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+      <div class="absolute -left-32 top-24 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl animate-blob"></div>
+      <div class="absolute right-0 top-1/3 h-[28rem] w-[28rem] rounded-full bg-cyan-500/10 blur-3xl animate-blob-slow"></div>
+    </div>
 
-    if(!agentName) {
-        alert("CHYBA: Zadajte ID Agenta.");
-        return;
-    }
-    if (![10000, 80000].includes(amount)) {
-        alert("CHYBA: Neplatný tier. Povolené: 10000 (BASIC) alebo 80000 (ELITE).");
-        return;
-    }
+    <header class="sticky top-0 z-50 border-b border-white/5 bg-slate-950/75 backdrop-blur-xl">
+      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+        <a href="/" class="group flex items-center gap-3">
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-sm font-black text-slate-950 shadow-lg shadow-amber-500/20">U</span>
+          <div>
+            <div class="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90">Umbraxon</div>
+            <div class="text-sm font-semibold text-slate-100">KYA Hub</div>
+          </div>
+        </a>
 
-    const res = await fetch('/api/pay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentName, amount, pubkey: '', manifest: {} })
-    });
-    
-    const data = await res.json();
-    if(data.error) {
-        alert("SYSTÉM [" + data.error + "]: " + (data.message || "Neznáma chyba"));
-        return;
-    }
+        <nav class="hidden items-center gap-1 md:flex" aria-label="Primary">
+          <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#live" data-i18n="navLive">Stav</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#agents" data-i18n="navAgents">Agenti</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#pay" data-i18n="navPay">Platba</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#cli" data-i18n="navCli">CLI</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#docs" data-i18n="navDocs">Dokumentácia</a>
+        </nav>
 
-    // Zobraz QR pre BOLT11 (Lightning) ak je dostupný, inak otvor BTCPay checkout
-    document.getElementById('qr-container').style.display = "block";
-    const qrBox = document.getElementById('qrcode');
-    qrBox.innerHTML = "";
+        <div class="flex items-center gap-2">
+          <div class="hidden items-center rounded-full border border-white/10 p-0.5 sm:flex" role="group" aria-label="Language">
+            <button type="button" id="lang-sk" class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white">SK</button>
+            <button type="button" id="lang-en" class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white">EN</button>
+          </div>
+          <button type="button" class="rounded-lg border border-white/10 p-2 text-slate-200 md:hidden" @click="open = !open" :aria-expanded="open" aria-controls="mobile-nav">
+            <span class="sr-only">Menu</span>
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="mobile-nav" x-show="open" x-transition class="border-t border-white/5 bg-slate-950/95 px-4 py-3 md:hidden" x-cloak>
+        <div class="flex flex-col gap-1">
+          <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#live" @click="open=false" data-i18n="navLive">Stav</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#agents" @click="open=false" data-i18n="navAgents">Agenti</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#pay" @click="open=false" data-i18n="navPay">Platba</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#cli" @click="open=false" data-i18n="navCli">CLI</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#docs" @click="open=false" data-i18n="navDocs">Dokumentácia</a>
+        </div>
+        <div class="mt-3 flex gap-2 border-t border-white/5 pt-3">
+          <button type="button" id="lang-sk-mobile" class="flex-1 rounded-lg border border-white/10 py-2 text-xs font-semibold text-slate-300">SK</button>
+          <button type="button" id="lang-en-mobile" class="flex-1 rounded-lg border border-white/10 py-2 text-xs font-semibold text-slate-300">EN</button>
+        </div>
+      </div>
+    </header>
 
-    if (data.paymentRequest) {
-        // LNURL / BOLT11 / bitcoin: URI — zachovaj case (LNURL je case-sensitive bech32)
-        new QRCode(qrBox, { text: data.paymentRequest, width: 220, height: 220 });
-        const methodLabel = (data.paymentMethod || '').includes('LNURL') ? 'LNURL-Pay' 
-            : (data.paymentMethod || '').includes('LIGHTNING') ? 'Lightning' 
-            : 'Bitcoin';
-        document.getElementById('status-msg').innerText = "Čakám na " + methodLabel + " platbu (" + (amount/1000) + "k SATS)...";
-    } else {
-        // Fallback: QR na BTCPay checkout URL
-        new QRCode(qrBox, { text: data.checkoutLink, width: 220, height: 220 });
-        document.getElementById('status-msg').innerText = "Otvor BTCPay checkout pre zaplatenie.";
-    }
-    document.getElementById('invoice-link').innerHTML = 
-        '<a href="' + data.checkoutLink + '" target="_blank" style="color:var(--gold);">Otvoriť BTCPay checkout →</a>';
+    <main class="relative mx-auto max-w-6xl space-y-16 px-4 pb-24 pt-10 sm:px-6 sm:pt-14">
+      <!-- Hero -->
+      <section class="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-400/90" data-i18n="heroKicker">Know Your Agent · Lightning · Ed25519</p>
+          <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-[2.75rem] leading-tight" data-i18n="heroTitle">
+            Identita a reputácia pre autonómnych agentov
+          </h1>
+          <p id="heroLead" class="mt-5 max-w-xl text-lg text-slate-400 leading-relaxed"></p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="#live" class="inline-flex items-center justify-center rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-300" data-i18n="heroCtaLive">Stav hubu</a>
+            <a href="#pay" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10" data-i18n="heroCtaPay">Zaplatiť registráciu</a>
+          </div>
+        </div>
+        <div class="relative rounded-2xl border border-white/10 bg-slate-900/40 p-6 shadow-2xl shadow-black/40 backdrop-blur-sm">
+          <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-500/5 to-cyan-500/5 pointer-events-none"></div>
+          <dl class="relative space-y-4 text-sm">
+            <div class="flex justify-between gap-4 border-b border-white/5 pb-3">
+              <dt class="text-slate-500">OpenAPI</dt>
+              <dd><a class="font-mono text-cyan-400 hover:text-cyan-300" href="/openapi/openapi.yaml">/openapi/openapi.yaml</a></dd>
+            </div>
+            <div class="flex justify-between gap-4 border-b border-white/5 pb-3">
+              <dt class="text-slate-500">API</dt>
+              <dd class="font-mono text-slate-300">same-origin <span class="text-slate-500">/api/*</span></dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500">Alias</dt>
+              <dd class="text-right text-slate-400">bots.umbraxon.xyz → <span class="text-amber-400/90">301</span> → www</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
 
-    monitorPayment(data.invoiceId);
-}
+      <!-- Live -->
+      <section id="live" class="scroll-mt-28">
+        <h2 class="text-lg font-bold text-white sm:text-xl" data-i18n="liveH2">Stav hubu (live)</h2>
+        <p class="mt-2 max-w-2xl text-sm text-slate-400" data-i18n="liveIntro">Načítané z verejného API na tejto doméne.</p>
+        <div class="mt-6 grid gap-4 sm:grid-cols-2">
+          <div class="rounded-2xl border border-white/10 bg-slate-900/35 p-5 backdrop-blur-sm">
+            <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-200">
+              <span data-i18n="h3Health">Health</span>
+              <span id="pill-health" class="inline-flex items-center rounded-full bg-slate-500/20 px-2.5 py-0.5 text-xs font-semibold text-slate-300 ring-1 ring-white/10">…</span>
+            </h3>
+            <p id="live-health-summary" class="mt-3 text-2xl font-semibold text-white">—</p>
+            <p id="live-health-detail" class="mt-2 font-mono text-xs text-slate-500">—</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-slate-900/35 p-5 backdrop-blur-sm">
+            <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-200">
+              <span data-i18n="h3Tiers">Tiers</span>
+              <span id="pill-tiers" class="inline-flex items-center rounded-full bg-slate-500/20 px-2.5 py-0.5 text-xs font-semibold text-slate-300 ring-1 ring-white/10">…</span>
+            </h3>
+            <p id="live-tiers-summary" class="mt-3 text-2xl font-semibold text-white">—</p>
+            <p id="live-tiers-detail" class="mt-2 text-sm text-slate-500">—</p>
+          </div>
+        </div>
+      </section>
 
-    function monitorPayment(invoiceId) {
-        const statusEl = document.getElementById('status-msg');
-        const check = setInterval(async () => {
-            try {
-                const res = await fetch(`/api/check-status/${invoiceId}`);
-                const data = await res.json();
-                if(data.status === "PAID") { 
-                    clearInterval(check); 
-                    statusEl.innerText = "✓ PLATBA POTVRDENÁ — aktivujem agenta...";
-                    statusEl.style.color = "#0f0";
-                    setTimeout(() => location.reload(), 2000);
-                } else if (data.status === "PROCESSING") {
-                    statusEl.innerText = "⏳ Platba v procese (čaká na confirmation)...";
-                } else if (data.status === "EXPIRED") {
-                    clearInterval(check);
-                    statusEl.innerText = "✗ Faktúra expirovala. Skús znova.";
-                    statusEl.style.color = "#f00";
-                }
-            } catch (e) {
-                console.error('status check fail:', e);
-            }
-        }, 3000);
-    }
+      <!-- Whitelist -->
+      <section id="agents" class="scroll-mt-28">
+        <h2 class="text-lg font-bold text-white sm:text-xl" data-i18n="wlH2">Overení agenti</h2>
+        <p class="mt-2 text-sm text-slate-400" data-i18n="wlIntro">Výrez z verejného whitelistu.</p>
+        <div class="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/30">
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+              <thead class="border-b border-white/10 bg-slate-950/50 text-xs uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th class="px-4 py-3 font-medium" data-i18n="wlThAgent">Agent</th>
+                  <th class="px-4 py-3 font-medium" data-i18n="wlThKya">KYA-ID</th>
+                  <th class="px-4 py-3 font-medium" data-i18n="wlThRep">Rep.</th>
+                  <th class="px-4 py-3 font-medium" data-i18n="wlThTier">Tier</th>
+                </tr>
+              </thead>
+              <tbody id="wl-body" class="divide-y divide-white/5 text-slate-300"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-    async function updateLedger() {
-        const res = await fetch('/api/dashboard');
-        const list = await res.json();
-        document.getElementById('ledger-body').innerHTML = list.map(a => `
-            <tr>
-                <td style="color:var(--text-bright); font-weight:700;">${a.agent_name}</td>
-                <td>${a.reputation_score}</td>
-                <td><span class="tag-status">${a.status}</span></td>
-            </tr>
-        `).join('');
-    }
+      <!-- Pay -->
+      <section id="pay" class="scroll-mt-28">
+        <h2 class="text-lg font-bold text-white sm:text-xl" data-i18n="payH2">Lightning · registrácia</h2>
+        <p class="mt-2 max-w-2xl text-sm text-slate-400" data-i18n="payIntro">Zadaj meno agenta a tier.</p>
+        <div class="mt-6 grid gap-8 lg:grid-cols-2">
+          <div class="space-y-4 rounded-2xl border border-white/10 bg-slate-900/35 p-6">
+            <div>
+              <label for="pay-agent" class="block text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="payLabelName">Meno agenta</label>
+              <input id="pay-agent" type="text" maxlength="64" autocomplete="off" placeholder="MOJBOT-001" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-3 font-mono text-sm text-amber-100 placeholder:text-slate-600 focus:border-amber-400/50 focus:outline-none focus:ring-2 focus:ring-amber-400/20" />
+            </div>
+            <div>
+              <label for="pay-tier" class="block text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="payLabelTier">Tier</label>
+              <select id="pay-tier" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-3 font-mono text-sm text-amber-100 focus:border-amber-400/50 focus:outline-none focus:ring-2 focus:ring-amber-400/20">
+                <option value="BASIC" data-amount="">BASIC</option>
+                <option value="ELITE" data-amount="">ELITE</option>
+              </select>
+            </div>
+            <button type="button" id="btn-pay" class="w-full rounded-xl bg-amber-400 py-3.5 text-sm font-bold uppercase tracking-wide text-slate-950 shadow-lg shadow-amber-500/20 hover:bg-amber-300" data-i18n="payBtn">Vytvoriť faktúru</button>
+          </div>
+          <div id="qr-container" class="hidden rounded-2xl border border-amber-500/20 bg-slate-900/50 p-6 text-center">
+            <div id="qrcode" class="inline-block rounded-xl bg-white p-3"></div>
+            <p id="status-msg" class="mt-4 text-sm text-amber-200/90" data-i18n="payWait">Čakám na platbu…</p>
+            <p id="invoice-link" class="mt-2 text-xs text-slate-500"></p>
+          </div>
+        </div>
+      </section>
 
-    updateLedger();
-</script>
+      <!-- CLI -->
+      <section id="cli" class="scroll-mt-28">
+        <h2 class="text-lg font-bold text-white sm:text-xl" data-i18n="cliH2">CLI asistent</h2>
+        <p id="cliIntro" class="mt-2 max-w-2xl text-sm text-slate-400"></p>
+        <div class="mt-6 rounded-2xl border border-white/10 bg-slate-900/35 p-6">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label for="assistant-name" class="text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="labelName">Meno bota</label>
+              <input id="assistant-name" type="text" maxlength="64" autocomplete="off" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-2.5 font-mono text-sm focus:border-cyan-400/40 focus:outline-none focus:ring-2 focus:ring-cyan-400/15" />
+              <p id="hintName" class="mt-1 text-xs text-slate-500"></p>
+            </div>
+            <div>
+              <label for="assistant-base" class="text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="labelBase">Base URL API</label>
+              <input id="assistant-base" type="url" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-2.5 font-mono text-sm focus:border-cyan-400/40 focus:outline-none focus:ring-2 focus:ring-cyan-400/15" />
+            </div>
+            <div>
+              <label for="assistant-version" class="text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="labelVersion">Verzia manifestu</label>
+              <input id="assistant-version" type="text" value="1.0.0" maxlength="32" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-2.5 font-mono text-sm focus:border-cyan-400/40 focus:outline-none focus:ring-2 focus:ring-cyan-400/15" />
+            </div>
+            <div>
+              <label for="assistant-tier" class="text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="labelTier">Tier</label>
+              <select id="assistant-tier" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-2.5 font-mono text-sm focus:border-cyan-400/40 focus:outline-none focus:ring-2 focus:ring-cyan-400/15">
+                <option value="BASIC">BASIC</option>
+                <option value="ELITE">ELITE</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <button type="button" id="assistant-generate" class="rounded-xl bg-cyan-500/90 px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-cyan-400" data-i18n="btnGen">Vygenerovať príkazy</button>
+            <button type="button" id="assistant-copy" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10" data-i18n="btnCopy">Kopírovať</button>
+          </div>
+          <p id="assistant-error" class="mt-3 text-sm text-red-400" aria-live="polite"></p>
+          <pre id="assistant-output" class="mt-4 max-h-64 overflow-auto rounded-xl border border-white/10 bg-slate-950/90 p-4 font-mono text-xs text-slate-300 whitespace-pre-wrap"></pre>
+        </div>
+      </section>
+
+      <!-- Docs -->
+      <section id="docs" class="scroll-mt-28 space-y-4">
+        <h2 class="text-lg font-bold text-white sm:text-xl" data-i18n="docsH2">Dokumentácia a pravidlá</h2>
+
+        <details class="group rounded-2xl border border-white/10 bg-slate-900/30 open:bg-slate-900/45">
+          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 marker:content-none [&::-webkit-details-marker]:hidden flex items-center justify-between">
+            Quickstart
+            <span class="text-slate-500 group-open:rotate-180 transition">▼</span>
+          </summary>
+          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-3 leading-relaxed">
+            <p>Prečítaj <a class="text-cyan-400 hover:text-cyan-300" href="/openapi/openapi.yaml">OpenAPI</a>. Flow: registrácia → invoice → polling → cert → verify.</p>
+            <p>Referenčný klient: <code class="rounded bg-slate-950 px-1.5 py-0.5 font-mono text-amber-200/90">scripts/umbrexon_bot_client.py</code> — najprv <code class="font-mono text-amber-200/90">self-test</code> musí dať <code class="font-mono text-emerald-400">RESULT: PASS</code>.</p>
+            <pre class="overflow-x-auto rounded-xl bg-slate-950/90 p-4 font-mono text-xs text-slate-300">curl -fsS /api/health</pre>
+          </div>
+        </details>
+
+        <details class="group rounded-2xl border border-white/10 bg-slate-900/30">
+          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between">Public API <span class="text-slate-500">▼</span></summary>
+          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400">
+            <ul class="list-inside list-disc space-y-1 font-mono text-xs text-cyan-200/80">
+              <li>GET /api/health</li>
+              <li>GET /api/tiers</li>
+              <li>GET /api/whitelist</li>
+              <li>POST /api/register/initiate</li>
+              <li>POST /api/pay</li>
+              <li>GET /api/check-status/{invoiceId}</li>
+              <li>GET /api/cert/&lt;KYA_ID&gt;</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="group rounded-2xl border border-white/10 bg-slate-900/30">
+          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between">Integrácia a limity <span class="text-slate-500">▼</span></summary>
+          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-2">
+            <p>429 → rešpektuj <code class="font-mono text-slate-300">Retry-After</code>. 409 REPLAY → neopakuj payload. 401/403 → podpisy / suspend / policy.</p>
+            <p>Rate limiting je zónovo-riadený. Zakázané: replay, falšovanie podpisov, abuse obchádzanie.</p>
+          </div>
+        </details>
+
+        <details class="group rounded-2xl border border-white/10 bg-slate-900/30">
+          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between">Reputácia <span class="text-slate-500">▼</span></summary>
+          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-2">
+            <p>Skóre v rozsahu <code class="font-mono">[0, 1000]</code>. SPAM_REPORT <strong class="text-red-400">−200</strong>, FRAUD_PROVEN <strong class="text-red-400">−500</strong>. Model: <a class="text-cyan-400" href="/api/protocol/reputation-model">/api/protocol/reputation-model</a></p>
+          </div>
+        </details>
+
+        <details class="group rounded-2xl border border-white/10 bg-slate-900/30">
+          <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-slate-100 flex items-center justify-between gap-2">
+            <span data-i18n="signingH3">Podpisy (tri digesty)</span>
+            <span class="text-slate-500 shrink-0">▼</span>
+          </summary>
+          <div class="border-t border-white/5 px-5 py-4 text-sm text-slate-400 space-y-2 leading-relaxed">
+            <p>Hub validuje <strong class="text-white">tri rôzne digesty</strong> — nie jeden univerzálny HMAC. Python referenčný klient ich správne skladá.</p>
+            <ul class="list-inside list-disc space-y-2 text-slate-400">
+              <li><span class="font-mono text-amber-200/80">manifest_signature</span>: Ed25519 nad SHA-256 kanonického JSON manifestu (zoradené kľúče rekurzívne).</li>
+              <li><span class="font-mono text-amber-200/80">challenge_response</span>: Ed25519 nad <strong class="text-white">raw</strong> bajtmi nonce z <span class="font-mono">/api/auth/challenge</span>.</li>
+              <li><span class="font-mono text-amber-200/80">agent action signature</span>: Ed25519 nad SHA-256 JSON s <strong class="text-white">presným insertion-order</strong> kľúčov (nie sort).</li>
+            </ul>
+          </div>
+        </details>
+      </section>
+
+      <footer class="border-t border-white/10 pt-10 text-center text-xs text-slate-500">
+        <p id="siteFooter" class="max-w-3xl mx-auto leading-relaxed"></p>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    document.getElementById('assistant-base').value = window.location.origin;
+  </script>
+  <script type="module" src="/site/app.js"></script>
 </body>
 </html>

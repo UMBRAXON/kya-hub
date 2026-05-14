@@ -4,7 +4,8 @@
 // Beží pod PM2 (ecosystem.config.js). Konfigurácia v .env.
 // Endpointy:
 //   GET  /api/health                  — server/DB/BTCPay/Alby health
-//   GET  /bots/                       — Bot Developer Portal (canonical on www; bots.* → 301)
+//   GET  /                           — unified www portal (live + whitelist + pay + CLI + docs)
+//   GET  /bots/*                     — legacy path → 301 redirect to /
 //   GET  /api/tiers                   — zoznam tierov
 //   POST /api/pay                     — vytvorenie LN/onchain faktúry
 //   GET  /api/check-status/:invoiceId — polling stavu faktúry
@@ -1016,42 +1017,13 @@ app.post('/api/webhook/alby', express.raw({ type: 'application/json', limit: '64
 app.use(express.json({ limit: '100kb' }));
 
 // ----------------------------------------------------------------------------
-// Bot Developer Portal — canonical on www, technical alias on bots.* 
+// Unified www portal + legacy /bots redirect + bots.* alias
 // ----------------------------------------------------------------------------
-// Human-readable portal files live in public/bots/ and are served at
-//   https://www.umbraxon.xyz/bots/   (and apex / localhost for dev).
-// Host bots.umbraxon.xyz is a permanent redirect alias (301) to the canonical
-// URL so bookmarks and old links keep working. ACME /.well-known/ passes
-// through to later handlers (typically answered by outer nginx before Node).
-// Optional override: BOTS_PORTAL_PUBLIC_BASE (no trailing slash), e.g.
-//   https://www.umbraxon.xyz/bots
+// Primary HTML is repo-root index.html + /site/app.js (Tailwind CDN + dynamic /api).
+// Optional: BOTS_PORTAL_PUBLIC_BASE (no trailing slash), default https://www.umbraxon.xyz
+// Host bots.umbraxon.xyz → HTTP 301 to that base (query preserved).
 const BOTS_ALIAS_HOST = 'bots.umbraxon.xyz';
-const BOTS_PORTAL_PUBLIC_BASE = String(process.env.BOTS_PORTAL_PUBLIC_BASE || 'https://www.umbraxon.xyz/bots').replace(/\/$/, '');
-/** Hostnames that may serve /bots/ in addition to any host (optional tighten via BOTS_PORTAL_REQUIRE_MAIN_HOST=1). */
-const MAIN_WEB_HOSTS = new Set(['umbraxon.xyz', 'www.umbraxon.xyz', 'localhost', '127.0.0.1', '[::1]']);
-
-function parseExtraBotsHosts() {
-    return String(process.env.BOTS_PORTAL_ALLOWED_HOSTS || '')
-        .split(',')
-        .map((s) => s.trim().toLowerCase().replace(/\.$/, ''))
-        .filter(Boolean);
-}
-
-function isMainWebHost(host) {
-    const h = String(host || '').toLowerCase().replace(/\.$/, '');
-    if (!h) return false;
-    if (MAIN_WEB_HOSTS.has(h)) return true;
-    return parseExtraBotsHosts().includes(h);
-}
-
-const botsPortalStatic = express.static(path.join(__dirname, 'public/bots'), {
-    dotfiles: 'ignore',
-    index: 'index.html',
-    etag: true,
-    maxAge: '5m',
-});
-
-const BOTS_INDEX = path.join(__dirname, 'public/bots', 'index.html');
+const BOTS_PORTAL_PUBLIC_BASE = String(process.env.BOTS_PORTAL_PUBLIC_BASE || 'https://www.umbraxon.xyz').replace(/\/$/, '');
 
 app.use((req, res, next) => {
     const host = (req.headers.host || '').split(':')[0].toLowerCase();
@@ -1064,27 +1036,22 @@ app.use((req, res, next) => {
     } catch (_) {
         return res.redirect(301, `${BOTS_PORTAL_PUBLIC_BASE}/`);
     }
-    const tail = u.pathname === '/' ? '' : u.pathname;
-    return res.redirect(301, `${BOTS_PORTAL_PUBLIC_BASE}${tail}${u.search}`);
+    const target = new URL('/', `${BOTS_PORTAL_PUBLIC_BASE}/`);
+    if (u.search) target.search = u.search;
+    return res.redirect(301, target.toString());
 });
 
 app.use('/bots', (req, res, next) => {
-    const requireMain = String(process.env.BOTS_PORTAL_REQUIRE_MAIN_HOST || '').trim() === '1';
-    const host = String(req.hostname || (req.headers.host || '').split(':')[0] || '')
-        .toLowerCase()
-        .replace(/\.$/, '');
-    if (requireMain && !isMainWebHost(host)) {
-        return res.status(404).type('text/plain').send('Not Found');
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    let u;
+    try {
+        u = new URL(req.originalUrl || '/bots/', 'https://internal.local');
+    } catch (_) {
+        return res.redirect(301, `${BOTS_PORTAL_PUBLIC_BASE}/`);
     }
-    botsPortalStatic(req, res, () => {
-        if (res.headersSent) return next();
-        if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-        const pathOnly = (req.originalUrl || '').split('?')[0];
-        if (pathOnly === '/bots' || pathOnly === '/bots/') {
-            return res.sendFile(BOTS_INDEX, (err) => (err ? next(err) : undefined));
-        }
-        return next();
-    });
+    const target = new URL('/', `${BOTS_PORTAL_PUBLIC_BASE}/`);
+    if (u.search) target.search = u.search;
+    return res.redirect(301, target.toString());
 });
 
 app.use(express.static(__dirname, { dotfiles: 'ignore', index: 'index.html' }));
