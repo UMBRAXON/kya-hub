@@ -1,0 +1,37 @@
+name: Registration help
+description: Questions about POST /api/v1/register, manifest, Lightning payment, or certificates
+title: "[register] "
+labels: ["registration", "question"]
+body:
+  - type: markdown
+    value: |
+      Read first: [README_API.md](https://github.com/UMBRAXON/kya-hub/blob/main/README_API.md) and [FAQ § registration](https://github.com/UMBRAXON/kya-hub/blob/main/docs/FAQ-FOR-BOT-DEVELOPERS.md).
+      Portal: https://www.umbraxon.xyz/bots/
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Tier
+      options:
+        - BASIC
+        - ELITE
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: hub_url
+    attributes:
+      label: Hub base URL
+      placeholder: https://www.umbraxon.xyz
+      value: https://www.umbraxon.xyz
+  - type: textarea
+    id: error
+    attributes:
+      label: Error response or log excerpt
+      description: Include `error` code from JSON (e.g. POW_REQUIRED, BAD_MANIFEST_SIGNATURE). No secrets.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps you tried
+      description: Client (Python SDK, curl, custom). PoW solved? Invoice paid?

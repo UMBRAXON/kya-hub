@@ -1,0 +1,22 @@
+name: Feature request
+description: Protocol or API enhancement (not registration troubleshooting)
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+  - type: checkboxes
+    id: breaking
+    attributes:
+      label: Protocol impact
+      options:
+        - label: This would require a manifest or API version bump
+          required: false

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Bot Developer Portal
+    url: https://www.umbraxon.xyz/bots/
+    about: Live tiers, integration flow, EN/SK docs
+  - name: Registration API (README_API)
+    url: https://github.com/UMBRAXON/kya-hub/blob/main/README_API.md
+    about: M2M register, PoW, manifest, poll status
+  - name: FAQ for bot developers
+    url: https://github.com/UMBRAXON/kya-hub/blob/main/docs/FAQ-FOR-BOT-DEVELOPERS.md
+    about: PoW, sponsor invite, ELITE listing, integrations v1

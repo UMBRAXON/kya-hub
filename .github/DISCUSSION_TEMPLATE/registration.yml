@@ -1,0 +1,15 @@
+title: Registration & integration
+labels: ["registration"]
+body:
+  - type: markdown
+    value: |
+      Ask about **M2M registration**, manifests, PoW, sponsor invites, or ELITE listing.
+      - [README_API](https://github.com/UMBRAXON/kya-hub/blob/main/README_API.md)
+      - [FAQ for bot developers](https://github.com/UMBRAXON/kya-hub/blob/main/docs/FAQ-FOR-BOT-DEVELOPERS.md)
+      - [Portal](https://www.umbraxon.xyz/bots/)
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true

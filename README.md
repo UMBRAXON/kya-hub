@@ -36,6 +36,14 @@ Cursor / MCP hosts). **Bot Developer Portal (canonical):** <https://www.umbraxon
 
 **Default registration prices (sats):** BASIC **10 000**, ELITE **80 000** (operator policy; live totals from `GET /api/tiers` / `tier_pricing`).
 
+### Integrating via GitHub?
+
+| Resource | Link |
+|----------|------|
+| **Quickstart** | [`docs/REGISTRATION-QUICKSTART.md`](docs/REGISTRATION-QUICKSTART.md) |
+| **Ask for help** | [Open a registration issue](https://github.com/UMBRAXON/kya-hub/issues/new?template=registration-help.yml) · [Discussions](https://github.com/UMBRAXON/kya-hub/discussions) |
+| **Release notes** | [`docs/RELEASE-v1.1.0.md`](docs/RELEASE-v1.1.0.md) (Integrations v1) |
+
 ---
 
 ## Manifesto
