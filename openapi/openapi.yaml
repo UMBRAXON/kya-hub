@@ -36,6 +36,11 @@ components:
       in: header
       name: X-Admin-Key
       description: Admin authentication key.
+    IntegratorApiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Optional `Bearer umb_live_...` developer key (higher rate limits in future tiers).
   responses:
     InternalError:
       description: Internal error
@@ -593,6 +598,45 @@ paths:
         "404":
           description: REGISTRATION_NOT_FOUND
 
+  /api/v1/agents/{kya_id}:
+    get:
+      tags: [public]
+      summary: Integrator view — agent trust, cert summary, reputation (plug-in verify)
+      description: |
+        Aggregated read model for third-party systems (LNBits, marketplaces, SDKs).
+        Cached ~5 minutes server-side. Does not replace GET /api/cert/{kya_id}.
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string, pattern: '^UMBRA-[A-F0-9]{6}$' }
+      security:
+        - {}
+        - IntegratorApiKey: []
+      responses:
+        "200":
+          description: Agent integrator payload (trust, reputation, cert summary, links)
+        "404":
+          description: AGENT_NOT_FOUND
+
+  /api/v1/agents/{kya_id}/status:
+    get:
+      tags: [public]
+      summary: Lightweight trust gate (verified boolean for plug-ins)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string, pattern: '^UMBRA-[A-F0-9]{6}$' }
+      security:
+        - {}
+        - IntegratorApiKey: []
+      responses:
+        "200":
+          description: verified, trust_level, tier, serial
+        "404":
+          description: AGENT_NOT_FOUND
+
   /api/cert/{kya_id}:
     get:
       tags: [agent]
@@ -1141,6 +1185,46 @@ paths:
       tags: [admin]
       summary: Hub key metadata + signing activity
       security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+
+  /api/admin/developer-keys:
+    get:
+      tags: [admin]
+      summary: List integrator API keys (prefixes only, no secrets)
+      security: [{ AdminKey: [] }]
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [admin]
+      summary: Create integrator API key (umb_live_… shown once)
+      security: [{ AdminKey: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label: { type: string }
+                owner_contact: { type: string }
+                scopes:
+                  type: array
+                  items: { type: string }
+                tier: { type: string, enum: [free, pro, enterprise] }
+                rate_limit_per_min: { type: integer }
+      responses:
+        "201": { description: Created with api_key field }
+
+  /api/admin/developer-keys/{id}/revoke:
+    post:
+      tags: [admin]
+      summary: Revoke integrator API key
+      security: [{ AdminKey: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
       responses:
         "200": { description: OK }
 

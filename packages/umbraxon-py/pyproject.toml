@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "umbraxon"
+version = "0.1.0"
+description = "UMBRAXON KYA-Hub Python SDK — agent registration and integrator verify API"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "UMBRAXON" }]
+dependencies = ["pynacl>=1.5.0"]
+keywords = ["kya", "lightning", "agents", "umbraxon"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+dev = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["umbraxon*"]

@@ -163,6 +163,26 @@ module.exports = {
             time: true,
         },
         {
+            // Developer webhook outbox — retry integrator HTTPS callbacks (every minute).
+            name: 'kya-dev-webhook-worker',
+            script: 'scripts/prod/developer-webhook-worker.sh',
+            cwd: '/root/kya-hub',
+            interpreter: 'bash',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '*/1 * * * *',
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-dev-webhook-worker-error.log',
+            out_file: '/root/.pm2/logs/kya-dev-webhook-worker-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
             // UMBRAXON-PR-AMBASSADOR — themed Nostr note (Mon/Wed/Fri 14:00 UTC).
             name: 'kya-pr-nostr',
             script: 'scripts/prod/pr-agent-nostr-post.sh',

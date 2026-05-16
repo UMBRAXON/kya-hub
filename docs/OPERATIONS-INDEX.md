@@ -40,6 +40,29 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 - `scripts/test-sponsor-invite-e2e.js` — smoke test (requires `SPONSOR_INVITE_ENABLED=true` + hub on `PORT`).
 - Env: `SPONSOR_INVITE_ENABLED`, optional `SPONSOR_AGENT_ALLOWLIST` for staged rollout.
 
+## GitHub promo (integrators)
+
+- `docs/REGISTRATION-QUICKSTART.md` — pin or link from a GitHub issue.
+- `.github/ISSUE_TEMPLATE/` + `.github/DISCUSSION_TEMPLATE/` — registration help forms.
+- `.github/PINNED_ISSUE_BODY.md` — copy-paste for a pinned welcome issue.
+- `scripts/github-promo-verify.sh` — local smoke (templates + `github-scan` dry-run).
+- **Manual (once):** Repo **Settings → General → Features → Discussions** → enable; **Topics:** `ai-agents`, `lightning`, `ed25519`, `ky-a`, `m2m`.
+- **Release:** tag `v1.1.0` — publish notes from `docs/RELEASE-v1.1.0.md` at https://github.com/UMBRAXON/kya-hub/releases
+
+## Platform integrator API (plug-in layer)
+
+- ADR: `docs/adr/001-platform-integrator-roles.md`
+- Roadmap: `docs/PLATFORM-INTEGRATOR-ROADMAP.md`
+- Public: `GET /api/v1/agents/{kya_id}`, `GET /api/v1/agents/{kya_id}/status`
+- Migration: `023_developer_api_keys.sql`
+- Admin keys: `GET/POST /api/admin/developer-keys`, `POST .../:id/revoke` (`X-Admin-Key`)
+- Tests: `node test-platform-integrator.js`, `node test-developer-api-keys.js`
+- Example: `examples/plugin-gate-v1.js`
+- Env: `INTEGRATOR_READ_CACHE_MS`, `RATE_INTEGRATOR_READ_PER_MIN`, `DEVKEY_RATE_*_PER_MIN`
+- Webhooks: `024_developer_webhook_outbox.sql`, PM2 `kya-dev-webhook-worker` (`*/1 * * * *`)
+- Admin: `GET /api/admin/developer-webhooks/deliveries`, `POST .../process`
+- Metric: `kyahub_developer_webhook_outbox{status}`
+
 ## Logging
 
 - `docs/LOGGING.md` — baseline logging strategy (PM2 file logs + `logrotate`, secure defaults) + Bitcoin Core / LND / Docker notes (§4).

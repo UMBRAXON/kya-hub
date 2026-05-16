@@ -308,6 +308,11 @@ row lists `events` the integrator wants: `agent.registered`, `reputation.changed
 `cert.reissued`. Deliveries are **JSON POST** bodies signed by the hub (`hub_signature` over the
 canonical payload without that field — verify with `GET /api/hub/pubkey`).
 
+**Retry queue (v1.2):** events are written to `developer_webhook_outbox` and delivered by a
+background worker with exponential backoff (1 min → 5 min → 30 min → 2 h → 24 h, max 5 attempts).
+Your endpoint should return **2xx** quickly; respond async if needed. Ops: `GET /api/admin/developer-webhooks/deliveries`
+(`X-Admin-Key`). Metric: `kyahub_developer_webhook_outbox{status="pending"}`.
+
 ### H.3 Discovery feed
 
 If `integrations.discovery_opt_in` is `true` at registration, the agent may appear in
@@ -332,6 +337,72 @@ landing pages.
 
 See [`examples/express-kya-verify-snippet.js`](../examples/express-kya-verify-snippet.js) for a
 minimal verification + optional online cert-status check.
+
+---
+
+## I. Platform integrator (plug-in / third-party systems)
+
+Use this when you embed KYA into **your** product (LNBits, marketplace, agent framework) without
+running your own hub.
+
+### I.1 Read API (no agent key required)
+
+| Endpoint | Use |
+|----------|-----|
+| `GET /api/v1/agents/{kya_id}/status` | Fast gate: `verified`, `trust_level` |
+| `GET /api/v1/agents/{kya_id}` | Full view: reputation, cert summary, links |
+
+Legacy cert routes (`GET /api/cert/{kya_id}`) remain supported. Responses are cached ~5 minutes
+server-side (`INTEGRATOR_READ_CACHE_MS`).
+
+### I.2 Developer API keys (optional)
+
+Operators issue keys via admin API (`POST /api/admin/developer-keys` with `X-Admin-Key`).
+Integrators send `Authorization: Bearer umb_live_…` for a dedicated rate-limit bucket
+(`free` 60/min, `pro` 300/min, `enterprise` 1000/min — configurable).
+
+**Agent registration still uses Ed25519 + Lightning** — the integrator key does not register agents.
+
+### I.3 Payments and revenue
+
+Registration invoices are always created by **this hub** (operator BTCPay/Alby). Integrators do
+not receive registration sats unless you have a separate commercial agreement. Integrators monetize
+their own product; the hub monetizes identity issuance.
+
+### I.4 Example
+
+[`examples/plugin-gate-v1.js`](../examples/plugin-gate-v1.js) — minimal trust gate before your
+handler runs.
+
+Architecture: [`docs/adr/001-platform-integrator-roles.md`](adr/001-platform-integrator-roles.md).
+
+### I.5 Python SDK (`umbraxon`)
+
+```bash
+pip install -e packages/umbraxon-py   # from kya-hub repo root
+```
+
+```python
+from umbraxon import UmbraxonIntegratorClient, agent_status
+
+if agent_status("https://hub.umbraxon.xyz", "UMBRA-ABCDEF"):
+    ...
+client = UmbraxonIntegratorClient(base_url, api_key="umb_live_…")
+```
+
+See [`packages/umbraxon-py/README.md`](../packages/umbraxon-py/README.md).
+
+### I.6 LSAT day pass (paid integrator API tier)
+
+For higher rate limits without a long-lived partner key:
+
+1. `POST /api/v1/integrator/lsat/invoice` → pay `bolt11`
+2. `GET /api/v1/integrator/lsat/status?access_id=…` until `status=paid`
+3. `POST /api/v1/integrator/lsat/redeem` with `{ "access_id": "…" }` → `umb_lsat_…` (once)
+4. Use `Authorization: Bearer umb_lsat_…` on read endpoints
+
+Profile: `GET /api/protocol/integrator-lsat-profile`. Default price:
+`INTEGRATOR_LSAT_DAY_PASS_SATS` (5000 sats), TTL `INTEGRATOR_LSAT_TTL_HOURS` (24h).
 
 ---
 
