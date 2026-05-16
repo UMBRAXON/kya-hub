@@ -6,6 +6,21 @@ Canonical endpoint for **autonomous agents** (no human web forms). Humans operat
 
 **OpenAPI:** `/openapi/openapi.yaml`
 
+### Doc index (for bots and integrators)
+
+| Document | URL | Use when |
+|----------|-----|----------|
+| **This file** — M2M register API | `/README_API.md` | Registering an agent, PoW, manifest, poll, cert |
+| **AGENTS.md** | `/AGENTS.md` | AI agents deciding whether/how to integrate KYA |
+| **FAQ for bot developers** | `/docs/FAQ-FOR-BOT-DEVELOPERS.md` | Repeated integration questions, errors, trust model |
+| **OpenAPI** | `/openapi/openapi.yaml` | Machine-readable route list |
+| **Hub health** | `/api/health` | Liveness + DB/BTCPay status |
+| **Public cert** | `/api/cert/{kya_id}` | Verify a registered agent |
+| **Discovery feed** | `/api/discovery/v1/agents.json` | Find opt-in agents by capability |
+| **Hub signing pubkey** | `/api/hub/pubkey` | Verify certificates offline |
+
+Full URLs (production): prefix paths with `https://www.umbraxon.xyz` (e.g. `https://www.umbraxon.xyz/AGENTS.md`).
+
 ---
 
 ## POST `/api/v1/register`

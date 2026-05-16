@@ -293,6 +293,27 @@ module.exports = {
             time: true,
         },
         {
+            name: 'kya-portal',
+            script: 'node_modules/next/dist/bin/next',
+            args: 'start -p 3001',
+            cwd: '/root/kya-hub/portal',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: true,
+            max_restarts: 10,
+            min_uptime: '10s',
+            env: {
+                NODE_ENV: 'production',
+                PORT: '3001',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*'
+            },
+            error_file: '/root/.pm2/logs/kya-portal-error.log',
+            out_file: '/root/.pm2/logs/kya-portal-out.log',
+            merge_logs: true,
+            time: true
+        },
+        {
             name: 'alby-hub',
             script: '/root/kya-hub/albyhub/bin/albyhub',
             cwd: '/root/kya-hub/albyhub',

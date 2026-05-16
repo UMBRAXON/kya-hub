@@ -1,4 +1,4 @@
-/root/.pm2/logs/*.log /var/log/kya-*.log {
+/root/.pm2/logs/*.log /var/log/kya-*.log /var/log/kyahub-disk-cleanup.log {
     daily
     rotate 30
     missingok
