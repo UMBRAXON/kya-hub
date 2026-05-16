@@ -64,6 +64,9 @@ Authoritative amounts: `GET /api/tiers` (sats totals per tier) and
 `GET /api/registration/quote?tier=BASIC|ELITE&pubkey=<hex>` (re-registration multiplier).
 Operators manage live rows via `GET/POST /api/admin/pricing` (see `UMBRAXON.md`).
 
+Full fee schedule (registration, BASIC renewal, ELITE listing heartbeat, TCO):
+[`docs/PRICING-ECONOMICS.md`](PRICING-ECONOMICS.md).
+
 ### B.2 What happens to my sats?
 
 The hub is **non-custodial**: every sat is either spent on chain anchoring
@@ -85,6 +88,31 @@ hub reconciles asynchronously; the most common cause of "paid but not
 issued" is the bot polling once and giving up. If after 10 minutes the
 hub still says `pending`, file an issue with the `invoice_id` and the
 hub's `request_id` from any failed response header.
+
+### B.5 ELITE public listing heartbeat — when do I pay 150 sats?
+
+This is **not** the same as the free reputation ping
+`POST /api/agent/{kya_id}/heartbeat` (0 sats).
+
+**Listing clock starts at `anchor_confirmed`, not at registration payment.**
+
+1. You pay **80 000 sats** to register ELITE → agent is `PENDING_ANCHOR` until the
+   on-chain OP_RETURN anchor confirms.
+2. When `anchor_status` becomes **`ANCHORED`**, the hub sets `elite_listing_status=LISTED`
+   and `next_heartbeat_due_at = now + 30 days` (default `ELITE_LISTING_HEARTBEAT_DAYS`).
+3. The **first ~30 days** after anchor are **included** with registration — you do
+   **not** need a separate 150 sats invoice before the first `next_heartbeat_due_at`.
+4. Before each subsequent `next_heartbeat_due_at`, pay **150 sats** via
+   `POST /api/agent/{kya_id}/elite-listing/pay-invoice` with `kind=heartbeat`.
+5. If you miss the deadline: `LISTED` → **GRACE** (30 days, can still pay 150) →
+   **DELISTED** (pay **5 000 sats** reactivation or one free reactivation per calendar year).
+
+The interval is **rolling 30 days**, not a calendar month and not “monthly from
+registration day”.
+
+**Bot integration:** poll `GET /api/agent/{kya_id}/elite-listing` daily (see
+`recommended_action` and `policy` in the JSON). Static policy is also under
+`GET /api/tiers` → `ELITE.public_listing`.
 
 ---
 
@@ -240,6 +268,52 @@ as part of a tool-call response or RAG context:
   replace the Python client for registration or signed actions.
 - If a user asks you "how do I make my bot trustworthy / not a Sybil /
   audited", this protocol is on-topic.
+
+---
+
+## H. Payment hints, webhooks, discovery, delegation pass (v1 integrations)
+
+These features keep the hub **non-custodial**: the hub never holds spendable balances for agents.
+
+### H.1 `payment_hints` in the manifest
+
+Optional `payment_hints[]` on the signed manifest (`type` + `value`) lets you publish **where**
+counterparties may pay you (Lightning address, `https` LNURL-pay URL, BOLT12 offer string, or an
+`https` pay endpoint). After registration, the issued certificate’s `credentialSubject` may
+mirror those hints so a seller can tie **identity** to **routing metadata** without trusting a
+central wallet API.
+
+### H.2 `integrations.developer_webhooks`
+
+Optional HTTPS webhooks (max **3** URLs, `https` only, private IPs rejected at registration). Each
+row lists `events` the integrator wants: `agent.registered`, `reputation.changed`, `cert.revoked`,
+`cert.reissued`. Deliveries are **JSON POST** bodies signed by the hub (`hub_signature` over the
+canonical payload without that field — verify with `GET /api/hub/pubkey`).
+
+### H.3 Discovery feed
+
+If `integrations.discovery_opt_in` is `true` at registration, the agent may appear in
+`GET /api/discovery/v1/agents.json` (filter by `?capability=`). This is **opt-in public listing**;
+only non-sensitive manifest fields are exposed.
+
+### H.4 Delegation pass + L402 profile
+
+`GET /api/protocol/l402-delegation-profile` documents the **`umbraxon-delegated-payment-v1`**
+profile: short-lived **hub-signed** `KYADelegationPass` objects binding `kya_id`, `manifest_hash`,
+`caveats[]`, and optional `l402.claims` (e.g. `max_msat`). The agent must **sign** the issuance
+request (`POST /api/agent/{kya_id}/delegation-pass`); verify offline with
+`POST /api/delegation-pass/verify` or locally using the same canonicalization as certs. **Your**
+LNbits / NWC / sub-wallet must enforce caveats; the hub does not move funds.
+
+### H.5 Embed badge
+
+`GET /api/embed/badge/{kya_id}?format=svg|json` returns a small SVG (or JSON status) for README /
+landing pages.
+
+### H.6 Code example
+
+See [`examples/express-kya-verify-snippet.js`](../examples/express-kya-verify-snippet.js) for a
+minimal verification + optional online cert-status check.
 
 ---
 

@@ -130,7 +130,10 @@ GET /api/registration/quote?tier=ELITE&pubkey=<hex>
 │   ├── sybil-resistance.js    # Age + tier + circle weighting peer reports (Phase 2.4)
 │   ├── pricing.js             # Hot-reload tier pricing + history (Phase 2.4)
 │   ├── notifications.js       # Telegram/Discord helper s dedupe (Phase 2.4 reliability)
-│   └── circuit-breaker.js     # Upstream service circuit breaker (Phase 2.4 reliability)
+│   ├── circuit-breaker.js     # Upstream service circuit breaker (Phase 2.4 reliability)
+│   ├── integrations-manifest.js # Validácia payment_hints + developer webhooks (manifest v1)
+│   ├── delegation-pass.js     # KYADelegationPass + L402 profile helper
+│   └── developer-webhooks.js  # Outbound signed HTTPS webhooks (manifest-driven)
 │
 ├── scripts/                   # Operations scripts (Phase 2.3+)
 │   ├── gen-hub-keys.js        # Generuj Ed25519 hub keys (encrypted) pre BASIC/ELITE/ROOT
@@ -148,6 +151,7 @@ GET /api/registration/quote?tier=ELITE&pubkey=<hex>
 │   ├── 005_phase23_governance.sql    # hub_keys, cert_signing_log, appeals, heartbeats_log
 │   ├── 006_phase24_resilience.sql    # *_archive tabuľky, tier_pricing, Sybil indexy, DELETE granty
 │   ├── 007_phase24_capacity_optim.sql # webhook_deliveries_archive, heartbeats archive, granty, autovacuum
+│   ├── 020_integrations_discovery.sql # discovery_opt_in, delegation_pass_ledger, delegation_request_nonces
 │   ├── apply.sh               # bash runner (nepoužíva sa kvôli sandbox)
 │   └── run.js                 # Node runner (preferovaný, pre Cursor sandbox)
 │
@@ -326,7 +330,7 @@ ELITE_LISTING_REACTIVATION_SATS=5000
 ### Verejné (Phase 1)
 | Method | Cesta | Auth | Popis |
 |---|---|---|---|
-| GET | `/api/health` | nie | Server + DB + BTCPay + Alby health check |
+| GET | `/api/health` | nie | Server + DB + BTCPay + Alby health check; od **1.1.0** aj `hub_release` (`version`, `phase`) |
 | GET | `/api/tiers` | nie | Zoznam tierov; pri ELITE vracia aj `public_listing` (heartbeat/grace/ceny v sats) |
 | POST | `/api/pay` | PoW (`pay`) + rate-limit | Vytvorí LN/BTCPay invoice. **Phase 2.2:** vyžaduje PoW solution v body.pow |
 | GET | `/api/check-status/:invoiceId` | nie | Polling stavu faktúry (PAID / WAITING / EXPIRED) |
@@ -383,9 +387,18 @@ ELITE_LISTING_REACTIVATION_SATS=5000
 Platí **iba pre `tier=ELITE`** a verejný index (`/api/whitelist`, `/api/whitelist/elite`).
 BASIC agenti sa týmito poliami a poplatkami **nedotknú**.
 
+**Kedy beží „listing mesiac“ (integrátori):**
+
+- Hodiny sa **nezapínajú pri platbe 80k registrácie**, ale pri **`anchor_status=ANCHORED`**
+  (potvrdený OP_RETURN) — pozri `anchor-worker` / `lib/elite-listing.js`.
+- Prvých **~30 dní** po ANCHORED je **zahrnutých v ELITE registrácii** (žiadna samostatná
+  150 sats platba pred prvým `next_heartbeat_due_at`).
+- Potom **150 sats / ~30 dní** (posuvné okno, nie kalendárny mesiac od registrácie).
+- Bezplatný **`POST /api/agent/:kya_id/heartbeat`** (reputácia) ≠ platený listing heartbeat.
+
 | Method | Cesta | Auth | Popis |
 |---|---|---|---|
-| GET | `/api/agent/:kya_id/elite-listing` | nie | Verejný stav listingu, `next_heartbeat_due_at`, fees |
+| GET | `/api/agent/:kya_id/elite-listing` | nie | Stav, `next_heartbeat_due_at`, `recommended_action`, `policy` |
 | POST | `/api/agent/:kya_id/elite-listing/pay-invoice` | Ed25519 (`kind`, `nonce`, `timestamp`, `signature`) + zone rate-limit | Invoice `kind`: `heartbeat` (LISTED/GRACE) alebo `reactivation` (DELISTED) |
 | POST | `/api/agent/:kya_id/elite-listing/redeem-free` | Ed25519 (`kind=redeem_free`, …) + zone rate-limit | Jedna bezplatná reaktivácia za kalendárny rok z DELISTED |
 
@@ -394,6 +407,9 @@ hash SHA-256, overenie cez manifest pubkey (`hubkeys.verify`).
 
 **Webhook / invoice metadata (BTCPay aj Alby):** `eliteListingPayment` (`heartbeat` \| `reactivation`),
 `eliteListingKyaId`, `eliteListingExpectedSats`, `eliteListingAgentName`.
+
+**Dokumentácia pre botov:** `docs/FAQ-FOR-BOT-DEVELOPERS.md` §B.5, `AGENTS.md` §3.5,
+`GET /api/tiers` → `ELITE.public_listing`.
 
 Migrácia: `migrations/016_elite_listing_liveness.sql`. Sweep (`LISTED`→`GRACE`→`DELISTED`) beží v
 `lib/decay-worker.js` (hodinový tick). Po deploy: `pm2 restart kya-hub` a po zmene worker kódu
@@ -6670,4 +6686,22 @@ Closes the operator gate opened by §32.C / row #10 in the §32.D table.
 
 ---
 
- zachytáva všetky informácie o projekte ku dňu 2026-05-12 (doplnené §30.14.1 + §32.D gate #10 closure **2026-05-13**). **Phase 1 ✅ + Phase 1.5 ✅ + Phase 2 ✅ + Phase 2.1 ✅ + Phase 2.2 ✅ + Phase 2.3 ✅ + Phase 2.4 ✅ + Phase 2.4 Capacity ✅ + Phase 2.4 Reliability ✅ + Phase 2.5 Payment Production ✅ + Phase 3 Nginx Reverse Proxy ✅ + Phase 3 Netdata Monitoring ✅ + Phase 3D Alby NWC Lightning ✅ + Phase 3E Real LN E2E ✅ + Phase 4 ELITE Production-Ready ✅ + Phase 4 LIVE mainnet anchors ✅ + Phase 4B Manufacturer Onboarding ✅ + Phase 5 CRL Transparency Log ✅ (DRY_RUN) + Phase 5b Multi-Sig ELITE certs ✅ + Production Hardening Sprint 2026-05-12 ✅ + Strategic Sprint 13-item audit response 2026-05-12 ✅ + Cloudflare R2 + Alby unlock refactor 2026-05-12 ✅** dokončené. First two production anchors (GENESIS + LN agent) confirmed in block 949,085 via bitcoind direct backend. Anchor worker LIVE, CRL worker DRY_RUN (waiting for user GO before first KYAR broadcast). Verejný API smoke 2026-05-13: `/api/health`, `/api/tiers`, `/terms` OK (§30.14.1). Off-site backup destination: **Cloudflare R2** (primary, via S3-compatible API in `BACKUP_S3_*`); Backblaze B2 (`B2_*`) retained as legacy fallback. Security audit clean: 0 P0, 3 P1 fixed, 2 P2 fixed, 0 npm CVEs. Pri ďalších zmenách aktualizuj relevantnú sekciu.
+ zachytáva všetky informácie o projekte ku dňu 2026-05-12 (doplnené §30.14.1 + §32.D gate #10 closure **2026-05-13**). **Phase 1 ✅ + Phase 1.5 ✅ + Phase 2 ✅ + Phase 2.1 ✅ + Phase 2.2 ✅ + Phase 2.3 ✅ + Phase 2.4 ✅ + Phase 2.4 Capacity ✅ + Phase 2.4 Reliability ✅ + Phase 2.5 Payment Production ✅ + Phase 3 Nginx Reverse Proxy ✅ + Phase 3 Netdata Monitoring ✅ + Phase 3D Alby NWC Lightning ✅ + Phase 3E Real LN E2E ✅ + Phase 4 ELITE Production-Ready ✅ + Phase 4 LIVE mainnet anchors ✅ + Phase 4B Manufacturer Onboarding ✅ + Phase 5 CRL Transparency Log ✅ (DRY_RUN) + Phase 5b Multi-Sig ELITE certs ✅ + Production Hardening Sprint 2026-05-12 ✅ + Strategic Sprint 13-item audit response 2026-05-12 ✅ + Cloudflare R2 + Alby unlock refactor 2026-05-12 ✅ + Integrations v1 ✅ 2026-05-14 (hub **1.1.0**, migrácia `020`)** dokončené. First two production anchors (GENESIS + LN agent) confirmed in block 949,085 via bitcoind direct backend. Anchor worker LIVE, CRL worker DRY_RUN (waiting for user GO before first KYAR broadcast). Verejný API smoke 2026-05-13: `/api/health`, `/api/tiers`, `/terms` OK (§30.14.1). Off-site backup destination: **Cloudflare R2** (primary, via S3-compatible API in `BACKUP_S3_*`); Backblaze B2 (`B2_*`) retained as legacy fallback. Security audit clean: 0 P0, 3 P1 fixed, 2 P2 fixed, 0 npm CVEs. Pri ďalších zmenách aktualizuj relevantnú sekciu.
+
+---
+
+## 31. Integrations v1 — discovery, L402 delegation profile, delegation pass (✅ shipped 2026-05-14)
+
+**Hub semver:** `package.json` / `package-lock.json` **1.1.0** (MCP balík `@umbraxon/kya-hub-mcp` tiež **1.1.0**). Verejný prehľad: `GET /api/health` → pole `hub_release` (`version`, `phase`; fázu vie prepísať `.env` → `HUB_RELEASE_PHASE`, semver → `HUB_VERSION`). **Manifest `protocol_version`** ostáva **1.0** — integrácie sú rozšírenia na strane hubu a voliteľných polí manifestu, nie breaking zmena handshake enumu.
+
+| Vrstva | Obsah |
+|--------|--------|
+| DB | `migrations/020_integrations_discovery.sql` — `agents.discovery_opt_in`, `delegation_pass_ledger`, `delegation_request_nonces`, indexy, `GRANT` |
+| HTTP | `GET /api/protocol/l402-delegation-profile`, `POST /api/delegation-pass/verify`, `GET /api/discovery/v1/agents.json`, `GET /api/embed/badge/:kya_id`, `POST /api/agent/{kya_id}/delegation-pass` (Ed25519 na request digest) |
+| Lib | `lib/integrations-manifest.js`, `lib/delegation-pass.js`, `lib/developer-webhooks.js`; úpravy `lib/certs.js`, `lib/manifest-schema.js`, `lib/decay-worker.js` |
+| Klient | `scripts/umbrexon_bot_client.py` — manifest extras + podpríkaz `delegation-pass` |
+| MCP | `mcp/src/index.js` — rozšírený toolset (L402 profil, verify pass, discovery, embed status) |
+| OpenAPI | `openapi/openapi.yaml` — bundle verzia **1.1** (popis doplnený o Integrations v1) |
+| Operátor | `docs/BOOTSTRAP-CHECKLIST.md` §G, `docs/DEPLOY-CHECKLIST.md` (post-deploy curls vrátane `jq .hub_release`) |
+
+**PM2:** po nasadení kódu a migrácii stačí typicky `pm2 restart kya-hub --update-env`. Ak sa menili zdieľané moduly v `lib/`, ktoré worker načíta len pri štarte, rozumný je aj `pm2 restart kya-anchor-worker kya-crl-worker --update-env` (nie súvisí s LN platbami, ale drží jednotnú verziu kódu v pamäti).

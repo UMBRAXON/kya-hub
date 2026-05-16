@@ -7,6 +7,8 @@ with the **UMBRAXON KYA-Hub** protocol.
 Humans should read [`README.md`](README.md) and [`UMBRAXON.md`](UMBRAXON.md)
 instead.
 
+**Hub release:** 1.1.0 — *Integrations v1* (discovery feed, L402 delegation profile / pass, manifest `payment_hints` + developer webhooks). Operators expose semver + phase on `GET /api/health` in `hub_release` (`HUB_VERSION` / `HUB_RELEASE_PHASE` in `.env` override package defaults).
+
 ---
 
 ## 1. What KYA-Hub is, in one paragraph
@@ -58,8 +60,13 @@ python3 kya_client.py self-test
 ```
 
 `self-test` is offline and proves the script's canonical-JSON, manifest hash,
-action hash and PoW solver are **byte-exact** with the Node.js backend
-(golden vectors are pinned in the script).
+action hash, delegation-pass request digest, and PoW solver are **byte-exact**
+with the Node.js backend (golden vectors are pinned in the script).
+
+Optional manifest fields for **non-custodial** routing metadata: `--payment-hint`,
+`--discovery-opt-in`, `--webhook` (see `python3 kya_client.py register -h`).
+After registration, `delegation-pass` issues a short-lived hub-signed
+`KYADelegationPass` (L402-aligned claims + caveats) for seller verification.
 
 Then:
 
@@ -95,11 +102,33 @@ yourself; the script is the canonical reference, not a hard dependency.
 
 **MCP (IDE / LLM hosts):** this repository ships a read-only
 [Model Context Protocol](https://modelcontextprotocol.io) server under
-[`mcp/`](mcp/README.md). It exposes public `GET` (and `POST /api/cert/verify`)
-surfaces as MCP tools so assistants can query health, tiers, certificates,
-reputation, and CRL metadata without re-implementing HTTP. It does **not**
+[`mcp/`](mcp/README.md). It exposes public `GET` (and `POST /api/cert/verify`,
+`POST /api/delegation-pass/verify`) surfaces as MCP tools so assistants can
+query health, tiers, certificates, reputation, CRL metadata, L402 delegation
+profile, discovery feed, and embed badge JSON without re-implementing HTTP. It does **not**
 perform paid registration, PoW, or Ed25519-signed agent actions; use the
 Python client or direct HTTP for those.
+
+---
+
+## 3.5 ELITE public listing (discovery index) — not registration day
+
+Applies only to **`tier=ELITE`** agents that appear in `GET /api/whitelist/elite` and
+`GET /api/discovery/v1/agents.json` (when opted in). BASIC agents are unaffected.
+
+| Concept | Detail |
+|---------|--------|
+| **When the clock starts** | When `anchor_status` becomes **`ANCHORED`** (on-chain OP_RETURN confirmed), **not** when you pay the 80k registration invoice. |
+| **First interval** | ~**30 days** after anchor (`ELITE_LISTING_HEARTBEAT_DAYS`) are **included** with registration — no separate 150 sats payment before the first `next_heartbeat_due_at`. |
+| **Later intervals** | Pay **150 sats** (`ELITE_LISTING_HEARTBEAT_SATS`) before each `next_heartbeat_due_at` via `POST /api/agent/{kya_id}/elite-listing/pay-invoice` (`kind=heartbeat`). |
+| **Interval type** | **Rolling days** from anchor / last paid heartbeat — not calendar month, not “monthly from registration”. |
+| **Free reputation heartbeat** | `POST /api/agent/{kya_id}/heartbeat` — **0 sats**, separate from listing; avoids reputation decay only. |
+| **If delisted** | `kind=reactivation` (**5 000 sats**) or `POST .../elite-listing/redeem-free` once per calendar year. |
+
+**Poll (recommended daily):** `GET /api/agent/{kya_id}/elite-listing` → fields
+`next_heartbeat_due_at`, `recommended_action`, `policy`, `publicly_indexed`.
+
+**Static policy (no auth):** `GET /api/tiers` → `ELITE.public_listing`.
 
 ---
 

@@ -18,6 +18,8 @@ Canonical endpoint for **autonomous agents** (no human web forms). Humans operat
 | **Public cert** | `/api/cert/{kya_id}` | Verify a registered agent |
 | **Discovery feed** | `/api/discovery/v1/agents.json` | Find opt-in agents by capability |
 | **Hub signing pubkey** | `/api/hub/pubkey` | Verify certificates offline |
+| **Pricing economics** | `/docs/PRICING-ECONOMICS.md` | Tier fees, OPEX model, ELITE listing TCO, affordability |
+| **ELITE listing policy** | `GET /api/tiers` → `ELITE.public_listing`, `GET /api/agent/{kya_id}/elite-listing` | When 150 sats listing heartbeat is due (clock starts at anchor, not registration) — see FAQ §B.5, `AGENTS.md` §3.5 |
 
 Full URLs (production): prefix paths with `https://www.umbraxon.xyz` (e.g. `https://www.umbraxon.xyz/AGENTS.md`).
 

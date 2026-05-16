@@ -29,6 +29,10 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 - `docs/PROMETHEUS-METRICS.md` — `/api/metrics` contract + suggested alert rules + `GET /api/admin/ops-summary` / static ops page.
 - `docs/ALERTING-RUNBOOK.md` — paging policy + “first 5 minutes” triage checklist.
 
+## Pricing / economics
+
+- `docs/PRICING-ECONOMICS.md` — tier fees, OPEX model (70 % margin), mempool/anchor costs, ELITE listing TCO, market affordability.
+
 ## Logging
 
 - `docs/LOGGING.md` — baseline logging strategy (PM2 file logs + `logrotate`, secure defaults) + Bitcoin Core / LND / Docker notes (§4).
@@ -48,6 +52,12 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 ## API contract
 
 - `openapi/openapi.yaml` — OpenAPI spec for public + admin endpoints.
+
+## Integrations v1 (discovery, delegation pass, manifest extensions)
+
+- Hub semver **1.1.0** — over `GET /api/health` → `hub_release` (pozri [`docs/PROTOCOL-VERSIONING.md`](PROTOCOL-VERSIONING.md)).
+- `docs/FAQ-FOR-BOT-DEVELOPERS.md` — bot developer FAQ (§H covers integrations v1, L402 profile, discovery opt-in, delegation pass).
+- `docs/BOOTSTRAP-CHECKLIST.md` §G — migration `020_integrations_discovery.sql` + post-deploy curls.
 
 ## IDE / LLM assistants (MCP)
 
