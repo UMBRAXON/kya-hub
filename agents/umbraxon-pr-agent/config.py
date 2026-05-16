@@ -51,6 +51,16 @@ def _llm_api_key() -> str:
     return os.getenv("OPENAI_API_KEY", "").strip()
 
 
+def _nostr_private_key() -> str:
+    direct = os.getenv("NOSTR_PRIVATE_KEY", os.getenv("NOSTR_nsec", "")).strip()
+    if direct:
+        return direct
+    file_path = os.getenv("NOSTR_PRIVATE_KEY_FILE", "").strip()
+    if file_path:
+        return _read_secret_file(file_path)
+    return ""
+
+
 @dataclass(frozen=True)
 class Settings:
     kya_hub_base_url: str
@@ -156,7 +166,7 @@ def load_settings() -> Settings:
         kya_registration_id=os.getenv("KYA_REGISTRATION_ID", ""),
         kya_register_wait=_bool("KYA_REGISTER_WAIT", "true"),
         kya_admin_api_key=os.getenv("KYA_ADMIN_API_KEY", os.getenv("ADMIN_API_KEY", "")),
-        nostr_private_key=os.getenv("NOSTR_PRIVATE_KEY", os.getenv("NOSTR_nsec", "")),
+        nostr_private_key=_nostr_private_key(),
         nostr_relays=_csv(
             "NOSTR_RELAYS",
             "wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band",
