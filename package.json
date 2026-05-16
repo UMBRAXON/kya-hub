@@ -1,7 +1,7 @@
 {
   "name": "kya-hub",
-  "version": "1.0.0",
-  "description": "UMBRAXON KYA-Hub — non-custodial, cryptographically-anchored identity and reputation hub for autonomous AI agents. Lightning-paid registration, Ed25519 signatures on canonical payloads, Bitcoin OP_RETURN anchoring (Phase 4), zero-trust 'Know Your Agent' protocol.",
+  "version": "1.1.0",
+  "description": "UMBRAXON KYA-Hub — non-custodial, cryptographically-anchored identity and reputation hub for autonomous AI agents. Lightning-paid registration, Ed25519 signatures on canonical payloads, Bitcoin OP_RETURN anchoring (Phase 4), Integrations v1 (discovery + L402 delegation pass), zero-trust 'Know Your Agent' protocol.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

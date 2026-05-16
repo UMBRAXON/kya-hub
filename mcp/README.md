@@ -1,5 +1,7 @@
 # KYA-Hub MCP server
 
+**Package:** `@umbraxon/kya-hub-mcp` **1.1.0** (tracks hub **Integrations v1** / OpenAPI bundle 1.1).
+
 Read-only [Model Context Protocol](https://modelcontextprotocol.io) bridge to the public UMBRAXON KYA-Hub HTTP API. Use it from Cursor, Claude Desktop, or any MCP client so models can look up certificates, reputation, tiers, and protocol metadata without copy-pasting JSON.
 
 ## Install
@@ -37,6 +39,7 @@ Replace `/ABSOLUTE/PATH/TO/kya-hub` with your clone path.
 ## Tools
 
 - `kya_health`, `kya_tiers`, `kya_hub_pubkey`, `kya_manifest_schema`, `kya_reputation_model`, `kya_protocol_versions`
+- `kya_l402_delegation_profile`, `kya_delegation_pass_verify` (POST body is the pass JSON), `kya_discovery_agents` (optional `capability`, `limit`), `kya_embed_badge_status`
 - `kya_cert`, `kya_cert_status`, `kya_cert_verify` (POST body `{ "certificate": { ... } }`)
 - `kya_agent_reputation`, `kya_agent_events`, `kya_agent_actions` (optional `limit` / `offset`)
 - `kya_manufacturers`, `kya_manufacturer`

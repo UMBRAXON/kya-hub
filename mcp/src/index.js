@@ -57,7 +57,7 @@ async function main() {
 
   const server = new McpServer({
     name: 'kya-hub',
-    version: '1.0.0',
+    version: '1.1.0',
   });
 
   server.registerTool(
@@ -118,6 +118,66 @@ async function main() {
       inputSchema: z.object({}),
     },
     async () => okJson(await hubRequest('GET', '/api/protocol/versions')),
+  );
+
+  server.registerTool(
+    'kya_l402_delegation_profile',
+    {
+      title: 'L402 delegated payment profile',
+      description:
+        'GET /api/protocol/l402-delegation-profile — schema for KYA delegation passes + caveat examples (hub is non-custodial).',
+      inputSchema: z.object({}),
+    },
+    async () => okJson(await hubRequest('GET', '/api/protocol/l402-delegation-profile')),
+  );
+
+  server.registerTool(
+    'kya_delegation_pass_verify',
+    {
+      title: 'Verify delegation pass',
+      description:
+        'POST /api/delegation-pass/verify — verify hub Ed25519 signature and time window on a KYADelegationPass JSON body.',
+      inputSchema: z.object({
+        delegation_pass: z
+          .record(z.unknown())
+          .describe('Full delegation pass object including proof.signatureValue'),
+      }),
+    },
+    async ({ delegation_pass }) =>
+      okJson(await hubRequest('POST', '/api/delegation-pass/verify', delegation_pass)),
+  );
+
+  server.registerTool(
+    'kya_discovery_agents',
+    {
+      title: 'Discovery feed (opt-in agents)',
+      description:
+        'GET /api/discovery/v1/agents.json — agents with discovery_opt_in; optional capability filter.',
+      inputSchema: z.object({
+        capability: z.string().min(1).max(64).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+      }),
+    },
+    async ({ capability, limit }) => {
+      const q = buildQuery({ capability, limit });
+      return okJson(await hubRequest('GET', `/api/discovery/v1/agents.json${q}`));
+    },
+  );
+
+  server.registerTool(
+    'kya_embed_badge_status',
+    {
+      title: 'Embed badge (JSON)',
+      description: 'GET /api/embed/badge/{kya_id}?format=json — compact verified / not_verified for READMEs.',
+      inputSchema: z.object({ kya_id: KYA_ID }),
+    },
+    async ({ kya_id }) =>
+      okJson(
+        await hubRequest(
+          'GET',
+          `/api/embed/badge/${encodeURIComponent(kya_id)}?format=json`,
+        ),
+      ),
   );
 
   server.registerTool(

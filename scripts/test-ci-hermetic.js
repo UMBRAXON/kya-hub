@@ -127,6 +127,9 @@ mustInclude('openapi/openapi.yaml', [
   '/api/dashboard:',
   '/api/anchors/pending:',
   '/api/protocol/reputation-model:',
+  '/api/protocol/l402-delegation-profile:',
+  '/api/discovery/v1/agents.json:',
+  '/api/delegation-pass/verify:',
   'X-Admin-Key',
 ]);
 
@@ -144,6 +147,8 @@ mustInclude('docs/DEPLOY-CHECKLIST.md', [
   'pm2 restart kya-hub',
   'node migrations/run.js',
   'docs/RESTORE-PROCEDURES.md',
+  'l402-delegation-profile',
+  'hub_release',
 ]);
 mustExist('docs/SENTRY.md');
 mustInclude('docs/SENTRY.md', [

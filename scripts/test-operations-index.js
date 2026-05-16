@@ -30,6 +30,7 @@ const mustMention = [
   'docs/LOGGING.md',
   'config/logrotate-btcpay-bitcoin-lnd.example',
   'docs/DIAGNOSTIC-CHECKLIST.md',
+  'docs/FAQ-FOR-BOT-DEVELOPERS.md',
   'docs/SENTRY.md',
   'docs/WATCHTOWER-SETUP.md',
   'docs/WATCHTOWER-MONITORING.md',

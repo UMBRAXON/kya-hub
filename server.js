@@ -7,7 +7,9 @@
 //   GET  /                           — unified www portal (live + whitelist + pay + CLI + docs)
 //   GET  /bots/*                     — legacy path → 301 redirect to /
 //   GET  /api/tiers                   — zoznam tierov
-//   POST /api/pay                     — vytvorenie LN/onchain faktúry
+//   POST /api/v1/register             — M2M registrácia (canonical)
+//   POST /api/register/initiate       — legacy alias (same handler)
+//   POST /api/pay                     — deprecated (410 → use /api/v1/register)
 //   GET  /api/check-status/:invoiceId — polling stavu faktúry
 //   POST /api/webhook/btcpay          — BTCPay webhook (HMAC validovaný)
 //   POST /api/webhook/alby            — Alby Hub webhook (sig validovaný)
@@ -36,11 +38,22 @@ const axios = require('axios');
 const crypto = require('crypto');
 const path = require('path');
 
+const HUB_PACKAGE_JSON = require('./package.json');
+/** Semver for ops + `/api/health`; override with `HUB_VERSION` in `.env` if needed. */
+const HUB_RELEASE_VERSION = (process.env.HUB_VERSION || HUB_PACKAGE_JSON.version || 'unknown').trim();
+/** Human-readable release track (not manifest `protocol_version`). */
+const HUB_RELEASE_PHASE = (process.env.HUB_RELEASE_PHASE || 'Integrations v1').trim();
+
 const logger = require('./lib/logger');
 const security = require('./lib/security');
 const alby = require('./lib/alby');
 const hubkeys = require('./lib/hubkeys');
 const manifestSchema = require('./lib/manifest-schema');
+const integrationsManifest = require('./lib/integrations-manifest');
+const apiV1Register = require('./lib/api-v1-register');
+const registerStatus = require('./lib/register-status');
+const delegationPass = require('./lib/delegation-pass');
+const developerWebhooks = require('./lib/developer-webhooks');
 const certs = require('./lib/certs');
 const reputation = require('./lib/reputation');
 const repEngine = require('./lib/reputation-engine');
@@ -354,7 +367,8 @@ setInterval(async () => {
 // ----------------------------------------------------------------------------
 // Cert issuance helper — uloží do DB tabuľky certificates a vráti signed cert
 // ----------------------------------------------------------------------------
-async function issueCertificate(client, { agent, tier, paymentMethod, paymentHash, amountSats }) {
+async function issueCertificate(client, { agent, tier, paymentMethod, paymentHash, amountSats, manifest }) {
+    const mf = manifest && typeof manifest === 'object' ? manifest : {};
     // Strategic Sprint §30 Item 3 — cert-issuance circuit breaker.
     // If the breaker is HARD HALTED, refuse to even build the body so we don't
     // burn DB writes / signing CPU. The outer caller will surface the error.
@@ -382,6 +396,8 @@ async function issueCertificate(client, { agent, tier, paymentMethod, paymentHas
             paymentHash,
             amountSats,
             serial,
+            paymentHints: integrationsManifest.paymentHintsForCert(mf),
+            integrationsPublic: integrationsManifest.integrationsPublicForCert(mf),
         });
         signed = certs.signCert(body, {
             purpose: 'cert_issue', serial, kya_id: agent.kya_id,
@@ -594,7 +610,9 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
         const seal = crypto.createHmac('sha256', cfg.HUB_SECRET)
             .update(`${agentName}:${axisId}:${tier.total}`)
             .digest('hex');
-        
+        const discoveryOptIn = integrationsManifest.discoveryOptInFromManifest(manifest || {});
+        const lightningNodeId = apiV1Register.lightningNodeIdFromManifest(manifest || {});
+
         const insertRes = await client.query(
             `INSERT INTO agents (
                 kya_id, agent_name, status, reputation_score, agent_pubkey,
@@ -605,8 +623,9 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
                 anchor_status,
                 protocol_version, manifest_hash, manifest_signature,
                 manufacturer_id, manufacturer_verified,
-                mfr_attestation_id, mfr_tier
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, $15, $16, $17, CURRENT_TIMESTAMP, $18, $19, $20, $21, $22, $23, $24, $25)
+                mfr_attestation_id, mfr_tier, discovery_opt_in,
+                lightning_node_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, $15, $16, $17, CURRENT_TIMESTAMP, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
             ON CONFLICT (agent_name) DO NOTHING
             RETURNING id, kya_id, agent_name, agent_pubkey, valid_until, reputation_score, manifest_hash, manufacturer_id`,
             [
@@ -619,6 +638,8 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
                 protocolVersion, manifestHash, manifestSignature,
                 manufacturerId, manufacturerVerified,
                 mfrAttestationId, mfrTier,
+                discoveryOptIn,
+                lightningNodeId,
             ]
         );
         
@@ -665,6 +686,7 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
                 paymentMethod,
                 paymentHash: invoiceId,
                 amountSats,
+                manifest: manifest || {},
             });
         } catch (certErr) {
             logger.error({ err: certErr.message, agentName }, 'cert issuance failed (agent zostáva registrovaný)');
@@ -714,6 +736,7 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
         await client.query('COMMIT');
         const repInfo = reputation.describe(startingScore);
         logger.info({
+            event: 'agent_registered',
             agentName,
             axisId: newAgent.kya_id,
             tier: tier.name,
@@ -722,7 +745,19 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
             mfr: manufacturerId,
             reputation: startingScore,
             zone: repInfo.zone,
+            registration_id: registrationIntent ? registrationIntent.registration_id : null,
+            invoice_id: invoiceId || null,
         }, 'Agent zaregistrovaný');
+
+        developerWebhooks.emit(pool, {
+            event: 'agent.registered',
+            kya_id: newAgent.kya_id,
+            payload: {
+                tier: tier.name,
+                manifest_hash: manifestHash,
+                discovery_opt_in: discoveryOptIn,
+            },
+        }).catch(() => {});
 
         // Fire-and-forget Telegram/Discord PING po každej zaplatenej registrácii (BASIC + ELITE).
         notifications.notifyRegistrationPaid({
@@ -814,6 +849,19 @@ const payLimiter = rateLimit({
     skip: (req) => _adminBypass(req),
 });
 
+// M2M canonical register — stricter than legacy pay/initiate
+const v1RegisterLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: parseInt(process.env.RATE_V1_REGISTER_PER_MIN || '3', 10),
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        error: 'RATE_LIMITED',
+        message: 'Max 3 registrácií/min/IP na /api/v1/register. Rešpektuj Retry-After.',
+    },
+    skip: (req) => _adminBypass(req),
+});
+
 // Phase 4B: manufacturer attestation submission throttle.
 const mfrAttestLimiter = rateLimit({
     windowMs: 60 * 1000,
@@ -825,7 +873,12 @@ const mfrAttestLimiter = rateLimit({
 });
 
 // Registrácia rate-limit referencií pre admin reset (Phase 2.2 testovacie pomôcky)
-const _rateLimiters = { global: globalLimiter, pay: payLimiter, mfr_attest: mfrAttestLimiter };
+const _rateLimiters = {
+    global: globalLimiter,
+    pay: payLimiter,
+    v1_register: v1RegisterLimiter,
+    mfr_attest: mfrAttestLimiter,
+};
 
 // ----------------------------------------------------------------------------
 // 1) Webhook BTCPay — raw body kvôli HMAC overeniu (PRED app.use(json()))
@@ -1126,235 +1179,16 @@ const payPowGate = pow.buildRequireMiddleware({
     },
 });
 
-app.post('/api/pay', payLimiter, payPowGate, async (req, res) => {
-    const log = logger.child({ route: 'pay' });
-    // Strategic Sprint §30 Item 3 — cert-issuance circuit breaker maintenance gate.
-    // When the breaker is HARD HALTED we refuse to even create an invoice
-    // because the moment payment settles we'd be unable to mint the cert.
-    if (certIssuanceBreaker.isMaintenanceMode()) {
-        res.set('Retry-After', '300');
-        return res.status(503).json({
-            error: 'MAINTENANCE_MODE',
-            reason: 'cert_issuance_breaker_halted',
-            retry_after_sec: 300,
-            message: 'Cert issuance is temporarily disabled due to elevated signing failure rate. The operator has been alerted; service will resume after manual review.',
-        });
-    }
-    const { amount, agentName, pubkey, manifest, paymentMethod: requestedMethod } = req.body || {};
-    
-    // Validácia
-    const tier = getTierByAmount(amount);
-    if (!tier) {
-        abuseTracker.recordRejection(pool, {
-            path: req.path, method: req.method, reason: 'INVALID_TIER',
-            http_status: 400, client_ip: req.ip, user_agent: req.headers['user-agent'],
-            error_detail: `amount=${amount}`,
-        }).catch(() => {});
-        return res.status(400).json({
-            error: 'INVALID_TIER',
-            message: `Suma ${amount} neodpovedá tieru. Povolené: ${TIERS.BASIC.total} (BASIC) alebo ${TIERS.ELITE.total} (ELITE).`
-        });
-    }
-    if (!security.isValidAgentName(agentName)) {
-        abuseTracker.recordRejection(pool, {
-            path: req.path, method: req.method, reason: 'INVALID_AGENT_NAME',
-            http_status: 400, client_ip: req.ip, user_agent: req.headers['user-agent'],
-        }).catch(() => {});
-        return res.status(400).json({ error: 'INVALID_AGENT_NAME', message: 'agentName: 3-64 znakov [A-Za-z0-9._-]' });
-    }
-    if (pubkey && !security.isValidPubkey(pubkey)) {
-        abuseTracker.recordRejection(pool, {
-            path: req.path, method: req.method, reason: 'INVALID_PUBKEY',
-            http_status: 400, client_ip: req.ip, user_agent: req.headers['user-agent'],
-        }).catch(() => {});
-        return res.status(400).json({ error: 'INVALID_PUBKEY', message: 'pubkey musí byť hex string (64-130 znakov)' });
-    }
-
-    // Strategic Sprint §31 D — A+B+D no-custody penalty: if the caller's pubkey
-    // is on the deny-list, block; if it has a prior ban, require the multiplied
-    // total. This is the *only* place we charge a re-registration premium.
-    if (pubkey) {
-        try {
-            const quote = await regQuote.getQuote(pool, { tier: tier.name, pubkey });
-            if (quote && quote.deny_listed) {
-                abuseTracker.recordRejection(pool, {
-                    path: req.path, method: req.method, reason: 'PUBKEY_DENY_LIST',
-                    http_status: 409, client_ip: req.ip, user_agent: req.headers['user-agent'],
-                    error_detail: `pubkey banned, expires_at=${quote.deny_listed_until}`,
-                }).catch(() => {});
-                return res.status(409).json({
-                    error: 'PUBKEY_DENY_LISTED',
-                    deny_listed_until: quote.deny_listed_until,
-                    ban_count: quote.ban_count,
-                    multiplier_on_clear: quote.multiplier,
-                    base_price_sats: quote.base_price_sats,
-                    next_total_price_sats: quote.total_price_sats,
-                    notice: quote.notice,
-                });
-            }
-            if (quote && quote.multiplier > 1 && parseInt(amount, 10) !== quote.total_price_sats) {
-                return res.status(402).json({
-                    error: 'PAYMENT_REQUIRED_RE_REGISTRATION_MULTIPLIER',
-                    tier: quote.tier,
-                    base_price_sats: quote.base_price_sats,
-                    multiplier: quote.multiplier,
-                    total_price_sats: quote.total_price_sats,
-                    ban_count: quote.ban_count,
-                    notice: `This pubkey has ban_count=${quote.ban_count}; re-registration costs ${quote.multiplier}× base price.`,
-                });
-            }
-        } catch (e) {
-            log.warn({ err: e.message }, 'deny-list check failed (fail-open)');
-        }
-    }
-
-    // Skontroluj že agent ešte nie je registrovaný
-    try {
-        const exists = await pool.query('SELECT id, status FROM agents WHERE agent_name = $1', [agentName]);
-        if (exists.rowCount > 0) {
-            return res.status(409).json({
-                error: 'AGENT_ALREADY_REGISTERED',
-                message: `Agent ${agentName} už existuje (status: ${exists.rows[0].status})`,
-            });
-        }
-    } catch (e) {
-        log.error({ err: e.message }, 'agent uniqueness check failed');
-    }
-
-    // Strategic Sprint §30 Item 4 — global registrations per hour AML cap.
-    try {
-        const volR = await volumetricLimits.check(pool, 'global:per_hour_regs', {
-            amount: 1,
-            metadata: { agent_name: agentName, tier: tier.name, ip: req.ip },
-        });
-        if (!volR.ok) {
-            res.set('Retry-After', String(volR.retry_after_sec || 3600));
-            return res.status(429).json({
-                error: 'VOLUMETRIC_LIMIT_EXCEEDED',
-                limit_key: volR.limit_key,
-                threshold: volR.threshold,
-                current: volR.current,
-                window_seconds: volR.window_seconds,
-                retry_after_sec: volR.retry_after_sec,
-                message: 'Global registration rate cap reached; try again later.',
-            });
-        }
-    } catch (e) {
-        log.warn({ err: e.message }, 'volumetric check failed (fail-open)');
-    }
-    
-    // Vyber payment backend
-    const useAlby = alby.isConfigured() && alby.isConnected() && requestedMethod !== 'btcpay';
-    const albyBreaker = breaker.get('alby');
-    const btcpayBreaker = breaker.get('btcpay');
-
-    if (useAlby && albyBreaker.canCall()) {
-        // ----- Lightning cez Alby Hub -----
-        try {
-            const description = `UMBRAXON ${tier.name} registration: ${agentName}`;
-            const inv = await alby.createInvoice({
-                amountSats: tier.total,
-                description,
-                metadata: { agentName, pubkey: pubkey || '', tier: tier.name, manifest: manifest || {} }
-            });
-            albyBreaker.onSuccess();
-            log.info({ agentName, tier: tier.name, paymentHash: inv.paymentHash }, 'Alby invoice created');
-            return res.json({
-                method: 'alby-lightning',
-                invoiceId: inv.paymentHash,
-                paymentHash: inv.paymentHash,
-                paymentRequest: inv.invoice,  // BOLT11
-                checkoutLink: null,
-                expiresAt: inv.expiresAt,
-                tier: { name: tier.name, grade: tier.grade, total: tier.total },
-            });
-        } catch (err) {
-            albyBreaker.onFailure();
-            log.error({ err: err.message }, 'Alby createInvoice FAIL — fallback na BTCPay');
-            // pokračuje na BTCPay flow
-        }
-    } else if (useAlby) {
-        log.warn({ breaker: albyBreaker.snapshot() }, 'Alby circuit OPEN — skipping');
-    }
-
-    // ----- Fallback: BTCPay -----
-    if (!btcpayBreaker.canCall()) {
-        const snap = btcpayBreaker.snapshot();
-        const retryAfterSec = Math.ceil(snap.opens_until_ms / 1000) || 60;
-        log.warn({ breaker: snap }, 'BTCPay circuit OPEN — returning 503');
-        res.set('Retry-After', String(retryAfterSec));
-        return res.status(503).json({
-            error: 'PAYMENT_SYSTEM_UNAVAILABLE',
-            message: `Platobný systém je dočasne mimo prevádzky. Skús to o ${retryAfterSec} sekúnd.`,
-            retry_after_sec: retryAfterSec,
-            breaker_state: snap.state,
-        });
-    }
-    try {
-        const r = await axios.post(
-            `${cfg.BTCPAY_URL}/api/v1/stores/${cfg.BTCPAY_STORE_ID}/invoices`,
-            {
-                amount: tier.total,
-                currency: 'SATS',
-                metadata: { agentName, pubkey: pubkey || '', manifest: manifest || {}, amount: tier.total },
-                checkout: { speedPolicy: 'HighSpeed', redirectURL: cfg.REDIRECT_URL }
-            },
-            // IMPORTANT: disable env proxy inheritance (Cursor sandbox / pm2 --update-env).
-            // We must talk to BTCPay directly.
-            { headers: { 'Authorization': `token ${cfg.BTCPAY_API_KEY}`, 'Content-Type': 'application/json' }, timeout: 10000, proxy: false }
-        );
-        btcpayBreaker.onSuccess();
-        const invoice = r.data;
-        
-        // Pokús sa získať payment URI z BTCPay
-        let paymentRequest = null, paymentMethod = null;
-        try {
-            const m = await axios.get(
-                `${cfg.BTCPAY_URL}/api/v1/stores/${cfg.BTCPAY_STORE_ID}/invoices/${invoice.id}/payment-methods`,
-                { headers: { 'Authorization': `token ${cfg.BTCPAY_API_KEY}` }, timeout: 5000, proxy: false }
-            );
-            const methods = m.data || [];
-            const chosen = methods.find(x => (x.paymentMethodId || '').toUpperCase().includes('LNURL') && x.activated)
-                       || methods.find(x => (x.paymentMethodId || '').toUpperCase().includes('LIGHTNING') && x.activated)
-                       || methods.find(x => x.activated);
-            if (chosen) {
-                paymentMethod = chosen.paymentMethodId;
-                paymentRequest = chosen.paymentLink || chosen.destination || null;
-            }
-        } catch (e) {
-            log.warn({ err: e.message }, 'BTCPay payment-methods fetch failed');
-        }
-        
-        res.json({
-            method: 'btcpay',
-            invoiceId: invoice.id,
-            checkoutLink: invoice.checkoutLink,
-            paymentRequest,
-            paymentMethod,
-            tier: { name: tier.name, grade: tier.grade, total: tier.total },
-            status: invoice.status,
-        });
-    } catch (err) {
-        btcpayBreaker.onFailure();
-        const snap = btcpayBreaker.snapshot();
-        log.error({ err: err.response ? err.response.data : err.message, breaker: snap }, 'BTCPay invoice create FAIL');
-        if (snap.state === 'OPEN') {
-            // Práve sme breaker otvorili — pošli warning notifikáciu (dedupe v notifications.js)
-            notifications.notifyBtcpayOutage({
-                error: err.message,
-                httpStatus: err.response ? err.response.status : null,
-            }).catch(() => {});
-            const retryAfterSec = Math.ceil(snap.opens_until_ms / 1000) || 60;
-            res.set('Retry-After', String(retryAfterSec));
-            return res.status(503).json({
-                error: 'PAYMENT_SYSTEM_UNAVAILABLE',
-                message: `Platobný systém je dočasne mimo prevádzky. Skús to o ${retryAfterSec} sekúnd.`,
-                retry_after_sec: retryAfterSec,
-                breaker_state: snap.state,
-            });
-        }
-        res.status(502).json({ error: 'INVOICE_FAILED', message: 'Nepodarilo sa vytvoriť faktúru, skús to o chvíľu znova.' });
-    }
+app.post('/api/pay', payLimiter, (req, res) => {
+    res.set('Deprecation', 'true');
+    res.set('Link', '</api/v1/register>; rel="successor-version"');
+    return res.status(410).json({
+        error: 'ENDPOINT_DEPRECATED',
+        message: 'Human / legacy pay removed. Autonomous agents must use POST /api/v1/register.',
+        successor: '/api/v1/register',
+        docs: '/README_API.md',
+        legacy_equivalent: '/api/register/initiate',
+    });
 });
 
 // ----------------------------------------------------------------------------
@@ -1533,6 +1367,7 @@ app.get('/api/health', async (req, res) => {
     res.json({
         server: 'OK',
         env: cfg.NODE_ENV,
+        hub_release: { version: HUB_RELEASE_VERSION, phase: HUB_RELEASE_PHASE },
         timestamp: new Date().toISOString(),
         db:     { status: _healthCache.db.status,     latency_ms: _healthCache.db.latency_ms     || null },
         btcpay: { status: _healthCache.btcpay.status, latency_ms: _healthCache.btcpay.latency_ms || null,
@@ -1566,6 +1401,7 @@ app.get('/api/admin/health/details', security.adminAuth, async (req, res) => {
     res.json({
         server: 'OK',
         env: cfg.NODE_ENV,
+        hub_release: { version: HUB_RELEASE_VERSION, phase: HUB_RELEASE_PHASE },
         timestamp: new Date().toISOString(),
         cache: {
             probe_interval_ms: HEALTH_PROBE_INTERVAL_MS,
@@ -1608,6 +1444,113 @@ app.get('/api/hub/pubkey', (req, res) => {
 // ----------------------------------------------------------------------------
 app.get('/api/protocol/manifest-schema', (req, res) => {
     res.json(manifestSchema.SCHEMA);
+});
+
+// ----------------------------------------------------------------------------
+// 7.55) L402-aligned delegated payment profile + delegation pass verify
+// ----------------------------------------------------------------------------
+app.get('/api/protocol/l402-delegation-profile', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.json(delegationPass.l402DelegationProfileDoc());
+});
+
+app.post('/api/delegation-pass/verify', async (req, res) => {
+    const pass = req.body;
+    const v = delegationPass.verifyDelegationPass(pass);
+    res.json({
+        ...v,
+        optional_next_checks: {
+            crl: '/crl/latest.json',
+            cert_status: pass && pass.sub ? `/api/cert/${pass.sub}/status` : null,
+        },
+    });
+});
+
+// ----------------------------------------------------------------------------
+// 7.56) Public discovery feed (opt-in agents only)
+// ----------------------------------------------------------------------------
+app.get('/api/discovery/v1/agents.json', async (req, res) => {
+    const cap = (req.query.capability || '').trim().toLowerCase();
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '50', 10), 1), 200);
+    const params = [];
+    let where = `WHERE a.discovery_opt_in = TRUE AND a.is_active = TRUE AND a.status = 'VERIFIED'`;
+    if (cap) {
+        params.push(cap);
+        where += ` AND EXISTS (
+            SELECT 1 FROM jsonb_array_elements_text(COALESCE(a.agent_manifest->'agent'->'capabilities', '[]'::jsonb)) cap
+            WHERE lower(cap) = lower($${params.length})
+        )`;
+    }
+    params.push(limit);
+    const limIdx = params.length;
+    try {
+        const r = await pool.query(
+            `SELECT a.kya_id, a.agent_name, a.tier, a.reputation_score,
+                    a.agent_manifest->'agent'->'capabilities' AS capabilities,
+                    a.agent_manifest->'payment_hints' AS payment_hints
+             FROM agents a
+             ${where}
+             ORDER BY a.reputation_score DESC NULLS LAST
+             LIMIT $${limIdx}`,
+            params
+        );
+        res.set('Cache-Control', 'public, max-age=30');
+        res.json({
+            profile: delegationPass.L402_PROFILE_ID,
+            count: r.rowCount,
+            agents: r.rows,
+        });
+    } catch (e) {
+        logger.error({ err: e.message }, 'discovery feed FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+// ----------------------------------------------------------------------------
+// 7.57) Embed badge (SVG) — third-party pages / README shields
+// ----------------------------------------------------------------------------
+app.get('/api/embed/badge/:kya_id', async (req, res) => {
+    const kya_id = req.params.kya_id;
+    if (!/^UMBRA-[A-F0-9]{6}$/.test(kya_id)) {
+        return res.status(400).type('text/plain').send('INVALID_KYA_ID');
+    }
+    const fmt = (req.query.format || 'svg').toLowerCase();
+    try {
+        const r = await pool.query(
+            `SELECT a.kya_id, a.agent_name, a.status, a.is_active, c.revoked_at
+             FROM agents a
+             LEFT JOIN certificates c ON c.kya_id = a.kya_id AND c.is_current = TRUE
+             WHERE a.kya_id = $1`,
+            [kya_id]
+        );
+        if (r.rowCount === 0) {
+            if (fmt === 'json') return res.status(404).json({ error: 'NOT_FOUND' });
+            return res.status(404).type('image/svg+xml').send('<svg xmlns="http://www.w3.org/2000/svg" width="90" height="20"><text x="4" y="14" font-size="11">KYA unknown</text></svg>');
+        }
+        const row = r.rows[0];
+        const ok = row.is_active && row.status === 'VERIFIED' && !row.revoked_at;
+        if (fmt === 'json') {
+            return res.json({
+                kya_id,
+                agent_name: row.agent_name,
+                status: ok ? 'verified' : 'not_verified',
+                hub: hubkeys.getPublicInfo().hub_url || 'https://umbraxon.xyz',
+            });
+        }
+        const label = ok ? 'KYA verified' : 'KYA not ok';
+        const fill = ok ? '#16a34a' : '#64748b';
+        const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20" role="img" aria-label="${label}">
+  <title>${label}</title>
+  <rect width="120" height="20" rx="3" fill="${fill}"/>
+  <text x="8" y="14" fill="#ffffff" font-family="system-ui,sans-serif" font-size="11">${row.agent_name.slice(0, 18)}</text>
+</svg>`;
+        res.set('Cache-Control', 'public, max-age=60');
+        res.type('image/svg+xml').send(svg);
+    } catch (e) {
+        logger.error({ err: e.message, kya_id }, 'embed badge FAIL');
+        res.status(500).type('text/plain').send('ERR');
+    }
 });
 
 // ----------------------------------------------------------------------------
@@ -1668,16 +1611,23 @@ _rateLimiters.pow = powLimiter;
 app.get('/api/pow/challenge', powLimiter, async (req, res) => {
     const purpose = req.query.purpose || 'generic';
     const difficulty = req.query.difficulty ? parseInt(req.query.difficulty, 10) : undefined;
-    
+    const tierRaw = (req.query.tier || '').toString().toUpperCase();
+    const tier = tierRaw === 'BASIC' || tierRaw === 'ELITE' ? tierRaw : undefined;
+
     if (!pow.PURPOSES.includes(purpose)) {
         return rejectAndLog(req, res, 400, 'INVALID_POW_PURPOSE', {
             body: { allowed: pow.PURPOSES },
         });
     }
-    
+    if (tier && purpose !== 'register') {
+        return rejectAndLog(req, res, 400, 'INVALID_POW_TIER', {
+            body: { message: 'Query tier=BASIC|ELITE is only valid with purpose=register' },
+        });
+    }
+
     try {
         const ch = await pow.createChallenge(pool, {
-            purpose, difficulty, clientIp: req.ip,
+            purpose, difficulty, clientIp: req.ip, tier,
         });
         return res.json({
             ...ch,
@@ -1774,8 +1724,8 @@ const registerAdmissionGate = sponsorInvite.buildRegisterAdmissionMiddleware({
     }),
 });
 
-app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req, res) => {
-    const log = logger.child({ route: 'register/initiate' });
+async function handleRegisterInitiate(req, res) {
+    const log = logger.child({ route: req.path.includes('/v1/') ? 'v1/register' : 'register/initiate' });
     const { manifest, manifest_signature, challenge_id, challenge_response } = req.body || {};
     
     // Helper na audit rejection
@@ -1797,7 +1747,11 @@ app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req
     if (!v.valid) {
         return reject(400, 'MANIFEST_INVALID', { body: { errors: v.errors }, detail: 'schema validation failed' });
     }
-    
+    const extAudit = integrationsManifest.auditManifestExtensions(manifest);
+    if (!extAudit.ok) {
+        return reject(400, 'MANIFEST_EXTENSION_INVALID', { body: { errors: extAudit.errors }, detail: 'payment_hints / integrations' });
+    }
+
     // 2) Timestamp tolerancia (Phase 2.4: konfigurovateľná cez TIMESTAMP_SKEW_MS)
     const tsMs = new Date(manifest.timestamp).getTime();
     if (!Number.isFinite(tsMs) || Math.abs(Date.now() - tsMs) > TIMESTAMP_SKEW_MS) {
@@ -1919,13 +1873,14 @@ app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req
         const sponsorInviteId = req.sponsor_invite_verified?.invite_id
             || req.body?.sponsor_invite_id
             || null;
-        await pool.query(
+        const intentIns = await pool.query(
             `INSERT INTO registration_intents
              (registration_id, agent_name, agent_pubkey, manifest, manifest_hash, manifest_signature,
               manufacturer_id, manufacturer_signature, manufacturer_verified, manufacturer_bonus,
               tier_requested, expires_at, client_ip, user_agent,
               mfr_attestation_id, mfr_tier, sponsor_invite_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+             RETURNING id`,
             [
                 registrationId, agentName, botPubkey,
                 JSON.stringify(manifest), mHash, manifest_signature,
@@ -1955,12 +1910,12 @@ app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req
         log.error({ err: e.message }, 'intent INSERT FAIL');
         return res.status(500).json({ error: 'INTENT_PERSIST_FAILED' });
     }
-
+    
     const regResponseExtras = req.sponsor_invite_verified ? {
         pow_bypassed: true,
         sponsor_invite_id: req.sponsor_invite_verified.invite_id,
     } : {};
-    
+
     // Vytvor invoice — preferuj Alby ak je dostupné
     const description = `UMBRAXON ${tier.name} registration: ${agentName} [${registrationId}]`;
     const useAlby = alby.isConfigured() && alby.isConnected();
@@ -1978,6 +1933,15 @@ app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req
                 `UPDATE registration_intents SET invoice_id = $1 WHERE registration_id = $2`,
                 [inv.paymentHash, registrationId]
             );
+            log.info({
+                event: 'registration_intent_created',
+                registration_id: registrationId,
+                agent_name: agentName,
+                tier: tier.name,
+                amount_sats: tier.total,
+                invoice_id: inv.paymentHash,
+                method: 'alby-lightning',
+            }, 'registration_intent_created');
             return res.json({
                 registration_id: registrationId,
                 method: 'alby-lightning',
@@ -1987,6 +1951,7 @@ app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req
                 tier: { name: tier.name, grade: tier.grade, total: tier.total },
                 manufacturer: mfrResult,
                 manifest_hash: mHash,
+                status_poll_url: `/api/v1/register/status?registration_id=${registrationId}`,
                 ...regResponseExtras,
             });
         }
@@ -2009,6 +1974,15 @@ app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req
             [invoice.id, registrationId]
         );
         
+        log.info({
+            event: 'registration_intent_created',
+            registration_id: registrationId,
+            agent_name: agentName,
+            tier: tier.name,
+            amount_sats: tier.total,
+            invoice_id: invoice.id,
+            method: 'btcpay',
+        }, 'registration_intent_created');
         return res.json({
             registration_id: registrationId,
             method: 'btcpay',
@@ -2017,6 +1991,7 @@ app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req
             tier: { name: tier.name, grade: tier.grade, total: tier.total },
             manufacturer: mfrResult,
             manifest_hash: mHash,
+            status_poll_url: `/api/v1/register/status?registration_id=${registrationId}`,
             ...regResponseExtras,
         });
     } catch (err) {
@@ -2039,8 +2014,10 @@ app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req
         if (errCode) body.upstream_error_code = errCode;
         return res.status(502).json(body);
     }
-});
+}
 
+app.post('/api/v1/register', v1RegisterLimiter, registerAdmissionGate, apiV1Register.normalizeMiddleware, handleRegisterInitiate);
+app.post('/api/register/initiate', payLimiter, registerAdmissionGate, handleRegisterInitiate);
 
 app.get('/api/sponsor-invite/:invite_id', async (req, res) => {
     const inviteId = String(req.params.invite_id || '');
@@ -2054,6 +2031,46 @@ app.get('/api/sponsor-invite/:invite_id', async (req, res) => {
     } catch (e) {
         logger.error({ err: e.message }, 'sponsor-invite status FAIL');
         return res.status(500).json({ error: 'SPONSOR_INVITE_STATUS_FAILED' });
+    }
+});
+
+async function lookupInvoicePaymentForStatus(invoiceId) {
+    if (alby.isConnected()) {
+        try {
+            const status = await alby.lookupInvoice({ paymentHash: invoiceId });
+            const normalized = status.settled ? 'PAID' : (status.state === 'expired' ? 'EXPIRED' : 'WAITING');
+            return { status: normalized, source: 'alby', albyState: status.state };
+        } catch (_) { /* BTCPay fallback */ }
+    }
+    try {
+        const r = await axios.get(
+            `${cfg.BTCPAY_URL}/api/v1/stores/${cfg.BTCPAY_STORE_ID}/invoices/${invoiceId}`,
+            { headers: { Authorization: `token ${cfg.BTCPAY_API_KEY}` }, timeout: 5000, proxy: false }
+        );
+        const s = (r.data.status || '').toLowerCase();
+        const normalized = (s === 'settled' || s === 'complete' || s === 'completed') ? 'PAID'
+            : s === 'processing' ? 'PROCESSING'
+            : (s === 'expired' || s === 'invalid') ? 'EXPIRED'
+            : 'WAITING';
+        return { status: normalized, source: 'btcpay', btcpayStatus: r.data.status };
+    } catch (_) {
+        return null;
+    }
+}
+
+app.get('/api/v1/register/status', async (req, res) => {
+    const registrationId = req.query.registration_id;
+    if (!registrationId || typeof registrationId !== 'string') {
+        return res.status(400).json({ error: 'REGISTRATION_ID_REQUIRED' });
+    }
+    try {
+        const result = await registerStatus.getRegistrationStatus(pool, registrationId.trim(), {
+            lookupPayment: lookupInvoicePaymentForStatus,
+        });
+        return res.status(result.httpStatus).json(result.body);
+    } catch (e) {
+        logger.error({ err: e.message, registration_id: registrationId }, 'GET /api/v1/register/status FAIL');
+        return res.status(500).json({ error: 'STATUS_LOOKUP_FAILED' });
     }
 });
 
@@ -2426,7 +2443,6 @@ async function findAgent(kya_id) {
     return { row: r.rows[0] };
 }
 
-
 // ----------------------------------------------------------------------------
 // Sponsor invite — ELITE anchored agents invite others (PoW bypass only)
 // ----------------------------------------------------------------------------
@@ -2652,6 +2668,32 @@ app.post('/api/agent/:kya_id/action', phase2Limiter, zoneLimitAction, async (req
         }
         
         await client.query('COMMIT');
+        if (eventResult) {
+            const zoneChanged = eventResult.oldZone !== eventResult.newZone;
+            if (eventResult.delta !== 0 || zoneChanged) {
+                developerWebhooks.emit(pool, {
+                    event: 'reputation.changed',
+                    kya_id,
+                    payload: {
+                        event_id: eventResult.eventId,
+                        delta: eventResult.delta,
+                        old_score: eventResult.oldScore,
+                        new_score: eventResult.newScore,
+                        old_zone: eventResult.oldZone,
+                        new_zone: eventResult.newZone,
+                        action_type,
+                    },
+                }).catch(() => {});
+            }
+            const revoked = (eventResult.sideEffects || []).some((s) => s.type === 'CERT_REVOKED');
+            if (revoked) {
+                developerWebhooks.emit(pool, {
+                    event: 'cert.revoked',
+                    kya_id,
+                    payload: { side_effects: eventResult.sideEffects },
+                }).catch(() => {});
+            }
+        }
         log.info({ kya_id, action_type, delta: eventResult?.delta || 0, actionId }, 'self-action recorded');
         
         return res.json({
@@ -2761,7 +2803,85 @@ app.post('/api/agent/:kya_id/heartbeat', phase2Limiter, zoneLimitHeartbeat, asyn
 
 
 // ----------------------------------------------------------------------------
-// 14b) ELITE public listing liveness — status + paid heartbeat / reactivation
+// 14b) POST /api/agent/:kya_id/delegation-pass — hub-issued short-lived pass (L402 claims + caveats)
+// ----------------------------------------------------------------------------
+app.post('/api/agent/:kya_id/delegation-pass', phase2Limiter, async (req, res) => {
+    const kya_id = req.params.kya_id;
+    if (!/^UMBRA-[A-F0-9]{6}$/.test(kya_id)) return res.status(400).json({ error: 'INVALID_KYA_ID' });
+    const { caveats, l402_claims, ttl_seconds, nonce, timestamp, signature } = req.body || {};
+    const tsMs = new Date(timestamp).getTime();
+    if (!Number.isFinite(tsMs) || Math.abs(Date.now() - tsMs) > TIMESTAMP_SKEW_MS) {
+        return res.status(400).json({ error: 'TIMESTAMP_SKEW', skew_ms_allowed: TIMESTAMP_SKEW_MS });
+    }
+    if (!nonce || !/^[0-9a-fA-F]{16,64}$/.test(nonce)) {
+        return res.status(400).json({ error: 'INVALID_NONCE_FORMAT' });
+    }
+    if (!signature || !/^[0-9a-fA-F]{128}$/.test(signature)) {
+        return res.status(400).json({ error: 'BAD_SIGNATURE_FORMAT' });
+    }
+    const ttl = delegationPass.clampTtl(ttl_seconds);
+    const cv = delegationPass.validateCaveats(caveats);
+    if (!cv.ok) return res.status(400).json({ error: cv.error });
+
+    const af = await findAgent(kya_id);
+    if (af.error) return res.status(af.status).json({ error: af.error });
+    const agent = af.row;
+    if (!agent.agent_pubkey) return res.status(400).json({ error: 'AGENT_NO_PUBKEY' });
+    if (agent.status === 'SUSPENDED' || !agent.is_active) return res.status(403).json({ error: 'AGENT_SUSPENDED' });
+    if (agent.status === 'RETIRED') return res.status(410).json({ error: 'AGENT_RETIRED' });
+
+    const digest = delegationPass.agentRequestDigest({
+        kya_id,
+        ttl_seconds: ttl,
+        caveats,
+        l402_claims: l402_claims || {},
+        nonce,
+        timestamp,
+    });
+    if (!hubkeys.verify(digest, signature, agent.agent_pubkey)) {
+        abuseTracker.recordSignatureFailure(pool, {
+            kya_id, client_ip: req.ip, endpoint: 'delegation-pass', failure_type: 'BAD_SIGNATURE', logger,
+        }).catch(() => {});
+        return res.status(401).json({ error: 'BAD_SIGNATURE' });
+    }
+
+    const nonceIns = await pool.query(
+        `INSERT INTO delegation_request_nonces (kya_id, nonce) VALUES ($1, $2)
+         ON CONFLICT (kya_id, nonce) DO NOTHING`,
+        [kya_id, nonce]
+    );
+    if (nonceIns.rowCount === 0) return res.status(409).json({ error: 'REPLAY', message: 'nonce already used' });
+
+    const mh = await pool.query('SELECT manifest_hash FROM agents WHERE id = $1', [agent.id]);
+    const manifest_hash = mh.rows[0] ? mh.rows[0].manifest_hash : null;
+
+    let pass;
+    try {
+        pass = await delegationPass.issueDelegationPass({
+            pool,
+            kya_id,
+            agent_id: agent.id,
+            agent_pubkey: agent.agent_pubkey,
+            manifest_hash,
+            caveats,
+            l402_claims: l402_claims || {},
+            ttl_seconds: ttl,
+            client_ip: req.ip,
+        });
+    } catch (e) {
+        logger.error({ err: e.message, kya_id }, 'delegation-pass issue FAIL');
+        return res.status(500).json({ error: e.code || 'INTERNAL' });
+    }
+    res.json({
+        delegation_pass: pass,
+        l402_profile: delegationPass.L402_PROFILE_ID,
+        verify_url: '/api/delegation-pass/verify',
+    });
+});
+
+
+// ----------------------------------------------------------------------------
+// 14c) ELITE public listing liveness — status + paid heartbeat / reactivation
 // ----------------------------------------------------------------------------
 app.get('/api/agent/:kya_id/elite-listing', phase2Limiter, async (req, res) => {
     const kya_id = req.params.kya_id;
@@ -2769,7 +2889,9 @@ app.get('/api/agent/:kya_id/elite-listing', phase2Limiter, async (req, res) => {
     try {
         const st = await eliteListing.getPublicStatus(pool, kya_id);
         if (st.error === 'AGENT_NOT_FOUND') return res.status(404).json(st);
-        if (st.error === 'NOT_ELITE') return res.status(400).json(st);
+        if (st.error === 'NOT_ELITE') {
+            return res.status(400).json(st);
+        }
         res.json(st);
     } catch (e) {
         logger.error({ err: e.message, kya_id }, 'elite-listing GET FAIL');
@@ -3038,6 +3160,33 @@ app.post('/api/agent/:kya_id/report', phase2Limiter, async (req, res) => {
         }
         
         await client.query('COMMIT');
+        if (autoEvent) {
+            const zoneChanged = autoEvent.oldZone !== autoEvent.newZone;
+            if (autoEvent.delta !== 0 || zoneChanged) {
+                developerWebhooks.emit(pool, {
+                    event: 'reputation.changed',
+                    kya_id,
+                    payload: {
+                        event_id: autoEvent.eventId,
+                        delta: autoEvent.delta,
+                        old_score: autoEvent.oldScore,
+                        new_score: autoEvent.newScore,
+                        old_zone: autoEvent.oldZone,
+                        new_zone: autoEvent.newZone,
+                        source: 'peer_auto',
+                        report_id: reportId,
+                    },
+                }).catch(() => {});
+            }
+            const revoked = (autoEvent.sideEffects || []).some((s) => s.type === 'CERT_REVOKED');
+            if (revoked) {
+                developerWebhooks.emit(pool, {
+                    event: 'cert.revoked',
+                    kya_id,
+                    payload: { side_effects: autoEvent.sideEffects, report_id: reportId },
+                }).catch(() => {});
+            }
+        }
         log.info({ kya_id, report_type, status, autoApplied, reportId, sybil: sybilBreakdown }, 'report recorded');
         
         return res.json({
@@ -3120,6 +3269,33 @@ app.post('/api/admin/agent/:kya_id/slash', security.adminAuth, async (req, res) 
             client_ip: req.ip,
         });
         await client.query('COMMIT');
+        if (result) {
+            const zoneChanged = result.oldZone !== result.newZone;
+            if (result.delta !== 0 || zoneChanged) {
+                developerWebhooks.emit(pool, {
+                    event: 'reputation.changed',
+                    kya_id,
+                    payload: {
+                        event_id: result.eventId,
+                        delta: result.delta,
+                        old_score: result.oldScore,
+                        new_score: result.newScore,
+                        old_zone: result.oldZone,
+                        new_zone: result.newZone,
+                        source: 'admin',
+                        event_type,
+                    },
+                }).catch(() => {});
+            }
+            const revoked = (result.sideEffects || []).some((s) => s.type === 'CERT_REVOKED');
+            if (revoked) {
+                developerWebhooks.emit(pool, {
+                    event: 'cert.revoked',
+                    kya_id,
+                    payload: { side_effects: result.sideEffects },
+                }).catch(() => {});
+            }
+        }
         res.json(result);
     } catch (e) {
         await client.query('ROLLBACK');
@@ -3151,6 +3327,25 @@ app.post('/api/admin/agent/:kya_id/restore', security.adminAuth, async (req, res
             client_ip: req.ip,
         });
         await client.query('COMMIT');
+        if (result) {
+            const zoneChanged = result.oldZone !== result.newZone;
+            if (result.delta !== 0 || zoneChanged) {
+                developerWebhooks.emit(pool, {
+                    event: 'reputation.changed',
+                    kya_id,
+                    payload: {
+                        event_id: result.eventId,
+                        delta: result.delta,
+                        old_score: result.oldScore,
+                        new_score: result.newScore,
+                        old_zone: result.oldZone,
+                        new_zone: result.newZone,
+                        source: 'admin',
+                        event_type: 'ADMIN_RESTORE',
+                    },
+                }).catch(() => {});
+            }
+        }
         res.json(result);
     } catch (e) {
         await client.query('ROLLBACK');
@@ -3208,6 +3403,33 @@ app.post('/api/admin/reports/:id/resolve', security.adminAuth, async (req, res) 
         );
         
         await client.query('COMMIT');
+        if (appliedEvent) {
+            const zoneChanged = appliedEvent.oldZone !== appliedEvent.newZone;
+            if (appliedEvent.delta !== 0 || zoneChanged) {
+                developerWebhooks.emit(pool, {
+                    event: 'reputation.changed',
+                    kya_id: rep.target_kya_id,
+                    payload: {
+                        event_id: appliedEvent.eventId,
+                        delta: appliedEvent.delta,
+                        old_score: appliedEvent.oldScore,
+                        new_score: appliedEvent.newScore,
+                        old_zone: appliedEvent.oldZone,
+                        new_zone: appliedEvent.newZone,
+                        source: 'admin_report_resolve',
+                        report_id: id,
+                    },
+                }).catch(() => {});
+            }
+            const revoked = (appliedEvent.sideEffects || []).some((s) => s.type === 'CERT_REVOKED');
+            if (revoked) {
+                developerWebhooks.emit(pool, {
+                    event: 'cert.revoked',
+                    kya_id: rep.target_kya_id,
+                    payload: { side_effects: appliedEvent.sideEffects, report_id: id },
+                }).catch(() => {});
+            }
+        }
         res.json({ report_id: id, resolution, event: appliedEvent });
     } catch (e) {
         await client.query('ROLLBACK');
@@ -3578,7 +3800,7 @@ app.post('/api/admin/agent/:kya_id/reissue-cert', security.adminAuth, async (req
     try {
         const ag = await client.query(
             `SELECT id, kya_id, agent_name, agent_pubkey, tier, conduct_grade, valid_until,
-                    reputation_score, manifest_hash, manufacturer_id
+                    reputation_score, manifest_hash, manufacturer_id, agent_manifest
              FROM agents WHERE kya_id = $1`,
             [kya_id]
         );
@@ -3618,7 +3840,8 @@ app.post('/api/admin/agent/:kya_id/reissue-cert', security.adminAuth, async (req
         const cnt = await client.query(`SELECT COUNT(*)::int AS c FROM certificates WHERE kya_id = $1`, [kya_id]);
         const serial = certs.makeSerial(kya_id, cnt.rows[0].c + 1);
         
-        const tier = a.tier === 'ELITE' ? { name: 'ELITE' } : { name: 'BASIC' };
+        const tier = a.tier === 'ELITE' ? { name: 'ELITE', grade: a.conduct_grade } : { name: 'BASIC', grade: a.conduct_grade };
+        const manifestSnap = a.agent_manifest && typeof a.agent_manifest === 'object' ? a.agent_manifest : {};
         const body = certs.buildCertBody({
             kya_id: a.kya_id,
             agentName: a.agent_name,
@@ -3633,6 +3856,8 @@ app.post('/api/admin/agent/:kya_id/reissue-cert', security.adminAuth, async (req
             paymentHash: `reissue:${serial}`,
             amountSats: 0,
             serial,
+            paymentHints: integrationsManifest.paymentHintsForCert(manifestSnap),
+            integrationsPublic: integrationsManifest.integrationsPublicForCert(manifestSnap),
         });
         const signed = certs.signCert(body, {
             purpose: 'cert_reissue', serial, kya_id, admin_user: req.headers['x-admin-user'] || 'admin', client_ip: req.ip,
@@ -3673,6 +3898,11 @@ app.post('/api/admin/agent/:kya_id/reissue-cert', security.adminAuth, async (req
         );
         
         await client.query('COMMIT');
+        developerWebhooks.emit(pool, {
+            event: 'cert.reissued',
+            kya_id,
+            payload: { serial, reason: reason || null },
+        }).catch(() => {});
         res.json({ reissued: true, serial, certificate: signed, reason: reason || null });
     } catch (err) {
         await client.query('ROLLBACK');

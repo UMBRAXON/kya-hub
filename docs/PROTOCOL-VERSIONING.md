@@ -2,6 +2,12 @@
 
 **Status:** Strategic Sprint §30 Item 9 — 2026-05-12.
 
+## Hub release vs manifest protocol
+
+- **Manifest `protocol_version`** (handshake below) describes signed payload compatibility — today **`1.0`** only.
+- **Hub semver** (`package.json`, optional `HUB_VERSION` in `.env`) is the Node deployment release (e.g. **1.1.0** for Integrations v1). It appears on `GET /api/health` as `hub_release.version` plus a short `hub_release.phase` label (optional override `HUB_RELEASE_PHASE` in `.env`).
+- **OpenAPI `info.version`** in `openapi/openapi.yaml` (e.g. **1.1**) versions the HTTP contract bundle, not the manifest enum.
+
 ## Why a handshake
 
 KYA-Hub speaks one logical protocol today (`1.0`) but is designed to

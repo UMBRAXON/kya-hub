@@ -1,5 +1,5 @@
 /**
- * UMBRAXON www — live hub, whitelist, Lightning pay, CLI assistant.
+ * UMBRAXON www — live hub, whitelist, M2M CLI assistant, docs (no human pay UI).
  * Loaded as classic script (defer) so globals (Alpine, QRCode) stay predictable.
  */
 const LANG_KEY = 'kyahub_portal_lang';
@@ -22,12 +22,22 @@ const DOC_BODIES = {
   api: {
     sk: `<ul class="list-inside list-disc space-y-1 font-mono text-xs text-cyan-200/80">
       <li>GET /api/health</li><li>GET /api/tiers</li><li>GET /api/whitelist</li>
-      <li>POST /api/register/initiate</li><li>POST /api/pay</li>
-      <li>GET /api/check-status/{invoiceId}</li><li>GET /api/cert/&lt;KYA_ID&gt;</li></ul>`,
+      <li>POST /api/v1/register</li><li>GET /api/v1/register/status</li><li>POST /api/register/initiate</li>
+      <li>GET /api/check-status/{invoiceId}</li><li>GET /api/cert/&lt;KYA_ID&gt;</li>
+      <li>GET /api/protocol/l402-delegation-profile</li>
+      <li>GET /api/discovery/v1/agents.json</li>
+      <li>GET /api/embed/badge/&lt;KYA_ID&gt;?format=json</li>
+      <li>POST /api/delegation-pass/verify</li>
+      <li>POST /api/agent/&lt;KYA_ID&gt;/delegation-pass</li></ul>`,
     en: `<ul class="list-inside list-disc space-y-1 font-mono text-xs text-cyan-200/80">
       <li>GET /api/health</li><li>GET /api/tiers</li><li>GET /api/whitelist</li>
-      <li>POST /api/register/initiate</li><li>POST /api/pay</li>
-      <li>GET /api/check-status/{invoiceId}</li><li>GET /api/cert/&lt;KYA_ID&gt;</li></ul>`,
+      <li>POST /api/v1/register</li><li>GET /api/v1/register/status</li><li>POST /api/register/initiate</li>
+      <li>GET /api/check-status/{invoiceId}</li><li>GET /api/cert/&lt;KYA_ID&gt;</li>
+      <li>GET /api/protocol/l402-delegation-profile</li>
+      <li>GET /api/discovery/v1/agents.json</li>
+      <li>GET /api/embed/badge/&lt;KYA_ID&gt;?format=json</li>
+      <li>POST /api/delegation-pass/verify</li>
+      <li>POST /api/agent/&lt;KYA_ID&gt;/delegation-pass</li></ul>`,
   },
   limits: {
     sk: `<p>429 → spomaľ a rešpektuj <code class="font-mono text-slate-300">Retry-After</code>. 409 REPLAY → neopakuj rovnaký payload. 401/403 → podpisy / suspend / policy.</p>
@@ -61,8 +71,7 @@ const I18N = {
     skip: 'Preskočiť na obsah',
     navLive: 'Stav',
     navAgents: 'Agenti',
-    navPay: 'Platba',
-    navCli: 'CLI',
+    navCli: 'M2M registrácia',
     navDocs: 'Dokumentácia',
     menuOpen: 'Menu',
     brandWord: 'Umbraxon',
@@ -70,9 +79,9 @@ const I18N = {
     heroKicker: 'Know Your Agent · Lightning · Ed25519',
     heroTitle: 'Identita a reputácia pre autonómnych agentov',
     heroLead:
-      'Jeden hub: živý stav služieb, verejný zoznam overených agentov, Lightning platba a nástroje pre vývojárov — priamo na doméne www.',
+      'Jeden hub: živý stav služieb, verejný zoznam overených agentov a M2M API pre autonómnych agentov — bez ľudského registračného formulára.',
     heroCtaLive: 'Stav hubu',
-    heroCtaPay: 'Zaplatiť registráciu',
+    heroCtaApi: 'M2M API dokumentácia',
     dtOpenApi: 'OpenAPI',
     dtApi: 'API',
     ddApiLine: 'rovnaký pôvod · /api/*',
@@ -96,7 +105,7 @@ const I18N = {
     payBtn: 'Vytvoriť faktúru',
     payWait: 'Čakám na platbu…',
     payPlaceholder: 'MOJBOT-001',
-    cliH2: 'CLI asistent',
+    cliH2: 'M2M registrácia (CLI)',
     cliIntro:
       'Privátny kľúč vzniká len lokálne v <code class="text-amber-400/90">bot.key</code>. Príkazy spúšťaj v klóne kya-hub (kde je <code class="text-amber-400/90">scripts/umbrexon_bot_client.py</code>).',
     labelName: 'Meno bota',
@@ -139,8 +148,7 @@ const I18N = {
     skip: 'Skip to content',
     navLive: 'Status',
     navAgents: 'Agents',
-    navPay: 'Pay',
-    navCli: 'CLI',
+    navCli: 'M2M registration',
     navDocs: 'Docs',
     menuOpen: 'Menu',
     brandWord: 'Umbraxon',
@@ -148,9 +156,9 @@ const I18N = {
     heroKicker: 'Know Your Agent · Lightning · Ed25519',
     heroTitle: 'Identity and reputation for autonomous agents',
     heroLead:
-      'One surface: live service status, a public verified-agent feed, Lightning checkout, and developer tooling — on the main www host.',
+      'One surface: live hub status, verified agents, and M2M-only registration via POST /api/v1/register — no human pay form.',
     heroCtaLive: 'Hub status',
-    heroCtaPay: 'Pay registration',
+    heroCtaApi: 'M2M API docs',
     dtOpenApi: 'OpenAPI',
     dtApi: 'API',
     ddApiLine: 'same origin · /api/*',
@@ -174,7 +182,7 @@ const I18N = {
     payBtn: 'Create invoice',
     payWait: 'Waiting for payment…',
     payPlaceholder: 'MYBOT-001',
-    cliH2: 'CLI assistant',
+    cliH2: 'M2M registration (CLI)',
     cliIntro:
       'Private keys stay in <code class="text-amber-400/90">bot.key</code> on your machine. Run commands in a kya-hub clone (<code class="text-amber-400/90">scripts/umbrexon_bot_client.py</code>).',
     labelName: 'Bot name',
@@ -287,9 +295,6 @@ function applyLang() {
   if (hintName) hintName.innerHTML = tr('hintName');
   const footer = document.getElementById('siteFooter');
   if (footer) footer.innerHTML = tr('footerHtml');
-  const payPh = document.getElementById('pay-agent');
-  if (payPh) payPh.setAttribute('placeholder', tr('payPlaceholder'));
-
   const ddApi = document.getElementById('dd-api-line');
   if (ddApi) ddApi.textContent = tr('ddApiLine');
   const ddAlias = document.getElementById('dd-alias-line');
@@ -313,8 +318,6 @@ function applyLang() {
   const btnCopy = document.getElementById('assistant-copy');
   if (btnCopy && !btnCopy.dataset.copyFlash) btnCopy.textContent = tr('btnCopy');
 
-  const sm = document.getElementById('status-msg');
-  if (sm && !sm.dataset.payActive) sm.textContent = tr('payWait');
 }
 
 function setLang(lang) {
@@ -356,6 +359,16 @@ function buildCommandBlock({ baseUrl, name, version, tier }) {
     '  --privkey-file bot.key \\',
     `  --name ${nm} --version ${ver} \\`,
     `  --capability btc_payments --tier ${tier}`,
+    '# Voliteľné (non-custodial manifest):',
+    '#   --payment-hint lightning_address:bot@wallet.example \\',
+    '#   --discovery-opt-in \\',
+    "#   --webhook 'https://your.app/hooks/kya|agent.registered,reputation.changed'",
+    '# Po vydaní KYA-ID:',
+    '# python3 scripts/umbrexon_bot_client.py delegation-pass --base-url ' +
+      b +
+      ' \\',
+    '#   --privkey-file bot.key --kya-id UMBRA-XXXXXX --ttl-seconds 300 \\',
+    '#   --caveat payment.max_satoshi:5000 --l402-json \'{"max_msat":5000000}\'',
   ].join('\n');
 }
 
@@ -397,26 +410,6 @@ async function loadLive() {
     setPill('pill-tiers', 'ok', tr('pillLive'));
 
     const sel = document.getElementById('assistant-tier');
-    const paySel = document.getElementById('pay-tier');
-    if (basic != null && elite != null) {
-      if (sel) {
-        for (const o of sel.options) {
-          if (o.value === 'BASIC') o.textContent = `BASIC (${basic} sats)`;
-          if (o.value === 'ELITE') o.textContent = `ELITE (${elite} sats)`;
-        }
-      }
-      if (paySel) {
-        for (const o of paySel.options) {
-          if (o.value === 'BASIC') {
-            o.textContent = `BASIC (${basic} sats)`;
-            o.dataset.amount = String(basic);
-          }
-          if (o.value === 'ELITE') {
-            o.textContent = `ELITE (${elite} sats)`;
-            o.dataset.amount = String(elite);
-          }
-        }
-      }
     }
   } catch (e) {
     tiersCache = null;
@@ -508,110 +501,6 @@ function wireAssistant() {
       err.textContent = tr('errClip');
     }
   });
-}
-
-function wirePay() {
-  const btn = document.getElementById('btn-pay');
-  if (!btn) return;
-  btn.addEventListener('click', initiateKYA);
-}
-
-async function initiateKYA() {
-  const agentName = document.getElementById('pay-agent')?.value.trim() || '';
-  const tierSel = document.getElementById('pay-tier');
-  const opt = tierSel && tierSel.selectedOptions && tierSel.selectedOptions[0];
-  const amount = opt && opt.dataset.amount ? parseInt(opt.dataset.amount, 10) : NaN;
-
-  if (!agentName) {
-    alert(tr('alertNoName'));
-    return;
-  }
-  if (!isValidAgentName(agentName)) {
-    alert(tr('errName'));
-    return;
-  }
-  if (!Number.isFinite(amount)) {
-    alert(tr('alertTiersWait'));
-    return;
-  }
-
-  const res = await fetch(apiUrl('/api/pay'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ agentName, amount, pubkey: '', manifest: {} }),
-  });
-  const data = await res.json();
-  if (data.error) {
-    alert(`[${data.error}] ${data.message || ''}`);
-    return;
-  }
-
-  const qrBox = document.getElementById('qrcode');
-  const qrContainer = document.getElementById('qr-container');
-  const statusMsg = document.getElementById('status-msg');
-  const invoiceLink = document.getElementById('invoice-link');
-  if (!qrBox || !qrContainer || typeof window.QRCode === 'undefined') {
-    alert('QRCode library not loaded');
-    return;
-  }
-
-  qrContainer.classList.remove('hidden');
-  qrBox.innerHTML = '';
-  if (statusMsg) {
-    statusMsg.dataset.payActive = '1';
-  }
-
-  if (data.paymentRequest) {
-    // eslint-disable-next-line no-new
-    new window.QRCode(qrBox, { text: data.paymentRequest, width: 200, height: 200 });
-    const methodLabel = (data.paymentMethod || '').includes('LNURL')
-      ? 'LNURL-Pay'
-      : (data.paymentMethod || '').includes('LIGHTNING')
-        ? 'Lightning'
-        : 'Bitcoin';
-    if (statusMsg) {
-      statusMsg.textContent = `${tr('payMethodPrefix')}${methodLabel} (${amount} sats)`;
-    }
-  } else if (data.checkoutLink) {
-    // eslint-disable-next-line no-new
-    new window.QRCode(qrBox, { text: data.checkoutLink, width: 200, height: 200 });
-    if (statusMsg) statusMsg.textContent = tr('payCheckout');
-  }
-  if (invoiceLink && data.checkoutLink) {
-    invoiceLink.innerHTML = `<a href="${escapeHtml(data.checkoutLink)}" target="_blank" rel="noopener" class="text-cyan-400 hover:text-cyan-300">${escapeHtml(tr('checkoutLink'))}</a>`;
-  }
-
-  if (data.invoiceId) monitorPayment(data.invoiceId);
-}
-
-function monitorPayment(invoiceId) {
-  const statusEl = document.getElementById('status-msg');
-  const check = setInterval(async () => {
-    try {
-      const res = await fetch(apiUrl(`/api/check-status/${invoiceId}`));
-      const data = await res.json();
-      if (data.status === 'PAID') {
-        clearInterval(check);
-        if (statusEl) {
-          statusEl.textContent = tr('payConfirmed');
-          statusEl.classList.add('text-emerald-400');
-          delete statusEl.dataset.payActive;
-        }
-        setTimeout(() => location.reload(), 2200);
-      } else if (data.status === 'PROCESSING') {
-        if (statusEl) statusEl.textContent = tr('payProcessing');
-      } else if (data.status === 'EXPIRED') {
-        clearInterval(check);
-        if (statusEl) {
-          statusEl.textContent = tr('payExpired');
-          statusEl.classList.add('text-red-400');
-          delete statusEl.dataset.payActive;
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, 3000);
 }
 
 function wireLang() {
@@ -721,7 +610,6 @@ document.addEventListener('DOMContentLoaded', () => {
   applyLang();
   wireLang();
   wireAssistant();
-  wirePay();
   loadLive();
   loadWhitelist();
   void initBrandLottie();

@@ -9,6 +9,7 @@
 [![Node](https://img.shields.io/badge/node-%E2%89%A520.18-339933)](package.json)
 [![License](https://img.shields.io/badge/license-ISC-orange)](LICENSE)
 [![Protocol](https://img.shields.io/badge/protocol-1.0-purple)](docs/PROTOCOL-VERSIONING.md)
+[![Hub release](https://img.shields.io/badge/hub-1.1.0-blue)](package.json)
 
 ---
 
@@ -16,7 +17,9 @@
 protocol** — a non-custodial identity and reputation layer for autonomous AI
 agents and bots. Agents pay for their certificates over Lightning, sign every
 privileged request with Ed25519 on a canonical payload, and (in Phase 4) are
-audited on Bitcoin via `OP_RETURN`. The hub holds no funds, runs no escrow,
+audited on Bitcoin via `OP_RETURN`. **Integrations v1 (release 1.1.0)** adds an
+opt-in discovery feed, L402-aligned delegation passes, and manifest extensions
+(`payment_hints`, developer webhooks). The hub holds no funds, runs no escrow,
 and emits no bearer tokens.
 
 > If you build agents that need to prove **"I am not a sockpuppet"** without
@@ -84,9 +87,10 @@ without a SaaS dependency. Concretely:
 - **`lib/`** — modular boundaries: `pow.js`, `manifest-schema.js`,
   `reputation-engine.js`, `zone-rate-limiter.js`, `abuse-tracker.js`,
   `http-403-tracker.js`, `certs.js`, `hub-key-store.js`, `anchor.js`,
-  `manufacturer.js`, …
-- **`migrations/`** — 19 idempotent SQL migrations (Phase 1 through Strategic
-  Sprint). Run via `node migrations/run.js`.
+  `manufacturer.js`, `integrations-manifest.js`, `delegation-pass.js`,
+  `developer-webhooks.js`, …
+- **`migrations/`** — 20 idempotent SQL migrations (Phase 1 through integrations
+  discovery / delegation pass ledger). Run via `node migrations/run.js`.
 - **`scripts/`** — operator tools (anchor worker, backups, restore drills,
   DAC8 export, channel state backup, cold-wallet generator) plus the
   **Python reference bot client** (`umbrexon_bot_client.py`).
@@ -227,6 +231,7 @@ Two recent point-in-time security audits live in
 | 5.0 | CRL + certificate transparency | shipped |
 | 5B | Multi-sig (BASIC/ELITE/ROOT) hub signing | shipped |
 | Strategic Sprint | No-custody penalty, PDF invoices, AML, DAC8 export | shipped |
+| **Integrations v1** | Discovery feed, L402 delegation profile + pass ledger, manifest `payment_hints` / dev webhooks, MCP tools | shipped (2026-05-14) |
 
 The single source of truth for status is
 [`UMBRAXON.md` §16](UMBRAXON.md#16-rozhodnutia--roadmap). This table is a
@@ -278,7 +283,7 @@ The operator-facing entry points (in order of how often you'll touch them):
 .
 ├── server.js               # single HTTP entrypoint
 ├── lib/                    # domain modules (pow, reputation, security, …)
-├── migrations/             # 19 idempotent SQL files + run.js
+├── migrations/             # 20 idempotent SQL files + run.js
 ├── scripts/                # operator + maintenance tools
 │   ├── umbrexon_bot_client.py    # Python reference SDK
 │   ├── anchor-worker.js          # Bitcoin OP_RETURN broadcaster

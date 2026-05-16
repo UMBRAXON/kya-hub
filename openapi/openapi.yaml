@@ -1,11 +1,13 @@
 openapi: 3.0.3
 info:
   title: UMBRAXON KYA-Hub API
-  version: "1.0"
+  version: "1.1"
   description: |
     Minimal OpenAPI spec for the public + admin API surface.
     This is intentionally not exhaustive yet; it covers the integration-critical endpoints
     and documents security schemes at a high level.
+    **Spec bundle 1.1** adds Integrations v1 surfaces (L402 delegation profile, discovery feed,
+    delegation-pass verify, embed badge) alongside existing registration and admin routes.
 
 servers:
   - url: https://umbraxon.xyz
@@ -142,6 +144,57 @@ components:
               type: integer
               description: Self-reported solver iterations (telemetry only; server uses it for p50/p95 dashboards).
 
+    RegisterV1CompactRequest:
+      type: object
+      required:
+        - agent_name
+        - public_key
+        - lightning_node_id
+        - capabilities
+        - timestamp
+        - nonce
+        - manifest_signature
+        - challenge_id
+        - challenge_response
+      properties:
+        agent_name:
+          type: string
+          pattern: '^[A-Za-z0-9._-]{3,64}$'
+        agent_version:
+          type: string
+          default: "1.0.0"
+        public_key:
+          type: string
+          pattern: '^[0-9a-fA-F]{64}$'
+        lightning_node_id:
+          type: string
+          description: 66-char hex node pubkey or `pubkey@host:port`
+        capabilities:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            type: string
+            pattern: '^[a-z0-9_-]+$'
+        tier:
+          type: string
+          enum: [BASIC, ELITE]
+        timestamp:
+          type: string
+          format: date-time
+        nonce:
+          type: string
+        manifest_signature:
+          type: string
+        challenge_id:
+          type: string
+        challenge_response:
+          type: string
+        pow:
+          type: object
+        integrations:
+          type: object
+
     RegisterInitiateResponse:
       type: object
       description: Registration intent + invoice details.
@@ -199,8 +252,18 @@ paths:
             application/json:
               schema:
                 type: object
-
-  /api/tiers:
+                description: >
+                  Includes `hub_release` with hub semver (`version`, from `package.json` or `HUB_VERSION`)
+                  and operator-facing `phase` (default Integrations v1; override `HUB_RELEASE_PHASE`).
+                properties:
+                  server: { type: string, example: OK }
+                  env: { type: string }
+                  hub_release:
+                    type: object
+                    properties:
+                      version: { type: string, example: "1.1.0" }
+                      phase: { type: string, example: "Integrations v1" }
+                additionalProperties: true
     get:
       tags: [public]
       summary: Tier pricing snapshot
@@ -252,6 +315,92 @@ paths:
       responses:
         "200":
           description: OK
+
+  /api/protocol/l402-delegation-profile:
+    get:
+      tags: [protocol]
+      summary: L402-aligned delegated payment profile (claims + caveat examples)
+      responses:
+        "200":
+          description: JSON profile document
+
+  /api/delegation-pass/verify:
+    post:
+      tags: [protocol]
+      summary: Verify a KYADelegationPass (hub Ed25519 signature + nbf/exp window)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, description: Full delegation pass JSON including proof }
+      responses:
+        "200":
+          description: `{ valid, reason, ... }` plus optional_next_checks hints
+
+  /api/discovery/v1/agents.json:
+    get:
+      tags: [public]
+      summary: Opt-in public discovery index (agents with discovery_opt_in)
+      parameters:
+        - in: query
+          name: capability
+          schema: { type: string }
+          description: Filter agents whose capabilities include this token (case-insensitive)
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, maximum: 200 }
+      responses:
+        "200":
+          description: JSON list of agents (kya_id, capabilities, payment_hints, …)
+
+  /api/embed/badge/{kya_id}:
+    get:
+      tags: [public]
+      summary: KYA status badge (SVG image or JSON)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string, pattern: '^UMBRA-[A-F0-9]{6}$' }
+        - in: query
+          name: format
+          schema: { type: string, enum: [svg, json], default: svg }
+      responses:
+        "200":
+          description: image/svg+xml or JSON `{ kya_id, agent_name, status, hub }`
+        "404":
+          description: Unknown agent (JSON) or SVG placeholder
+
+  /api/agent/{kya_id}/delegation-pass:
+    post:
+      tags: [protocol]
+      summary: Issue hub-signed short-lived delegation pass (agent must sign request body)
+      parameters:
+        - in: path
+          name: kya_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [caveats, ttl_seconds, nonce, timestamp, signature]
+              properties:
+                caveats: { type: array, items: { type: string } }
+                l402_claims: { type: object, additionalProperties: true }
+                ttl_seconds: { type: integer }
+                nonce: { type: string }
+                timestamp: { type: string, format: date-time }
+                signature: { type: string, description: Ed25519 hex128 over agentRequestDigest }
+      responses:
+        "200":
+          description: `{ delegation_pass, l402_profile, verify_url }`
+        "401":
+          description: Bad agent signature
+        "409":
+          description: Request nonce replay
 
   /api/protocol/versions:
     get:
@@ -396,6 +545,53 @@ paths:
           description: POW_REQUIRED / POW_INVALID — fetch a fresh challenge from `/api/pow/challenge`.
         "429":
           description: Rate limited (respect `Retry-After`).
+
+  /api/v1/register:
+    post:
+      tags: [protocol]
+      summary: M2M agent registration (canonical)
+      description: |
+        Compact JSON for autonomous agents (`public_key`, `lightning_node_id`, `capabilities`)
+        or full `manifest` object (legacy-compatible with `/api/register/initiate`).
+        Stricter rate limit (default 3/min/IP). See `/README_API.md`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/RegisterInitiateRequest"
+                - $ref: "#/components/schemas/RegisterV1CompactRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterInitiateResponse"
+        "401":
+          description: Signature / challenge errors
+        "402":
+          description: POW_REQUIRED
+        "429":
+          description: Rate limited (respect `Retry-After`)
+
+  /api/v1/register/status:
+    get:
+      tags: [protocol]
+      summary: Poll registration intent (payment + kya_id when complete)
+      parameters:
+        - in: query
+          name: registration_id
+          required: true
+          schema:
+            type: string
+            pattern: '^REG-[0-9a-f]{24}$'
+      responses:
+        "200":
+          description: Status snapshot including payment_status and cert_url when COMPLETED
+        "404":
+          description: REGISTRATION_NOT_FOUND
 
   /api/cert/{kya_id}:
     get:

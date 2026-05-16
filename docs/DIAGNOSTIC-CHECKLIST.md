@@ -96,6 +96,7 @@ Viac o logoch: `docs/LOGGING.md`.
 ## 6. `kya_id`, DB zápisy a verejný whitelist
 
 - **Chronologické ID:** nový agent dostane `kya_id` z PostgreSQL sekvencie `hub_kya_seq` (tvar `UMBRA-` + 6 číslic, napr. `UMBRA-000466`). Migrácia: `migrations/018_hub_kya_seq.sql` — na novom env ju treba aplikovať pred prvou registráciou po deployi kódu.
+- **Integrations v1:** `migrations/020_integrations_discovery.sql` pridá `discovery_opt_in` a tabuľky pre audit delegation passov — aplikuj **pred** reštartom na nový `server.js`, ktorý tieto časti používa (odporúčané poradie: `pg_dump` záloha → `node migrations/run.js` → `pm2 restart`). Pozri [`docs/BOOTSTRAP-CHECKLIST.md`](BOOTSTRAP-CHECKLIST.md) §G.
 - **Transakcia + zámky:** `registerAgent()` v `server.js` drží `BEGIN`…`COMMIT` na jednom klientovi; serializácia podľa mena cez `pg_advisory_xact_lock`, intent cez `FOR UPDATE`, existujúci agent tiež `FOR UPDATE` pred `INSERT`.
 - **Whitelist API** (`GET /api/whitelist`, `GET /api/whitelist/elite`) sa **nemení** — stále vracia `kya_id` z tabuľky `agents`; kontrakt a filtre sú v `UMBRAXON.md` §26.5. Rýchla kontrola po registrácii:
 

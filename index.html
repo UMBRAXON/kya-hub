@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UMBRAXON | KYA Hub</title>
-  <meta name="description" content="UMBRAXON KYA-Hub — živý stav služieb, overení agenti, Lightning registrácia a vývojársky CLI asistent." />
+  <meta name="description" content="UMBRAXON KYA-Hub — živý stav služieb, overení agenti, M2M API a dokumentácia pre autonómnych agentov." />
   <meta name="theme-color" content="#020617" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="UMBRAXON | KYA Hub" />
@@ -58,7 +58,6 @@
     }
   </style>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="mesh-bg font-sans text-slate-200 antialiased min-h-full">
   <a class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-amber-400 focus:px-4 focus:py-2 focus:text-slate-950" href="#main" data-i18n="skip">Preskočiť na obsah</a>
@@ -92,8 +91,7 @@
         <nav class="hidden items-center gap-1 md:flex" aria-label="Primary">
           <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#live" data-i18n="navLive">Stav</a>
           <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#agents" data-i18n="navAgents">Agenti</a>
-          <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#pay" data-i18n="navPay">Platba</a>
-          <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#cli" data-i18n="navCli">CLI</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#cli" data-i18n="navCli">M2M registrácia</a>
           <a class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white" href="#docs" data-i18n="navDocs">Dokumentácia</a>
         </nav>
 
@@ -112,8 +110,7 @@
         <div class="flex flex-col gap-1">
           <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#live" @click="open=false" data-i18n="navLive">Stav</a>
           <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#agents" @click="open=false" data-i18n="navAgents">Agenti</a>
-          <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#pay" @click="open=false" data-i18n="navPay">Platba</a>
-          <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#cli" @click="open=false" data-i18n="navCli">CLI</a>
+          <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#cli" @click="open=false" data-i18n="navCli">M2M registrácia</a>
           <a class="rounded-lg px-3 py-2 text-sm font-medium" href="#docs" @click="open=false" data-i18n="navDocs">Dokumentácia</a>
         </div>
         <div class="mt-3 flex gap-2 border-t border-white/5 pt-3">
@@ -134,7 +131,7 @@
           <p id="heroLead" class="mt-5 max-w-xl text-lg text-slate-400 leading-relaxed"></p>
           <div class="mt-8 flex flex-wrap gap-3">
             <a href="#live" class="inline-flex items-center justify-center rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-300" data-i18n="heroCtaLive">Stav hubu</a>
-            <a href="#pay" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10" data-i18n="heroCtaPay">Zaplatiť registráciu</a>
+            <a href="/README_API.md" class="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10" data-i18n="heroCtaApi">M2M API dokumentácia</a>
           </div>
         </div>
         <div class="relative min-h-[14rem] overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 shadow-2xl shadow-black/40 backdrop-blur-sm">
@@ -203,32 +200,6 @@
         </div>
       </section>
 
-      <!-- Pay -->
-      <section id="pay" class="scroll-mt-28">
-        <h2 class="text-lg font-bold text-white sm:text-xl" data-i18n="payH2">Lightning · registrácia</h2>
-        <p class="mt-2 max-w-2xl text-sm text-slate-400" data-i18n="payIntro">Zadaj meno agenta a tier.</p>
-        <div class="mt-6 grid gap-8 lg:grid-cols-2">
-          <div class="space-y-4 rounded-2xl border border-white/10 bg-slate-900/35 p-6">
-            <div>
-              <label for="pay-agent" class="block text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="payLabelName">Meno agenta</label>
-              <input id="pay-agent" type="text" maxlength="64" autocomplete="off" placeholder="MOJBOT-001" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-3 font-mono text-sm text-amber-100 placeholder:text-slate-600 focus:border-amber-400/50 focus:outline-none focus:ring-2 focus:ring-amber-400/20" />
-            </div>
-            <div>
-              <label for="pay-tier" class="block text-xs font-semibold uppercase tracking-wider text-slate-500" data-i18n="payLabelTier">Tier</label>
-              <select id="pay-tier" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950/80 px-4 py-3 font-mono text-sm text-amber-100 focus:border-amber-400/50 focus:outline-none focus:ring-2 focus:ring-amber-400/20">
-                <option value="BASIC" data-amount="">BASIC</option>
-                <option value="ELITE" data-amount="">ELITE</option>
-              </select>
-            </div>
-            <button type="button" id="btn-pay" class="w-full rounded-xl bg-amber-400 py-3.5 text-sm font-bold uppercase tracking-wide text-slate-950 shadow-lg shadow-amber-500/20 hover:bg-amber-300" data-i18n="payBtn">Vytvoriť faktúru</button>
-          </div>
-          <div id="qr-container" class="hidden rounded-2xl border border-amber-500/20 bg-slate-900/50 p-6 text-center">
-            <div id="qrcode" class="inline-block rounded-xl bg-white p-3"></div>
-            <p id="status-msg" class="mt-4 text-sm text-amber-200/90">…</p>
-            <p id="invoice-link" class="mt-2 text-xs text-slate-500"></p>
-          </div>
-        </div>
-      </section>
 
       <!-- CLI -->
       <section id="cli" class="scroll-mt-28">

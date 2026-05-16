@@ -1,6 +1,6 @@
 {
   "name": "@umbraxon/kya-hub-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server exposing read-only UMBRAXON KYA-Hub public API tools for IDE and agent clients",
   "type": "module",
   "main": "src/index.js",

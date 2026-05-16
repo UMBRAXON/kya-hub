@@ -124,7 +124,7 @@ The zip contains a single entry named `data.json`. Top-level shape:
     "agent_id": 12345,
     "exported_at": "2026-05-12T16:00:00Z",
     "export_id": 42,
-    "kyahub_version": "1.0.0",
+    "kyahub_version": "1.1.0",
     "schema_version": "2026-05-12-13",
     "included_tables": ["agent","certificates","reputation_events", ...]
   },

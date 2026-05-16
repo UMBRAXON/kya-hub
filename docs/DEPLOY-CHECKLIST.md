@@ -62,6 +62,12 @@ pm2 save
 ```bash
 # health endpoint must respond quickly
 curl -fsS https://umbraxon.xyz/api/health | head -c 400; echo
+# optional: hub semver + release phase (added 1.1.0)
+curl -fsS https://umbraxon.xyz/api/health | jq '.hub_release'
+
+# Integrations v1 (vyžaduje migráciu 020 + zodpovedajúci server.js)
+curl -fsS https://umbraxon.xyz/api/protocol/l402-delegation-profile | head -c 200; echo
+curl -fsS 'https://umbraxon.xyz/api/discovery/v1/agents.json?limit=2' | head -c 400; echo
 
 # internal admin-only sanity (on host)
 curl -fsS -H "X-Admin-Key: $ADMIN_API_KEY" http://127.0.0.1:3000/api/admin/system-health | head -c 1200; echo

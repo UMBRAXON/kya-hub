@@ -93,3 +93,8 @@ pm2 logs kya-hub --lines 200 --nostream | tail -n 200
 
 - [ ] **`migrations/018_hub_kya_seq.sql`** aplikovaná na produkčnej DB (`hub_kya_seq` + `GRANT` pre `kyahub_app`). Bez sekvencie `registerAgent()` pri novom agentovi zlyhá na `nextval`.
 - [ ] Po prvej registrácii over verejný index: `curl -fsS 'https://<tvoja-domena>/api/whitelist?limit=5' | jq '.agents[].kya_id'` — očakávaj tvar `UMBRA-000…` pre nových agentov (starí môžu mať „hex“ vzhľad).
+
+## G) Integrations v1 — discovery, delegation pass, manifest extensions (2026-05)
+
+- [ ] **`migrations/020_integrations_discovery.sql`** aplikovaná (`agents.discovery_opt_in`, `delegation_pass_ledger`, `delegation_request_nonces`, indexy, `GRANT`). Bez nej nový hub kód hlási SQL chyby pri INSERT agenta alebo pri `POST /api/agent/{kya_id}/delegation-pass`.
+- [ ] Po deployi over: `curl -fsS https://<tvoja-domena>/api/protocol/l402-delegation-profile | head` a `curl -fsS 'https://<tvoja-domena>/api/discovery/v1/agents.json?limit=1'`.

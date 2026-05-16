@@ -20,9 +20,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KYA Hub — Verified identity for autonomous systems",
+  title: "UMBRAXON KYA Hub — Verified identity for autonomous systems",
   description:
-    "Umbraxon Know Your Agent Hub. Lightning-native M2M registration, Ed25519 certificates, public discovery.",
+    "UMBRAXON KYA Hub — Lightning-native M2M agent registry, Ed25519 certificates, public discovery.",
 };
 
 export default function RootLayout({

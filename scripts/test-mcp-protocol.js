@@ -19,6 +19,10 @@ const REQUIRED_TOOLS = new Set([
   'kya_cert',
   'kya_cert_verify',
   'kya_registration_quote',
+  'kya_l402_delegation_profile',
+  'kya_delegation_pass_verify',
+  'kya_discovery_agents',
+  'kya_embed_badge_status',
 ]);
 
 function send(proc, obj) {

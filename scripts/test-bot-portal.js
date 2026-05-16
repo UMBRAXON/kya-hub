@@ -35,7 +35,8 @@ mustInclude(html, '/logo.png', 'logo path');
 mustInclude(js, '/api/health', 'health fetch path');
 mustInclude(js, '/api/tiers', 'tiers fetch path');
 mustInclude(js, '/api/whitelist', 'whitelist fetch');
-mustInclude(js, '/api/pay', 'pay endpoint');
+mustInclude(js, '/api/v1/register', 'v1 register in docs');
+mustInclude(html, 'README_API.md', 'M2M API docs link');
 mustInclude(js, 'umbrexon_bot_client.py', 'python client path');
 mustInclude(js, 'navigator.clipboard', 'copy helper');
 

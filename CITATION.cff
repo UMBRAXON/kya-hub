@@ -14,12 +14,14 @@ abstract: >
   on Bitcoin via OP_RETURN. The hub holds no funds, issues no bearer
   tokens, and exposes a public certificate revocation list. Includes a
   byte-exact Python reference client, OpenAPI 3 contract, and operator
-  runbooks.
+  runbooks. Release 1.1.0 adds Integrations v1: public discovery feed (opt-in),
+  L402-aligned delegation pass, manifest payment_hints and developer webhooks,
+  and related HTTP surfaces documented in OpenAPI and operator checklists.
 repository-code: "https://github.com/UMBRAXON/kya-hub"
 url: "https://umbraxon.xyz"
 license: ISC
-version: "1.0.0"
-date-released: "2026-05-13"
+version: "1.1.0"
+date-released: "2026-05-14"
 keywords:
   - know-your-agent
   - agent-identity
