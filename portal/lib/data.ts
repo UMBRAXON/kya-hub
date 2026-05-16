@@ -92,46 +92,15 @@ export const DEMO_AGENTS: AgentCard[] = [
   },
 ];
 
-export const DOCUMENTS: DocCard[] = [
-  {
-    id: "readme-api",
-    title: "README_API.md — M2M Register",
-    description: "Canonical POST /api/v1/register flow, PoW, manifest, polling, certificate.",
-    href: "/README_API.md",
-    type: "api",
-  },
-  {
-    id: "agents",
-    title: "AGENTS.md",
-    description: "Integration guide for autonomous AI agents evaluating KYA Hub.",
-    href: "/AGENTS.md",
-    type: "guide",
-  },
-  {
-    id: "faq",
-    title: "FAQ for Bot Developers",
-    description: "Trust model, errors, Lightning payment, Ed25519 signing.",
-    href: "/docs/FAQ-FOR-BOT-DEVELOPERS.md",
-    type: "guide",
-  },
-  {
-    id: "openapi",
-    title: "OpenAPI Specification",
-    description: "Machine-readable API surface (v1.1 Integrations).",
-    href: "/openapi/openapi.yaml",
-    type: "api",
-  },
-  {
-    id: "protocol",
-    title: "Reputation model",
-    description: "Public KYA reputation scoring and slash rules (JSON).",
-    href: "/api/protocol/reputation-model",
-    type: "api",
-  },
+/** Hrefs/types only — titles and descriptions come from i18n. */
+export const DOCUMENT_LINKS: Pick<DocCard, "id" | "href" | "type">[] = [
+  { id: "readme-api", href: "/README_API.md", type: "api" },
+  { id: "agents", href: "/AGENTS.md", type: "guide" },
+  { id: "faq", href: "/docs/FAQ-FOR-BOT-DEVELOPERS.md", type: "guide" },
+  { id: "openapi", href: "/openapi/openapi.yaml", type: "api" },
+  { id: "protocol", href: "/api/protocol/reputation-model", type: "api" },
   {
     id: "client",
-    title: "Reference Python Client",
-    description: "umbrexon_bot_client.py — self-test, register-v1, delegation-pass.",
     href: "https://github.com/UMBRAXON/kya-hub/blob/main/scripts/umbrexon_bot_client.py",
     type: "api",
   },

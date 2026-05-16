@@ -47,6 +47,71 @@ export interface HubHealthResponse {
   hub_release?: { version?: string; phase?: string };
 }
 
+export interface TierInfo {
+  total: number;
+  grade: string;
+  durationMonths: number | null;
+  startingReputation: number;
+  requiresAnchor: boolean;
+}
+
+export interface TiersResponse {
+  BASIC?: TierInfo;
+  ELITE?: TierInfo;
+}
+
+export async function fetchTiers(): Promise<{
+  basic: TierInfo;
+  elite: TierInfo;
+}> {
+  const fallback = {
+    basic: {
+      total: 10_000,
+      grade: "B",
+      durationMonths: 12,
+      startingReputation: 500,
+      requiresAnchor: false,
+    },
+    elite: {
+      total: 80_000,
+      grade: "S",
+      durationMonths: null,
+      startingReputation: 900,
+      requiresAnchor: true,
+    },
+  };
+  try {
+    const res = await fetch(`${HUB_BASE}/api/tiers`, {
+      headers: { Accept: "application/json", "User-Agent": "kya-portal/1.0" },
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return fallback;
+    const data = (await res.json()) as TiersResponse;
+    return {
+      basic: data.BASIC
+        ? {
+            total: data.BASIC.total,
+            grade: data.BASIC.grade,
+            durationMonths: data.BASIC.durationMonths ?? 12,
+            startingReputation: data.BASIC.startingReputation,
+            requiresAnchor: data.BASIC.requiresAnchor ?? false,
+          }
+        : fallback.basic,
+      elite: data.ELITE
+        ? {
+            total: data.ELITE.total,
+            grade: data.ELITE.grade,
+            durationMonths: data.ELITE.durationMonths,
+            startingReputation: data.ELITE.startingReputation,
+            requiresAnchor: data.ELITE.requiresAnchor ?? true,
+          }
+        : fallback.elite,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export async function fetchHubRelease(): Promise<{
   version?: string;
   phase?: string;

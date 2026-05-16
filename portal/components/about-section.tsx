@@ -1,4 +1,13 @@
-import { Anchor, Bitcoin, ShieldCheck, Zap } from "lucide-react";
+import type { ReactNode } from "react";
+import Link from "next/link";
+import {
+  Anchor,
+  Bitcoin,
+  Check,
+  ShieldCheck,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -7,47 +16,77 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { TierInfo } from "@/lib/hub-api";
+import type { Dictionary, Locale } from "@/lib/i18n";
+import { formatSats } from "@/lib/i18n";
+import { fill } from "@/lib/template";
+
+const PILLAR_ICONS = [ShieldCheck, Zap, Anchor, Bitcoin] as const;
 
 export interface AboutSectionProps {
+  locale: Locale;
+  t: Dictionary["about"];
   hubVersion?: string;
   hubPhase?: string;
+  tiers?: { basic: TierInfo; elite: TierInfo };
 }
 
-const PILLARS = [
-  {
-    icon: ShieldCheck,
-    title: "Ed25519 identity",
-    description:
-      "Agents prove control with their own keypair. Privileged actions use detached signatures over canonical payloads — not bearer tokens, API keys, or sessions.",
-  },
-  {
-    icon: Zap,
-    title: "Lightning registration",
-    description:
-      "Registration is paid on Lightning (M2M only). After settlement, poll status and fetch a publicly auditable certificate at GET /api/cert/{kya_id}.",
-  },
-  {
-    icon: Anchor,
-    title: "Public accountability",
-    description:
-      "Misbehaviour is reflected in a public CRL and a 3ⁿ price multiplier on re-registration (capped at 9×). Identity is designed to be verifiable, not anonymous by default.",
-  },
-  {
-    icon: Bitcoin,
-    title: "Non-custodial hub",
-    description:
-      "Every sat collected is spent on chain anchoring or recognised as revenue. There is no escrow, bond, or refund — the registry does not hold agent funds.",
-  },
-] as const;
+function BenefitItem({ children }: { children: ReactNode }) {
+  return (
+    <li className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
+      <Check
+        className="mt-0.5 size-4 shrink-0 text-primary"
+        aria-hidden
+      />
+      <span>{children}</span>
+    </li>
+  );
+}
 
-export function AboutSection({ hubVersion, hubPhase }: AboutSectionProps) {
+function BenefitLine({
+  lead,
+  rest,
+  vars,
+}: {
+  lead: string;
+  rest: string;
+  vars?: Record<string, string | number>;
+}) {
+  const L = vars ? fill(lead, vars) : lead;
+  const R = vars ? fill(rest, vars) : rest;
+  return (
+    <BenefitItem>
+      <strong className="font-medium text-foreground">{L}</strong> {R}
+    </BenefitItem>
+  );
+}
+
+export function AboutSection({
+  locale,
+  t,
+  hubVersion,
+  hubPhase,
+  tiers,
+}: AboutSectionProps) {
+  const basic = tiers?.basic;
+  const elite = tiers?.elite;
+  const basicPrice = basic
+    ? formatSats(basic.total, locale)
+    : formatSats(10_000, locale);
+  const elitePrice = elite
+    ? formatSats(elite.total, locale)
+    : formatSats(80_000, locale);
+  const basicRep = basic?.startingReputation ?? 500;
+  const eliteRep = elite?.startingReputation ?? 900;
+  const basicGrade = basic?.grade ?? "B";
+  const eliteGrade = elite?.grade ?? "S";
   return (
     <section id="about" className="relative px-4 py-20">
       <div className="glow-divider mx-auto mb-16 max-w-4xl" />
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            About KYA Hub
+            {t.title}
           </h2>
           {(hubVersion || hubPhase) && (
             <p className="mt-3">
@@ -55,7 +94,7 @@ export function AboutSection({ hubVersion, hubPhase }: AboutSectionProps) {
                 variant="outline"
                 className="border-cyan-500/30 bg-cyan-500/10 font-mono text-xs text-primary"
               >
-                Hub {hubVersion ?? "—"}
+                {t.hubLabel} {hubVersion ?? "—"}
                 {hubPhase ? ` · ${hubPhase}` : ""}
               </Badge>
             </p>
@@ -63,75 +102,185 @@ export function AboutSection({ hubVersion, hubPhase }: AboutSectionProps) {
         </div>
 
         <p className="mx-auto max-w-3xl text-center text-base leading-relaxed text-muted-foreground sm:text-lg">
-          <strong className="font-medium text-foreground">Know Your Agent Hub</strong>{" "}
-          is a Lightning-paid, Ed25519-anchored identity and reputation registry for
-          autonomous software agents. An agent proves it exists, pays a small fee,
-          signs a manifest with its own key, and receives a certificate others can
-          verify offline. Subsequent actions are authenticated with cryptographic
-          non-repudiation — built for bots and integrators, not human web forms.
+          <strong className="font-medium text-foreground">{t.introLead}</strong>{" "}
+          {t.intro}
         </p>
 
         <div className="mt-14 grid gap-5 sm:grid-cols-2">
-          {PILLARS.map(({ icon: Icon, title, description }) => (
-            <Card key={title} className="neon-card border-0 ring-0">
+          {t.pillars.map((pillar, i) => {
+            const Icon = PILLAR_ICONS[i];
+            return (
+              <Card key={pillar.title} className="neon-card border-0 ring-0">
+                <CardHeader>
+                  <Icon
+                    className="size-8 text-primary drop-shadow-[0_0_8px_rgba(0,255,255,0.35)]"
+                    aria-hidden
+                  />
+                  <CardTitle className="mt-3 text-lg">{pillar.title}</CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    {pillar.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent />
+              </Card>
+            );
+          })}
+        </div>
+
+        <div id="tiers" className="mt-16 scroll-mt-24">
+          <div className="text-center">
+            <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              {t.tiersTitle}
+            </h3>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {t.tiersIntro}
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <Card className="neon-card border border-cyan-500/10">
               <CardHeader>
-                <Icon
-                  className="size-8 text-primary drop-shadow-[0_0_8px_rgba(0,255,255,0.35)]"
-                  aria-hidden
-                />
-                <CardTitle className="mt-3 text-lg">{title}</CardTitle>
-                <CardDescription className="text-sm leading-relaxed">
-                  {description}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <CardTitle className="text-xl">{t.basic.name}</CardTitle>
+                  <Badge
+                    variant="outline"
+                    className="border-cyan-500/30 bg-cyan-500/10 font-mono text-primary"
+                  >
+                    {t.basic.grade} {basicGrade}
+                  </Badge>
+                </div>
+                <CardDescription className="text-base text-foreground">
+                  <span className="font-mono text-lg font-semibold text-primary">
+                    {basicPrice} sats
+                  </span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    {t.basic.priceSuffix}
+                  </span>
                 </CardDescription>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {t.basic.pitch}
+                </p>
               </CardHeader>
-              <CardContent />
+              <CardContent>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">
+                  {t.basic.whatYouGet}
+                </p>
+                <ul className="space-y-2.5">
+                  {t.basic.benefits.map((b, i) => (
+                    <BenefitLine
+                      key={i}
+                      lead={b.lead}
+                      rest={b.rest}
+                      vars={i === 2 ? { rep: basicRep } : undefined}
+                    />
+                  ))}
+                </ul>
+                <Link
+                  href="#docs"
+                  className="neon-btn-outline mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg border px-6 text-sm font-medium sm:w-auto"
+                >
+                  {t.basic.cta}
+                </Link>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  {t.basic.renewNote}
+                </p>
+              </CardContent>
             </Card>
-          ))}
+
+            <Card className="neon-card relative overflow-hidden border border-amber-500/25 shadow-[0_0_32px_rgba(251,191,36,0.08)]">
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent"
+                aria-hidden
+              />
+              <CardHeader>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Sparkles
+                      className="size-5 text-amber-400"
+                      aria-hidden
+                    />
+                    {t.elite.name}
+                  </CardTitle>
+                  <Badge className="bg-amber-500/15 font-mono text-amber-200 hover:bg-amber-500/15">
+                    {t.elite.grade} {eliteGrade} · {t.elite.recommended}
+                  </Badge>
+                </div>
+                <CardDescription className="text-base text-foreground">
+                  <span className="font-mono text-lg font-semibold text-amber-300">
+                    {elitePrice} sats
+                  </span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    {t.elite.priceSuffix}
+                  </span>
+                </CardDescription>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {t.elite.pitch}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-amber-300/90">
+                  {t.elite.plusTitle}
+                </p>
+                <ul className="space-y-2.5">
+                  {t.elite.benefits.map((b, i) => (
+                    <BenefitLine
+                      key={i}
+                      lead={b.lead}
+                      rest={b.rest}
+                      vars={
+                        i === 0
+                          ? { rep: eliteRep, delta: eliteRep - basicRep }
+                          : undefined
+                      }
+                    />
+                  ))}
+                </ul>
+                <Link
+                  href="#docs"
+                  className="neon-btn-cyan mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg text-sm font-medium sm:w-auto sm:px-6"
+                >
+                  {t.elite.cta}
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          <p className="mx-auto mt-8 max-w-3xl text-center text-xs text-muted-foreground">
+            {t.tiersFootnote}{" "}
+            <a
+              href="/docs/FAQ-FOR-BOT-DEVELOPERS.md"
+              className="text-primary hover:underline"
+            >
+              {t.tiersFaq}
+            </a>
+            .
+          </p>
         </div>
 
         <div className="mt-14 rounded-xl border border-cyan-500/15 bg-card/40 p-6 sm:p-8">
           <h3 className="font-mono text-sm font-semibold tracking-wider text-primary">
-            When to integrate
+            {t.integrateTitle}
           </h3>
           <ul className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-            <li className="flex gap-2">
-              <span className="text-primary" aria-hidden>
-                →
-              </span>
-              Prove your agent is not a Sybil sockpuppet to a counterparty.
-            </li>
-            <li className="flex gap-2">
-              <span className="text-primary" aria-hidden>
-                →
-              </span>
-              Provide an audit trail of which agent signed each request.
-            </li>
-            <li className="flex gap-2">
-              <span className="text-primary" aria-hidden>
-                →
-              </span>
-              Carry portable reputation across operators (you keep your keys).
-            </li>
-            <li className="flex gap-2">
-              <span className="text-primary" aria-hidden>
-                →
-              </span>
-              Opt into the public discovery feed by capability and tier.
-            </li>
+            {t.integrateItems.map((item) => (
+              <li key={item} className="flex gap-2">
+                <span className="text-primary" aria-hidden>
+                  →
+                </span>
+                {item}
+              </li>
+            ))}
           </ul>
           <p className="mt-6 border-t border-cyan-500/10 pt-6 text-sm text-muted-foreground">
-            Integrations v1 adds discovery (
-            <code className="break-all text-primary">
-              /api/discovery/v1/agents.json
-            </code>
-            ), L402-aligned delegation passes, manifest payment hints, and
-            developer webhooks. Start with{" "}
+            {t.integrateFoot}{" "}
             <a href="/README_API.md" className="text-primary hover:underline">
-              README_API.md
+              {t.readme}
             </a>{" "}
-            or{" "}
+            {t.or}{" "}
             <a href="/AGENTS.md" className="text-primary hover:underline">
-              AGENTS.md
+              {t.agentsMd}
             </a>
             .
           </p>

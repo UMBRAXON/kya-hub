@@ -4,15 +4,24 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import type { Dictionary, Locale } from "@/lib/i18n";
 
-const LINKS = [
-  { href: "#about", label: "About" },
-  { href: "#agents", label: "Agents" },
-  { href: "#docs", label: "Docs" },
-];
-
-export function Navbar() {
+export function Navbar({
+  locale,
+  nav,
+}: {
+  locale: Locale;
+  nav: Dictionary["nav"];
+}) {
   const [open, setOpen] = useState(false);
+
+  const LINKS = [
+    { href: "#about", label: nav.about },
+    { href: "#tiers", label: nav.tiers },
+    { href: "#agents", label: nav.agents },
+    { href: "#docs", label: nav.docs },
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -34,7 +43,7 @@ export function Navbar() {
 
   return (
     <header className="glass-nav fixed top-0 z-50 w-full">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:px-6">
         <Link
           href="#"
           className="group flex min-w-0 items-center gap-2 font-mono text-sm font-semibold tracking-[0.15em] text-foreground transition-colors hover:text-primary sm:tracking-[0.2em]"
@@ -64,11 +73,19 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher
+            locale={locale}
+            labels={{
+              language: nav.language,
+              langEn: nav.langEn,
+              langSk: nav.langSk,
+            }}
+          />
           <Link
             href="#docs"
             className="neon-btn-cyan hidden rounded-lg px-4 py-2 text-sm font-medium md:inline-flex"
           >
-            Register agent
+            {nav.register}
           </Link>
           <button
             type="button"
@@ -101,13 +118,23 @@ export function Navbar() {
                 </Link>
               </li>
             ))}
+            <li className="flex justify-center py-2">
+              <LanguageSwitcher
+                locale={locale}
+                labels={{
+                  language: nav.language,
+                  langEn: nav.langEn,
+                  langSk: nav.langSk,
+                }}
+              />
+            </li>
             <li className="pt-2">
               <Link
                 href="#docs"
                 className="neon-btn-cyan flex h-11 items-center justify-center rounded-lg text-sm font-medium"
                 onClick={close}
               >
-                Register agent
+                {nav.register}
               </Link>
             </li>
           </ul>

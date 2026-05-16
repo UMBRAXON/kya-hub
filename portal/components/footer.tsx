@@ -1,14 +1,15 @@
 import Link from "next/link";
+import type { Dictionary } from "@/lib/i18n";
 
-const LINKS = [
-  { href: "#about", label: "About" },
-  { href: "#agents", label: "Agents" },
-  { href: "#docs", label: "Docs" },
-  { href: "/README_API.md", label: "README_API" },
-  { href: "/api/health", label: "Health API" },
-];
+export function Footer({ t }: { t: Dictionary["footer"] }) {
+  const LINKS = [
+    { href: "#about", label: t.about },
+    { href: "#agents", label: t.agents },
+    { href: "#docs", label: t.docs },
+    { href: "/README_API.md", label: t.readme },
+    { href: "/api/health", label: t.health },
+  ];
 
-export function Footer() {
   return (
     <footer className="border-t border-cyan-500/10 bg-[#0d0d0d] px-4 py-12">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 md:flex-row">
@@ -16,10 +17,7 @@ export function Footer() {
           <p className="font-mono text-sm font-semibold tracking-widest text-primary">
             UMBRAXON KYA HUB
           </p>
-          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-            Umbraxon Know Your Agent — Lightning-paid M2M identity for autonomous
-            systems.
-          </p>
+          <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t.tagline}</p>
         </div>
         <nav className="flex flex-wrap justify-center gap-6">
           {LINKS.map((l) => (
@@ -34,7 +32,7 @@ export function Footer() {
         </nav>
       </div>
       <p className="mx-auto mt-10 max-w-6xl text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Umbraxon KYA Hub. Non-custodial agent registry.
+        © {new Date().getFullYear()} {t.copyright}
       </p>
     </footer>
   );

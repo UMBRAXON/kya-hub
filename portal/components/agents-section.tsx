@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { AgentCard } from "@/lib/data";
+import type { Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 function AgentAvatar({ name }: { name: string }) {
@@ -31,7 +32,13 @@ function AgentAvatar({ name }: { name: string }) {
   );
 }
 
-function AgentCardItem({ agent }: { agent: AgentCard }) {
+function AgentCardItem({
+  agent,
+  labels,
+}: {
+  agent: AgentCard;
+  labels: { reputation: string; tier: string; verified: string; unverified: string };
+}) {
   const verified = agent.status === "verified";
   return (
     <Card className="neon-card border-0 ring-0">
@@ -49,17 +56,17 @@ function AgentCardItem({ agent }: { agent: AgentCard }) {
                 : "border-amber-500/30 bg-amber-500/10 text-amber-200"
             )}
           >
-            {verified ? "Verified" : "Unverified"}
+            {verified ? labels.verified : labels.unverified}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <div className="flex justify-between">
-          <span>Reputation</span>
+          <span>{labels.reputation}</span>
           <span className="font-mono text-foreground">{agent.reputation}</span>
         </div>
         <div className="flex justify-between">
-          <span>Tier</span>
+          <span>{labels.tier}</span>
           <span className="font-mono text-primary">{agent.tier}</span>
         </div>
         <div className="flex flex-wrap gap-1 pt-1">
@@ -82,6 +89,7 @@ export interface AgentsSectionProps {
   hubBaseUrl: string;
   fetchedAt?: string;
   error?: string | null;
+  t: Dictionary["agents"];
 }
 
 export function AgentsSection({
@@ -89,6 +97,7 @@ export function AgentsSection({
   hubBaseUrl,
   fetchedAt,
   error,
+  t,
 }: AgentsSectionProps) {
   const [query, setQuery] = useState("");
 
@@ -109,10 +118,10 @@ export function AgentsSection({
       <div className="mx-auto max-w-6xl">
         <div className="mb-10 text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Registered agents
+            {t.title}
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Live feed from{" "}
+            {t.feedFrom}{" "}
             <a
               href={`${hubBaseUrl}/api/discovery/v1/agents.json`}
               className="text-primary hover:underline"
@@ -124,14 +133,15 @@ export function AgentsSection({
             {fetchedAt && (
               <span className="mt-2 block text-xs text-muted-foreground/80">
                 <RefreshCw className="mr-1 inline size-3" aria-hidden />
-                Updated: {fetchedAt}
-                {agents.length > 0 && ` · ${agents.length} agent(s)`}
+                {t.updated}: {fetchedAt}
+                {agents.length > 0 &&
+                  ` · ${agents.length} ${t.agentsCount}`}
               </span>
             )}
           </p>
           {error && (
             <p className="mt-2 text-sm text-amber-300/90">
-              Could not load live feed ({error}). Showing an empty list.
+              {t.fetchError.replace("{error}", error)}
             </p>
           )}
         </div>
@@ -139,7 +149,7 @@ export function AgentsSection({
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search agent, KYA ID, or capability…"
+            placeholder={t.searchPlaceholder}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="h-11 border-cyan-500/20 bg-card/60 pl-10 backdrop-blur-sm transition-shadow focus-visible:border-primary focus-visible:ring-primary/30 focus-visible:shadow-[0_0_20px_rgba(0,255,255,0.15)]"
@@ -147,18 +157,27 @@ export function AgentsSection({
         </div>
         {agents.length === 0 && !error ? (
           <p className="py-12 text-center text-muted-foreground">
-            No agents in the discovery feed yet (opt-in + verified).
+            {t.empty}
           </p>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((agent) => (
-              <AgentCardItem key={agent.id} agent={agent} />
+              <AgentCardItem
+                key={agent.id}
+                agent={agent}
+                labels={{
+                  reputation: t.reputation,
+                  tier: t.tier,
+                  verified: t.verified,
+                  unverified: t.unverified,
+                }}
+              />
             ))}
           </div>
         )}
         {filtered.length === 0 && agents.length > 0 && (
           <p className="py-12 text-center text-muted-foreground">
-            No agents match your search.
+            {t.noMatch}
           </p>
         )}
       </div>

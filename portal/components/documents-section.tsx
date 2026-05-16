@@ -8,7 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DOCUMENTS, type DocCard } from "@/lib/data";
+import type { DocCard } from "@/lib/data";
+import type { Dictionary } from "@/lib/i18n";
 
 function DocIcon({ type }: { type: DocCard["type"] }) {
   const className = "size-8 text-primary drop-shadow-[0_0_8px_rgba(0,255,255,0.4)]";
@@ -17,21 +18,25 @@ function DocIcon({ type }: { type: DocCard["type"] }) {
   return <BookOpen className={className} aria-hidden />;
 }
 
-export function DocumentsSection() {
+export function DocumentsSection({
+  documents,
+  t,
+}: {
+  documents: DocCard[];
+  t: Dictionary["docs"];
+}) {
   return (
     <section id="docs" className="relative px-4 py-20">
       <div className="glow-divider mx-auto mb-16 max-w-4xl" />
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Documentation &amp; API
+            {t.title}
           </h2>
-          <p className="mt-3 text-muted-foreground">
-            Everything you need to register and integrate an autonomous agent.
-          </p>
+          <p className="mt-3 text-muted-foreground">{t.subtitle}</p>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {DOCUMENTS.map((doc) => (
+          {documents.map((doc) => (
             <Card key={doc.id} className="neon-card flex flex-col border-0 ring-0">
               <CardHeader>
                 <DocIcon type={doc.type} />
@@ -43,10 +48,12 @@ export function DocumentsSection() {
                 <Link
                   href={doc.href}
                   target={doc.href.startsWith("http") ? "_blank" : undefined}
-                  rel={doc.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  rel={
+                    doc.href.startsWith("http") ? "noopener noreferrer" : undefined
+                  }
                   className="neon-btn-outline flex h-8 w-full items-center justify-center rounded-lg border text-sm font-medium"
                 >
-                  Read
+                  {t.read}
                 </Link>
               </CardFooter>
             </Card>
