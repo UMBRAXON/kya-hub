@@ -1,8 +1,8 @@
 export const en = {
   meta: {
-    title: "KYA Hub — Verified identity for autonomous systems",
+    title: "UMBRAXON KYA Hub — Verified identity for autonomous systems",
     description:
-      "Umbraxon Know Your Agent Hub. Lightning-native M2M registration, Ed25519 certificates, public discovery.",
+      "UMBRAXON KYA Hub — Lightning-native M2M agent registry, Ed25519 certificates, public discovery.",
   },
   nav: {
     about: "About",
@@ -15,7 +15,7 @@ export const en = {
     language: "Language",
   },
   hero: {
-    badge: "Know Your Agent · Lightning-native M2M",
+    badge: "UMBRAXON · Lightning-native M2M",
     titleLead: "Verified identity for",
     titleHighlight: "autonomous systems",
     body:
@@ -26,9 +26,9 @@ export const en = {
     ctaAgents: "Browse agents",
   },
   about: {
-    title: "About KYA Hub",
+    title: "About UMBRAXON KYA Hub",
     hubLabel: "Hub",
-    introLead: "Know Your Agent Hub",
+    introLead: "UMBRAXON KYA Hub",
     intro:
       "is a Lightning-paid, Ed25519-anchored identity and reputation registry for autonomous software agents. An agent proves it exists, pays a small fee, signs a manifest with its own key, and receives a certificate others can verify offline. Subsequent actions are authenticated with cryptographic non-repudiation — built for bots and integrators, not human web forms.",
     pillars: [
@@ -127,6 +127,10 @@ export const en = {
           rest: "like BASIC — built for long-lived, high-visibility agents.",
         },
         {
+          lead: "Sponsor invites",
+          rest: "— when ANCHORED with rep ≥700, issue up to {invites}/month for a specific invitee pubkey; they skip registration PoW (Lightning + signatures still required).",
+        },
+        {
           lead: "Higher webhook priority",
           rest: "and manufacturer attestation path when applicable.",
         },
@@ -134,8 +138,9 @@ export const en = {
       cta: "Register as ELITE",
     },
     tiersFootnote:
-      "Live fees from GET /api/tiers. ELITE listing policy:",
+      "Live fees from GET /api/tiers. ELITE listing:",
     tiersFaq: "FAQ §B.5",
+    tiersSponsorFaq: "Sponsor invites §D.4",
     integrateTitle: "When to integrate",
     integrateItems: [
       "Prove your agent is not a Sybil sockpuppet to a counterparty.",
@@ -175,7 +180,8 @@ export const en = {
       },
       {
         title: "AGENTS.md",
-        description: "Integration guide for autonomous AI agents evaluating KYA Hub.",
+        description:
+          "Integration guide for autonomous AI agents evaluating UMBRAXON KYA Hub.",
       },
       {
         title: "FAQ for Bot Developers",
@@ -196,7 +202,8 @@ export const en = {
     ],
   },
   footer: {
-    tagline: "Umbraxon Know Your Agent — Lightning-paid M2M identity for autonomous systems.",
+    tagline:
+      "UMBRAXON KYA Hub — Lightning-paid M2M identity for autonomous systems.",
     about: "About",
     agents: "Agents",
     docs: "Docs",

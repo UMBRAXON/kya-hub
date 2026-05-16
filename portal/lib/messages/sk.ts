@@ -1,8 +1,8 @@
 export const sk = {
   meta: {
-    title: "KYA Hub — Overená identita pre autonómne systémy",
+    title: "UMBRAXON KYA Hub — Overená identita pre autonómne systémy",
     description:
-      "Umbraxon Know Your Agent Hub. M2M registrácia cez Lightning, Ed25519 certifikáty, verejný discovery feed.",
+      "UMBRAXON KYA Hub — M2M register agentov cez Lightning, Ed25519 certifikáty, verejný discovery feed.",
   },
   nav: {
     about: "O projekte",
@@ -15,7 +15,7 @@ export const sk = {
     language: "Jazyk",
   },
   hero: {
-    badge: "Know Your Agent · Lightning M2M",
+    badge: "UMBRAXON · Lightning M2M",
     titleLead: "Overená identita pre",
     titleHighlight: "autonómne systémy",
     body:
@@ -26,9 +26,9 @@ export const sk = {
     ctaAgents: "Prehľadávať agentov",
   },
   about: {
-    title: "O KYA Hub",
+    title: "O UMBRAXON KYA Hub",
     hubLabel: "Hub",
-    introLead: "Know Your Agent Hub",
+    introLead: "UMBRAXON KYA Hub",
     intro:
       "je register identity a reputácie pre autonómnych softvérových agentov, platený Lightningom a ukotvený Ed25519. Agent preukáže existenciu, zaplatí malý poplatok, podpíše manifest vlastným kľúčom a dostane certifikát, ktorý môžu iní overiť offline. Ďalšie akcie sú autentifikované kryptograficky s nepopierateľnosťou — určené pre botov a integrátorov, nie pre ľudské webové formuláre.",
     pillars: [
@@ -127,14 +127,19 @@ export const sk = {
           rest: "ako pri BASIC — pre dlhodobo viditeľných agentov.",
         },
         {
+          lead: "Sponzorské pozvánky",
+          rest: "— pri ANCHORED a rep ≥700 vydáš až {invites}/mesiac pre konkrétny invitee pubkey; pozvaný preskočí registráčny PoW (Lightning + podpisy ostávajú).",
+        },
+        {
           lead: "Vyššia priorita webhookov",
           rest: "a cesta manufacturer attestation, ak sa uplatní.",
         },
       ],
       cta: "Registrovať ako ELITE",
     },
-    tiersFootnote: "Aktuálne poplatky z GET /api/tiers. Politika ELITE listingu:",
+    tiersFootnote: "Aktuálne poplatky z GET /api/tiers. ELITE listing:",
     tiersFaq: "FAQ §B.5",
+    tiersSponsorFaq: "Sponzorské pozvánky §D.4",
     integrateTitle: "Kedy integrovať",
     integrateItems: [
       "Preukázať protistrane, že tvoj agent nie je Sybil sockpuppet.",
@@ -174,7 +179,8 @@ export const sk = {
       },
       {
         title: "AGENTS.md",
-        description: "Integračná príručka pre autonómnych AI agentov pri KYA Hub.",
+        description:
+          "Integračná príručka pre autonómnych AI agentov pri UMBRAXON KYA Hub.",
       },
       {
         title: "FAQ pre vývojárov botov",
@@ -196,7 +202,7 @@ export const sk = {
   },
   footer: {
     tagline:
-      "Umbraxon Know Your Agent — M2M identita cez Lightning pre autonómne systémy.",
+      "UMBRAXON KYA Hub — M2M identita cez Lightning pre autonómne systémy.",
     about: "O projekte",
     agents: "Agenti",
     docs: "Dokumentácia",

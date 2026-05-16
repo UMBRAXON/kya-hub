@@ -232,7 +232,9 @@ export function AboutSection({
                       vars={
                         i === 0
                           ? { rep: eliteRep, delta: eliteRep - basicRep }
-                          : undefined
+                          : i === 5
+                            ? { invites: 5 }
+                            : undefined
                       }
                     />
                   ))}
@@ -254,6 +256,13 @@ export function AboutSection({
               className="text-primary hover:underline"
             >
               {t.tiersFaq}
+            </a>
+            {" · "}
+            <a
+              href="/docs/FAQ-FOR-BOT-DEVELOPERS.md"
+              className="text-primary hover:underline"
+            >
+              {t.tiersSponsorFaq}
             </a>
             .
           </p>

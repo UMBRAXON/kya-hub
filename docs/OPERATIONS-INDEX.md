@@ -33,6 +33,13 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 
 - `docs/PRICING-ECONOMICS.md` — tier fees, OPEX model (70 % margin), mempool/anchor costs, ELITE listing TCO, market affordability.
 
+## Sponsor invites (ELITE PoW bypass)
+
+- `docs/SPONSOR-INVITE-DESIGN.md` — invite flow, penalties, env vars, kill switch.
+- `migrations/022_sponsor_invites.sql` — schema + `kyahub_app` grants.
+- `scripts/test-sponsor-invite-e2e.js` — smoke test (requires `SPONSOR_INVITE_ENABLED=true` + hub on `PORT`).
+- Env: `SPONSOR_INVITE_ENABLED`, optional `SPONSOR_AGENT_ALLOWLIST` for staged rollout.
+
 ## Logging
 
 - `docs/LOGGING.md` — baseline logging strategy (PM2 file logs + `logrotate`, secure defaults) + Bitcoin Core / LND / Docker notes (§4).

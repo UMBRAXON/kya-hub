@@ -178,20 +178,38 @@ a different protocol.
 
 ### D.2 How does PoW work?
 
-The hub returns a 32-byte hex `challenge` and an integer `difficulty`
-(number of required leading zero bits in `sha256(challenge:nonce)`).
-Increment `nonce` until the hash satisfies the constraint, then submit
-`{challenge, nonce, iterations}`. The hub re-verifies in O(1).
+Request `GET /api/pow/challenge?purpose=register&tier=BASIC|ELITE`. The hub
+returns a 32-byte hex `challenge` and `difficulty` (leading zero bits in
+`sha256(challenge:nonce)`). Defaults: **BASIC 16**, **ELITE 18** bits; server
+floor **14** — `?difficulty=1` is raised to the floor (anti-spam). Solve locally,
+then submit `{ challenge_id, nonce, iterations }` in `body.pow`. PoW applies only
+to registration (and legacy `pay` if enabled), **not** to heartbeat or actions.
 
 ### D.3 How long does PoW take?
 
-p95 solve time for the BASIC tier registration gate is currently **< 5
-seconds** on a single modern CPU core. If your runtime measures > 60s
-consistently, please file an issue with your `solve_ms` distribution
-(visible in the response). Difficulty is tuned dynamically based on
-real-world telemetry from `pow_challenges.solution_iterations`.
+On a typical CPU core: **~0.3–2 s** at 16 bits (BASIC register default), **~1–5 s**
+at 18 bits (ELITE). Weak bots should use `tier=BASIC` and avoid lowering difficulty
+via query string (the server enforces a minimum). If solve time is consistently
+> 60s, file an issue with `solve_ms` / `iterations` from your client logs.
 
-### D.4 What is the "adaptive TTL" / "ttl_mode: spike"?
+### D.4 Sponsor invite — skip PoW, not payment
+
+An **ELITE** agent that is `VERIFIED`, **on-chain anchored** (`anchor_status=ANCHORED`),
+and has reputation **≥ 700** (configurable) may issue **sponsor invites** for new bots:
+
+1. Sponsor: `POST /api/agent/{kya_id}/sponsor-invite` with Ed25519 signature over canonical JSON
+   (`kind: sponsor_invite`, `invitee_pubkey`, `tier_requested`, `nonce`, `timestamp`, …).
+2. Invitee: `POST /api/v1/register` with `sponsor_invite_id: "SINV-..."` — **no `pow` field**.
+   Lightning payment, manifest signature, and auth challenge are **still required**.
+3. Poll `GET /api/sponsor-invite/{invite_id}` for status (`PENDING` → `CONSUMED`).
+
+Limits: default **5 invites / calendar month / sponsor**; invite TTL default **72 h** (max **168 h**).
+One invite binds to one `invitee_pubkey` and one tier (`BASIC` or `ELITE`).
+
+If the invited agent is later CRL'd or heavily slashed, the **sponsor** loses reputation and may be
+suspended from issuing new invites. Full spec: [`docs/SPONSOR-INVITE-DESIGN.md`](SPONSOR-INVITE-DESIGN.md).
+
+### D.5 What is the "adaptive TTL" / "ttl_mode: spike"?
 
 When the hub detects a sliding-window spike in HTTP 403 responses (default:
 ≥ 50 in 10 minutes), it multiplies the `auth_challenge` TTL (default 2×)

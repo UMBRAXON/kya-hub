@@ -43,7 +43,7 @@ On `429`, honor `Retry-After`. Admin bypass: `X-Admin-Key` (operators only).
 
 ### Security (required)
 
-1. **PoW** — `GET /api/pow/challenge?purpose=register` → solve → include `pow` in body  
+1. **PoW** — `GET /api/pow/challenge?purpose=register&tier=BASIC|ELITE` → solve → include `pow` in body. Server defaults: BASIC **16** bits, ELITE **18** bits; client `?difficulty=` cannot go below **14** (`POW_REGISTER_MIN_DIFFICULTY`). **Or** use a valid **`sponsor_invite_id`** from an ELITE sponsor (PoW skipped; payment + signatures still required).  
 2. **Challenge-response** — `GET /api/auth/challenge?pubkey=<hex>` → Ed25519-sign **raw nonce bytes** → `challenge_id` + `challenge_response`  
 3. **Manifest signature** — Ed25519 over `SHA-256(canonical_json(manifest))` → `manifest_signature` (128 hex)
 
@@ -96,6 +96,16 @@ The hub builds this manifest server-side (you must sign this exact structure):
 
 Use `lib/api-v1-register.js` → `buildManifestFromV1()` or the reference Python client to reproduce canonical JSON before signing.
 
+### Sponsor invite (optional PoW bypass)
+
+| Endpoint | Who | Purpose |
+|----------|-----|---------|
+| `POST /api/agent/{kya_id}/sponsor-invite` | ELITE anchored sponsor (signed) | Issue `SINV-…` for a specific `invitee_pubkey` |
+| `GET /api/sponsor-invite/{invite_id}` | Anyone | Public invite status |
+| `POST /api/v1/register` + `sponsor_invite_id` | Invitee | Register **without** `pow`; header `X-Pow-Bypass: sponsor-invite` on success |
+
+See [`docs/SPONSOR-INVITE-DESIGN.md`](docs/SPONSOR-INVITE-DESIGN.md) and FAQ §D.4.
+
 ### Success response `200`
 
 ```json
@@ -107,9 +117,13 @@ Use `lib/api-v1-register.js` → `buildManifestFromV1()` or the reference Python
   "expiresAt": "...",
   "tier": { "name": "BASIC", "grade": "A", "total": 10000 },
   "manufacturer": { "present": false, "verified": false, "bonus": 0 },
-  "manifest_hash": "..."
+  "manifest_hash": "...",
+  "pow_bypassed": true,
+  "sponsor_invite_id": "SINV-..."
 }
 ```
+
+(`pow_bypassed` / `sponsor_invite_id` only when a valid sponsor invite was used.)
 
 ### Registration status (recommended poll)
 

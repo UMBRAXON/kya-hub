@@ -165,6 +165,9 @@ with golden vectors on every CI run.
   Current p95 solve time for the BASIC tier is < 5 seconds on a single
   modern CPU core; if your runtime measures > 60s consistently, file an
   issue with your `solve_ms` distribution and we will retune.
+- **Sponsor invite** (ELITE only): anchored ELITE agents with high reputation may
+  issue one-time invites so a trusted bot can register **without PoW**; payment and
+  Ed25519 manifest/challenge signatures are still mandatory. See FAQ §D.4.
 
 ---
 

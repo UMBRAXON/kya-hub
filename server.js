@@ -73,6 +73,7 @@ const manufacturer = require('./lib/manufacturer');
 // Strategic Sprint §31 D — A+B+D no-custody penalty system (registration quote
 // with re-registration multiplier + pubkey deny-list cooldown).
 const regQuote = require('./lib/registration-quote');
+const sponsorInvite = require('./lib/sponsor-invite');
 // Strategic Sprint §31 C — PDF invoice generator.
 const invoicePdf = require('./lib/invoice-pdf');
 
@@ -678,6 +679,18 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
                  WHERE id = $1`,
                 [registrationIntent.id]
             );
+        }
+
+        if (registrationIntent?.sponsor_invite_id) {
+            try {
+                await sponsorInvite.linkAgentAfterRegistration(client, {
+                    inviteId: registrationIntent.sponsor_invite_id,
+                    agentKyaId: newAgent.kya_id,
+                });
+            } catch (e) {
+                logger.warn({ err: e.message, inviteId: registrationIntent.sponsor_invite_id },
+                    'sponsor invite link FAIL (non-fatal)');
+            }
         }
 
         // Phase 4B: link the mfr attestation to this agent (one-shot consume).
@@ -1752,8 +1765,16 @@ const registerPowGate = pow.buildRequireMiddleware({
         }, 'pow_solved');
     },
 });
+const registerAdmissionGate = sponsorInvite.buildRegisterAdmissionMiddleware({
+    poolGetter: () => pool,
+    powGate: registerPowGate,
+    recordRejection: (req, reason) => abuseTracker.recordRejection(pool, {
+        path: req.path, method: req.method, reason,
+        http_status: 402, client_ip: req.ip, user_agent: req.headers['user-agent'],
+    }),
+});
 
-app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res) => {
+app.post('/api/register/initiate', payLimiter, registerAdmissionGate, async (req, res) => {
     const log = logger.child({ route: 'register/initiate' });
     const { manifest, manifest_signature, challenge_id, challenge_response } = req.body || {};
     
@@ -1895,13 +1916,16 @@ app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res)
     const intentExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hodina
     
     try {
+        const sponsorInviteId = req.sponsor_invite_verified?.invite_id
+            || req.body?.sponsor_invite_id
+            || null;
         await pool.query(
             `INSERT INTO registration_intents
              (registration_id, agent_name, agent_pubkey, manifest, manifest_hash, manifest_signature,
               manufacturer_id, manufacturer_signature, manufacturer_verified, manufacturer_bonus,
               tier_requested, expires_at, client_ip, user_agent,
-              mfr_attestation_id, mfr_tier)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+              mfr_attestation_id, mfr_tier, sponsor_invite_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
             [
                 registrationId, agentName, botPubkey,
                 JSON.stringify(manifest), mHash, manifest_signature,
@@ -1912,12 +1936,30 @@ app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res)
                 tier.name, intentExpires,
                 req.ip, req.headers['user-agent'] || null,
                 mfrDbAttestationId, mfrResult.tier || null,
+                sponsorInviteId,
             ]
         );
+        if (sponsorInviteId) {
+            const consumed = await sponsorInvite.markConsumed(pool, {
+                inviteId: sponsorInviteId,
+                inviteePubkey: botPubkey,
+                tierRequested: tier.name,
+                registrationIntentId: registrationId,
+                agentName,
+            });
+            if (!consumed.ok) {
+                log.warn({ sponsorInviteId, reason: consumed.reason }, 'sponsor invite consume FAIL after intent');
+            }
+        }
     } catch (e) {
         log.error({ err: e.message }, 'intent INSERT FAIL');
         return res.status(500).json({ error: 'INTENT_PERSIST_FAILED' });
     }
+
+    const regResponseExtras = req.sponsor_invite_verified ? {
+        pow_bypassed: true,
+        sponsor_invite_id: req.sponsor_invite_verified.invite_id,
+    } : {};
     
     // Vytvor invoice — preferuj Alby ak je dostupné
     const description = `UMBRAXON ${tier.name} registration: ${agentName} [${registrationId}]`;
@@ -1945,6 +1987,7 @@ app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res)
                 tier: { name: tier.name, grade: tier.grade, total: tier.total },
                 manufacturer: mfrResult,
                 manifest_hash: mHash,
+                ...regResponseExtras,
             });
         }
 
@@ -1974,6 +2017,7 @@ app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res)
             tier: { name: tier.name, grade: tier.grade, total: tier.total },
             manufacturer: mfrResult,
             manifest_hash: mHash,
+            ...regResponseExtras,
         });
     } catch (err) {
         const httpStatus = (err.response && typeof err.response.status === 'number')
@@ -1994,6 +2038,22 @@ app.post('/api/register/initiate', payLimiter, registerPowGate, async (req, res)
         if (httpStatus != null) body.upstream_http_status = httpStatus;
         if (errCode) body.upstream_error_code = errCode;
         return res.status(502).json(body);
+    }
+});
+
+
+app.get('/api/sponsor-invite/:invite_id', async (req, res) => {
+    const inviteId = String(req.params.invite_id || '');
+    if (!/^SINV-[0-9a-f]{24}$/i.test(inviteId)) {
+        return res.status(400).json({ error: 'INVALID_INVITE_ID' });
+    }
+    try {
+        const status = await sponsorInvite.getPublicStatus(pool, inviteId);
+        if (status.error) return res.status(404).json({ error: status.error });
+        return res.json(status);
+    } catch (e) {
+        logger.error({ err: e.message }, 'sponsor-invite status FAIL');
+        return res.status(500).json({ error: 'SPONSOR_INVITE_STATUS_FAILED' });
     }
 });
 
@@ -2365,6 +2425,94 @@ async function findAgent(kya_id) {
     if (r.rowCount === 0) return { row: null, status: 404, error: 'AGENT_NOT_FOUND' };
     return { row: r.rows[0] };
 }
+
+
+// ----------------------------------------------------------------------------
+// Sponsor invite — ELITE anchored agents invite others (PoW bypass only)
+// ----------------------------------------------------------------------------
+app.post('/api/agent/:kya_id/sponsor-invite', phase2Limiter, async (req, res) => {
+    const log = logger.child({ route: 'agent/sponsor-invite' });
+    const kya_id = req.params.kya_id;
+    if (!/^UMBRA-[A-F0-9]{6}$/.test(kya_id)) {
+        return res.status(400).json({ error: 'INVALID_KYA_ID' });
+    }
+    const {
+        invitee_pubkey, tier_requested, expected_agent_name, ttl_hours,
+        nonce, timestamp, signature,
+    } = req.body || {};
+    if (!invitee_pubkey || !tier_requested || !signature || !nonce || !timestamp) {
+        return res.status(400).json({
+            error: 'MISSING_FIELDS',
+            required: ['invitee_pubkey', 'tier_requested', 'nonce', 'timestamp', 'signature'],
+        });
+    }
+    if (!/^[0-9a-fA-F]{128}$/.test(signature)) {
+        return res.status(400).json({ error: 'INVALID_SIGNATURE_FORMAT' });
+    }
+    if (!/^[0-9a-fA-F]{16,64}$/.test(nonce)) {
+        return res.status(400).json({ error: 'INVALID_NONCE_FORMAT' });
+    }
+    const tsMs = new Date(timestamp).getTime();
+    if (!Number.isFinite(tsMs) || Math.abs(Date.now() - tsMs) > TIMESTAMP_SKEW_MS) {
+        return res.status(400).json({ error: 'TIMESTAMP_SKEW', skew_ms_allowed: TIMESTAMP_SKEW_MS });
+    }
+
+    const af = await findAgent(kya_id);
+    if (af.error) return res.status(af.status).json({ error: af.error });
+    const agent = af.row;
+    if (!agent.agent_pubkey) {
+        return res.status(400).json({ error: 'AGENT_NO_PUBKEY' });
+    }
+    if (agent.status === 'SUSPENDED' || !agent.is_active) {
+        return res.status(403).json({ error: 'AGENT_SUSPENDED' });
+    }
+
+    const signBody = {
+        nonce,
+        timestamp,
+        invitee_pubkey: String(invitee_pubkey).toLowerCase(),
+        tier_requested,
+        expected_agent_name: expected_agent_name || null,
+        ttl_hours: ttl_hours != null ? ttl_hours : undefined,
+    };
+    if (!sponsorInvite.verifySponsorActionSignature(agent.agent_pubkey, signature, signBody)) {
+        abuseTracker.recordRejection(pool, {
+            path: req.path, method: req.method, reason: 'BAD_SIGNATURE',
+            http_status: 401, kya_id, client_ip: req.ip, user_agent: req.headers['user-agent'],
+        }).catch(() => {});
+        return res.status(401).json({ error: 'BAD_SIGNATURE' });
+    }
+
+    try {
+        const result = await sponsorInvite.createAgentInvite(pool, {
+            sponsorKyaId: kya_id,
+            inviteePubkey: signBody.invitee_pubkey,
+            tierRequested: signBody.tier_requested,
+            expectedAgentName: expected_agent_name || null,
+            ttlHours: ttl_hours,
+            clientIp: req.ip,
+        });
+        if (!result.ok) {
+            const status = result.status || 400;
+            return res.status(status).json({
+                error: result.error,
+                ...(result.min != null ? { min_reputation: result.min } : {}),
+                ...(result.limit != null ? { limit: result.limit } : {}),
+                ...(result.until ? { suspended_until: result.until } : {}),
+            });
+        }
+        log.info({
+            event: 'sponsor_invite_issued',
+            sponsor_kya_id: kya_id,
+            invite_id: result.invite_id,
+            tier: result.tier_requested,
+        }, 'sponsor_invite_issued');
+        return res.status(result.status).json(result);
+    } catch (e) {
+        log.error({ err: e.message }, 'sponsor-invite create FAIL');
+        return res.status(500).json({ error: 'SPONSOR_INVITE_FAILED' });
+    }
+});
 
 // ----------------------------------------------------------------------------
 // 13) POST /api/agent/:kya_id/action — bot self-report (signed)
