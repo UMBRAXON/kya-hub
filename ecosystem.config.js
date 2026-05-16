@@ -1,4 +1,5 @@
 // PM2 ecosystem pre celý KYA-Hub stack (KYA backend + Alby Hub Lightning node)
+// Hub release: 1.1.0 (Integrations v1) — po bump verzie v package.json reštartuj kya-hub.
 // Použitie:
 //   pm2 start ecosystem.config.js
 //   pm2 restart kya-hub
@@ -118,6 +119,46 @@ module.exports = {
             },
             error_file: '/root/.pm2/logs/kya-anchor-wallet-monitor-error.log',
             out_file: '/root/.pm2/logs/kya-anchor-wallet-monitor-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // UMBRAXON-PR-AMBASSADOR — Moltbook comments (every 3h).
+            name: 'kya-pr-engage',
+            script: 'scripts/prod/pr-agent-engage.sh',
+            cwd: '/root/kya-hub',
+            interpreter: 'bash',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '15 */3 * * *',
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-pr-engage-error.log',
+            out_file: '/root/.pm2/logs/kya-pr-engage-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // UMBRAXON-PR-AMBASSADOR — daily themed Moltbook post (10:00 UTC).
+            name: 'kya-pr-agent',
+            script: 'scripts/prod/pr-agent-daily-post.sh',
+            cwd: '/root/kya-hub',
+            interpreter: 'bash',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '0 10 * * *',
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-pr-agent-error.log',
+            out_file: '/root/.pm2/logs/kya-pr-agent-out.log',
             merge_logs: true,
             time: true,
         },
