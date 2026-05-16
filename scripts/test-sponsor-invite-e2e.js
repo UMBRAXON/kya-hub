@@ -11,7 +11,8 @@ const { Pool } = require('pg');
 const sponsorInvite = require('../lib/sponsor-invite');
 
 const BASE = `http://127.0.0.1:${process.env.PORT || 3000}`;
-const TEST_SPONSOR_KYA = process.env.SPONSOR_E2E_KYA_ID || 'UMBRA-000467';
+// Set SPONSOR_E2E_KYA_ID to a disposable test agent — never defaults to a production kya_id.
+const TEST_SPONSOR_KYA = process.env.SPONSOR_E2E_KYA_ID || '';
 
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
@@ -41,6 +42,10 @@ function sponsorSignBody(privKey, body) {
 async function main() {
     if (!sponsorInvite.isEnabled()) {
         console.error('SPONSOR_INVITE_ENABLED is not true — enable in .env and pm2 restart kya-hub');
+        process.exit(2);
+    }
+    if (!TEST_SPONSOR_KYA) {
+        console.error('Set SPONSOR_E2E_KYA_ID to an ELITE test agent kya_id (not a production bot).');
         process.exit(2);
     }
 
