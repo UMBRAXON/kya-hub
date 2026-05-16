@@ -58,11 +58,19 @@ def validate_content(
     return (len(reasons) == 0, reasons)
 
 
-def may_post_now(settings: Settings) -> Tuple[bool, Optional[str]]:
-    hours = _hours_since()
+def may_post_now(settings: Settings, *, platform: Optional[str] = None) -> Tuple[bool, Optional[str]]:
+    from pr.state import hours_since_last_post_for_platform
+
+    plat = (platform or "").strip().lower()
+    if plat == "nostr":
+        hours = hours_since_last_post_for_platform("nostr")
+        min_h = settings.nostr_min_hours_between_posts
+    else:
+        hours = _hours_since()
+        min_h = settings.pr_min_hours_between_posts
     if hours is None:
         return True, None
-    min_h = settings.pr_min_hours_between_posts
     if hours < min_h:
-        return False, f"cadence: last post {hours:.1f}h ago (min {min_h}h)"
+        label = plat or "global"
+        return False, f"cadence ({label}): last post {hours:.1f}h ago (min {min_h}h)"
     return True, None

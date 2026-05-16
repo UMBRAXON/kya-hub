@@ -99,6 +99,7 @@ class Settings:
     # Phase B — cross-post
     nostr_private_key: str
     nostr_relays: tuple[str, ...]
+    nostr_min_hours_between_posts: float
     x_api_key: str
     x_api_secret: str
     x_access_token: str
@@ -170,6 +171,9 @@ def load_settings() -> Settings:
         nostr_relays=_csv(
             "NOSTR_RELAYS",
             "wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band",
+        ),
+        nostr_min_hours_between_posts=float(
+            os.getenv("NOSTR_MIN_HOURS_BETWEEN_POSTS", "48")
         ),
         x_api_key=os.getenv("X_API_KEY", os.getenv("TWITTER_API_KEY", "")),
         x_api_secret=os.getenv("X_API_SECRET", os.getenv("TWITTER_API_SECRET", "")),

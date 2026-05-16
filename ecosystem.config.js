@@ -163,6 +163,26 @@ module.exports = {
             time: true,
         },
         {
+            // UMBRAXON-PR-AMBASSADOR — themed Nostr note (Mon/Wed/Fri 14:00 UTC).
+            name: 'kya-pr-nostr',
+            script: 'scripts/prod/pr-agent-nostr-post.sh',
+            cwd: '/root/kya-hub',
+            interpreter: 'bash',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '0 14 * * 1,3,5',
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-pr-nostr-error.log',
+            out_file: '/root/.pm2/logs/kya-pr-nostr-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
             // Strategic Sprint §30 Item 6 — Lightning inbound liquidity monitor.
             // PM2 cron: every 15 min. Uses Alby Hub HTTP API if unlock password
             // is dropped in /root/kya-hub/.secrets/alby-unlock.txt; else falls

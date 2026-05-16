@@ -24,10 +24,6 @@ def crosspost(
     if not ok:
         return {"ok": False, "blocked": True, "reasons": reasons}
 
-    allowed, cadence_reason = may_post_now(settings)
-    if not allowed and not dry:
-        return {"ok": False, "blocked": True, "reasons": [cadence_reason]}
-
     targets = platforms or list(settings.pr_publish_platforms)
     results: Dict[str, Any] = {}
     published = 0
@@ -41,6 +37,10 @@ def crosspost(
         conn = connectors_for_platform(settings, name)
         if not conn:
             results[name] = {"ok": False, "skipped": True, "reason": "not configured"}
+            continue
+        plat_allowed, plat_reason = may_post_now(settings, platform=name)
+        if not plat_allowed and not dry:
+            results[name] = {"ok": False, "skipped": True, "reason": plat_reason}
             continue
         if dry:
             results[name] = {"ok": True, "dry_run": True}
