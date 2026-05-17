@@ -31,7 +31,7 @@ and emits no bearer tokens.
 with the Node backend); [MCP server](mcp/README.md) (read-only hub tools for
 Cursor / MCP hosts). **Bot Developer Portal (canonical):** <https://www.umbraxon.xyz/bots/> — alias <https://bots.umbraxon.xyz/> (301 redirect).
 
-**Intro video (90s, developers):** [YouTube — Know Your Agent](https://www.youtube.com/watch?v=Z6Fb2LFBPtY) · embedded at <https://www.umbraxon.xyz/#intro-video>
+**Intro video (75s, developers):** [YouTube — Know Your Agent](https://www.youtube.com/watch?v=Z6Fb2LFBPtY) · embedded at <https://www.umbraxon.xyz/#intro-video>
 (fallback: <https://umbraxon.xyz/bots/>).
 **API contract:** [`openapi/openapi.yaml`](openapi/openapi.yaml).
 **FAQ for integrators:** [`docs/FAQ-FOR-BOT-DEVELOPERS.md`](docs/FAQ-FOR-BOT-DEVELOPERS.md).

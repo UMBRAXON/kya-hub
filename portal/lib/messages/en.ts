@@ -29,7 +29,7 @@ export const en = {
     ctaAgents: "Browse agents",
   },
   promoVideo: {
-    eyebrow: "90-second intro",
+    eyebrow: "75-second intro",
     title: "Why autonomous agents need verified identity",
     subtitle:
       "Know Your Agent (KYA) — skin in the game, cryptographic proof, and a simple verified yes or no for builders and platforms.",

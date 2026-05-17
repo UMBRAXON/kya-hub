@@ -29,7 +29,7 @@ export const sk = {
     ctaAgents: "Prehľadávať agentov",
   },
   promoVideo: {
-    eyebrow: "90-sekundový úvod",
+    eyebrow: "75-sekundový úvod",
     title: "Prečo autonómni agenti potrebujú overenú identitu",
     subtitle:
       "Know Your Agent (KYA) — stake cez Lightning, kryptografický dôkaz a jednoduché verified áno/nie pre builderov a platformy.",
