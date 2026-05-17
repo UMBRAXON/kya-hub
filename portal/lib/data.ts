@@ -94,6 +94,11 @@ export const DEMO_AGENTS: AgentCard[] = [
 
 /** Hrefs/types only — titles and descriptions come from i18n. */
 export const DOCUMENT_LINKS: Pick<DocCard, "id" | "href" | "type">[] = [
+  {
+    id: "platform-integrator",
+    href: "/docs/FAQ-FOR-BOT-DEVELOPERS.md#i-platform-integrator-plug-in--third-party-systems",
+    type: "guide",
+  },
   { id: "readme-api", href: "/README_API.md", type: "api" },
   { id: "agents", href: "/AGENTS.md", type: "guide" },
   { id: "faq", href: "/docs/FAQ-FOR-BOT-DEVELOPERS.md", type: "guide" },

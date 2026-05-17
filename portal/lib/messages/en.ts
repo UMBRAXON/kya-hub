@@ -2,12 +2,13 @@ export const en = {
   meta: {
     title: "UMBRAXON KYA Hub — Verified identity for autonomous systems",
     description:
-      "UMBRAXON KYA Hub — Lightning-native M2M agent registry, Ed25519 certificates, public discovery.",
+      "UMBRAXON KYA Hub — Lightning M2M agent registry plus Platform Integrator API for LNBits, marketplaces, and agent frameworks.",
   },
   nav: {
     about: "About",
     tiers: "Tiers",
     agents: "Agents",
+    platform: "Plug-in API",
     docs: "Docs",
     register: "Register agent",
     langEn: "English",
@@ -23,7 +24,30 @@ export const en = {
     bodyCode: "POST /api/v1/register",
     bodyTail: "for autonomous bots.",
     ctaIntegrate: "Start integrating",
+    ctaPlatform: "Build a plug-in",
     ctaAgents: "Browse agents",
+  },
+  platform: {
+    badge: "New · Platform Integrator API",
+    title: "Verify KYA agents inside your product",
+    body:
+      "Embed trust gates in LNBits, agent marketplaces, or orchestration stacks — without running your own identity hub. Public read API, optional partner keys, queued webhooks.",
+    bullets: [
+      "One-line gate: GET /api/v1/agents/{kya_id}/status → verified + trust_level",
+      "Optional umb_live_… API keys with dedicated rate limits",
+      "Developer webhooks on registration and reputation events",
+      "Python SDK (umbraxon) + OpenAPI — registration still uses Ed25519 + Lightning",
+    ],
+    codeLabel: "Plug-in gate (example)",
+    codeSample: `GET /api/v1/agents/UMBRA-000467/status
+→ { "verified": true, "trust_level": "TRUSTED" }
+
+Authorization: Bearer umb_live_…  (optional)`,
+    codeFoot: "Full guide: FAQ §I · Roadmap · examples/plugin-gate-v1.js",
+    ctaPrimary: "Platform integrator docs",
+    ctaSecondary: "OpenAPI",
+    primaryHref: "/docs/FAQ-FOR-BOT-DEVELOPERS.md#i-platform-integrator-plug-in--third-party-systems",
+    secondaryHref: "/openapi/openapi.yaml",
   },
   about: {
     title: "About UMBRAXON KYA Hub",
@@ -149,7 +173,9 @@ export const en = {
       "Opt into the public discovery feed by capability and tier.",
     ],
     integrateFoot:
-      "Integrations v1 adds discovery (/api/discovery/v1/agents.json), L402-aligned delegation passes, manifest payment hints, and developer webhooks. Start with",
+      "Integrations v1 adds discovery, L402 delegation passes, and developer webhooks. **Platform Integrator API** (plug-in layer) adds GET /api/v1/agents/{id} for third-party products — see",
+    platformLink: "Plug-in API",
+    platformHref: "#platform",
     readme: "README_API.md",
     or: "or",
     agentsMd: "AGENTS.md",
@@ -173,6 +199,11 @@ export const en = {
     subtitle: "Everything you need to register and integrate an autonomous agent.",
     read: "Read",
     items: [
+      {
+        title: "Platform Integrator API (plug-ins)",
+        description:
+          "Verify agents in your app: status gate, API keys, webhooks, umbraxon-py SDK. FAQ §I.",
+      },
       {
         title: "README_API.md — M2M Register",
         description:
@@ -207,6 +238,7 @@ export const en = {
     about: "About",
     agents: "Agents",
     docs: "Docs",
+    platform: "Plug-in API",
     readme: "README_API",
     health: "Health API",
     copyright: "Umbraxon KYA Hub. Non-custodial agent registry.",

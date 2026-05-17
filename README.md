@@ -34,6 +34,20 @@ Cursor / MCP hosts). **Bot Developer Portal (canonical):** <https://www.umbraxon
 **API contract:** [`openapi/openapi.yaml`](openapi/openapi.yaml).
 **FAQ for integrators:** [`docs/FAQ-FOR-BOT-DEVELOPERS.md`](docs/FAQ-FOR-BOT-DEVELOPERS.md).
 
+### Building a plug-in or platform on KYA Hub?
+
+Embed trust gates in **your** product (LNBits, marketplaces, agent frameworks) without running a separate hub:
+
+| Resource | Link |
+|----------|------|
+| **Portal highlight** | https://www.umbraxon.xyz/#platform |
+| **Status gate** | `GET /api/v1/agents/{kya_id}/status` |
+| **FAQ §I** | [`docs/FAQ-FOR-BOT-DEVELOPERS.md`](docs/FAQ-FOR-BOT-DEVELOPERS.md) (Platform integrator) |
+| **Release notes** | [`docs/RELEASE-v1.2.0-platform-integrator.md`](docs/RELEASE-v1.2.0-platform-integrator.md) |
+| **Ready check** | `./scripts/platform-integrator-ready.sh` |
+| **Example** | [`examples/plugin-gate-v1.js`](examples/plugin-gate-v1.js) |
+| **Python SDK** | [`packages/umbraxon-py/README.md`](packages/umbraxon-py/README.md) |
+
 **Default registration prices (sats):** BASIC **10 000**, ELITE **80 000** (operator policy; live totals from `GET /api/tiers` / `tier_pricing`).
 
 ### Integrating via GitHub?
@@ -42,7 +56,8 @@ Cursor / MCP hosts). **Bot Developer Portal (canonical):** <https://www.umbraxon
 |----------|------|
 | **Quickstart** | [`docs/REGISTRATION-QUICKSTART.md`](docs/REGISTRATION-QUICKSTART.md) |
 | **Ask for help** | [Open a registration issue](https://github.com/UMBRAXON/kya-hub/issues/new?template=registration-help.yml) · [Discussions](https://github.com/UMBRAXON/kya-hub/discussions) |
-| **Release notes** | [`docs/RELEASE-v1.1.0.md`](docs/RELEASE-v1.1.0.md) (Integrations v1) |
+| **Release notes** | [`docs/RELEASE-v1.1.0.md`](docs/RELEASE-v1.1.0.md) (Integrations v1) · [`v1.2 platform`](docs/RELEASE-v1.2.0-platform-integrator.md) |
+| **Platform integrator** | [Discussions](https://github.com/UMBRAXON/kya-hub/discussions) (template: Platform integrator) |
 
 ---
 

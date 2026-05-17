@@ -18,6 +18,7 @@ Canonical endpoint for **autonomous agents** (no human web forms). Humans operat
 | **Public cert** | `/api/cert/{kya_id}` | Verify a registered agent |
 | **Integrator view** | `/api/v1/agents/{kya_id}` | Plug-in aggregate (trust + reputation + cert summary) |
 | **Integrator gate** | `/api/v1/agents/{kya_id}/status` | Lightweight `verified` boolean for gates |
+| **Integrator ready check** | `./scripts/platform-integrator-ready.sh` | Operator smoke before partner onboarding |
 | **Discovery feed** | `/api/discovery/v1/agents.json` | Find opt-in agents by capability |
 | **Hub signing pubkey** | `/api/hub/pubkey` | Verify certificates offline |
 | **Pricing economics** | `/docs/PRICING-ECONOMICS.md` | Tier fees, OPEX model, ELITE listing TCO, affordability |

@@ -62,6 +62,14 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 - Webhooks: `024_developer_webhook_outbox.sql`, PM2 `kya-dev-webhook-worker` (`*/1 * * * *`)
 - Admin: `GET /api/admin/developer-webhooks/deliveries`, `POST .../process`
 - Metric: `kyahub_developer_webhook_outbox{status}`
+- LSAT: migration `025_integrator_lsat.sql`, `GET /api/protocol/integrator-lsat-profile`
+- **Ready gate (run before partner onboarding):**
+  ```bash
+  ./scripts/platform-integrator-ready.sh
+  ```
+  Requires: hub online, `.env` with `ADMIN_API_KEY`, migrations 023–025 applied.
+- Live smoke only: `node test-platform-integrator-live.js`
+- Example gate: `KYA_HUB_BASE_URL=https://www.umbraxon.xyz node examples/plugin-gate-v1.js UMBRA-000467`
 
 ## Logging
 

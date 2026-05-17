@@ -5,13 +5,15 @@ from typing import Any, Dict
 
 from config import Settings
 from pr.crosspost import crosspost
-from pr.themes import build_daily_post
+from pr.themes import build_nostr_post
 
 
 def run_nostr_post(settings: Settings) -> Dict[str, Any]:
-    title, body, theme_id = build_daily_post(settings)
-    if settings.pr_hub_url_required and settings.kya_hub_base_url not in body:
-        body = f"{body}\n\n{settings.kya_hub_base_url}/bots/"
+    title, body, theme_id = build_nostr_post(settings)
+    hub = settings.kya_hub_base_url.rstrip("/")
+    if settings.pr_hub_url_required and hub not in body:
+        suffix = f"{hub}/#platform" if theme_id == "platform_integrator" else f"{hub}/bots/"
+        body = f"{body}\n\n{suffix}"
     result = crosspost(
         settings,
         body,

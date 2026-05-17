@@ -22,8 +22,11 @@
 | **4** | `umbraxon-py` on repo (`packages/umbraxon-py`) | **Done (core)** | — |
 | **5** | LSAT day pass (`umb_lsat_…`, BTCPay invoice) | **Done (core)** | — |
 | **6** | LNBits extension, CrewAI tool (thin proxies) | per platform | per platform |
+| **Ready** | `./scripts/platform-integrator-ready.sh` (migrations + live smoke) | **operator checklist** | — |
 
 **MVP for real plug-in partners (phases 0–2b):** ~**6–10 weeks** part-time, ~**3–4 weeks** full-time.
+
+**Operator “ready for napojenie” (levels A):** phases 0–5 in repo + `./scripts/platform-integrator-ready.sh` green + PM2 `kya-dev-webhook-worker` online.
 
 ## Shipped in repo
 

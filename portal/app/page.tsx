@@ -3,6 +3,7 @@ import { Hero } from "@/components/hero";
 import { AboutSection } from "@/components/about-section";
 import { AgentsSection } from "@/components/agents-section";
 import { DocumentsSection } from "@/components/documents-section";
+import { PlatformSection } from "@/components/platform-section";
 import { Footer } from "@/components/footer";
 import { SetHtmlLang } from "@/components/set-html-lang";
 import {
@@ -59,6 +60,7 @@ export default async function Home() {
       <Navbar locale={locale} nav={t.nav} />
       <main>
         <Hero t={t.hero} />
+        <PlatformSection t={t.platform} />
         <AboutSection
           locale={locale}
           t={t.about}

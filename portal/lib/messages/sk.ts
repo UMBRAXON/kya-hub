@@ -2,12 +2,13 @@ export const sk = {
   meta: {
     title: "UMBRAXON KYA Hub — Overená identita pre autonómne systémy",
     description:
-      "UMBRAXON KYA Hub — M2M register agentov cez Lightning, Ed25519 certifikáty, verejný discovery feed.",
+      "UMBRAXON KYA Hub — M2M register agentov a Platform Integrator API pre LNBits, marketplace a agent frameworky.",
   },
   nav: {
     about: "O projekte",
     tiers: "Tiery",
     agents: "Agenti",
+    platform: "Plug-in API",
     docs: "Dokumentácia",
     register: "Registrovať agenta",
     langEn: "English",
@@ -23,7 +24,30 @@ export const sk = {
     bodyCode: "POST /api/v1/register",
     bodyTail: "pre autonómne boty.",
     ctaIntegrate: "Začať integráciu",
+    ctaPlatform: "Postaviť plug-in",
     ctaAgents: "Prehľadávať agentov",
+  },
+  platform: {
+    badge: "Novinka · Platform Integrator API",
+    title: "Overujte KYA agentov vo vašom produkte",
+    body:
+      "Trust gate do LNBits, agent marketplaces alebo orchestrátorov — bez vlastného identity hubu. Verejné read API, voliteľné partner kľúče, webhook fronta.",
+    bullets: [
+      "Jeden call: GET /api/v1/agents/{kya_id}/status → verified + trust_level",
+      "Voliteľné umb_live_… API kľúče s vlastným rate limitom",
+      "Developer webhooky pri registrácii a zmene reputácie",
+      "Python SDK (umbraxon) + OpenAPI — registrácia stále Ed25519 + Lightning",
+    ],
+    codeLabel: "Plug-in gate (príklad)",
+    codeSample: `GET /api/v1/agents/UMBRA-000467/status
+→ { "verified": true, "trust_level": "TRUSTED" }
+
+Authorization: Bearer umb_live_…  (voliteľné)`,
+    codeFoot: "Kompletný návod: FAQ §I · Roadmap · examples/plugin-gate-v1.js",
+    ctaPrimary: "Dokumentácia pre platformy",
+    ctaSecondary: "OpenAPI",
+    primaryHref: "/docs/FAQ-FOR-BOT-DEVELOPERS.md#i-platform-integrator-plug-in--third-party-systems",
+    secondaryHref: "/openapi/openapi.yaml",
   },
   about: {
     title: "O UMBRAXON KYA Hub",
@@ -148,7 +172,9 @@ export const sk = {
       "Opt-in do verejného discovery feedu podľa capability a tieru.",
     ],
     integrateFoot:
-      "Integrations v1 pridáva discovery (/api/discovery/v1/agents.json), L402 delegation pass, payment hints v manifeste a developer webhooky. Začni s",
+      "Integrations v1 pridáva discovery, L402 delegation pass a developer webhooky. **Platform Integrator API** (plug-in vrstva) pridáva GET /api/v1/agents/{id} pre tretie strany — pozri",
+    platformLink: "Plug-in API",
+    platformHref: "#platform",
     readme: "README_API.md",
     or: "alebo",
     agentsMd: "AGENTS.md",
@@ -172,6 +198,11 @@ export const sk = {
     subtitle: "Všetko na registráciu a integráciu autonómneho agenta.",
     read: "Otvoriť",
     items: [
+      {
+        title: "Platform Integrator API (plug-iny)",
+        description:
+          "Overenie agentov vo vašej app: status gate, API kľúče, webhooky, SDK umbraxon-py. FAQ §I.",
+      },
       {
         title: "README_API.md — M2M Register",
         description:
@@ -206,6 +237,7 @@ export const sk = {
     about: "O projekte",
     agents: "Agenti",
     docs: "Dokumentácia",
+    platform: "Plug-in API",
     readme: "README_API",
     health: "Health API",
     copyright: "Umbraxon KYA Hub. Nekustodiálny register agentov.",

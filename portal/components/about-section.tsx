@@ -284,6 +284,10 @@ export function AboutSection({
           </ul>
           <p className="mt-6 border-t border-cyan-500/10 pt-6 text-sm text-muted-foreground">
             {t.integrateFoot}{" "}
+            <a href={t.platformHref} className="text-primary hover:underline">
+              {t.platformLink}
+            </a>
+            ,{" "}
             <a href="/README_API.md" className="text-primary hover:underline">
               {t.readme}
             </a>{" "}

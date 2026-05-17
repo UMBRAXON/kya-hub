@@ -10,15 +10,22 @@ from pr.connectors_registry import connectors_for_platform
 def default_profile_fields(settings: Settings) -> Dict[str, str]:
     hub = settings.kya_hub_base_url.rstrip("/")
     kya = (settings.kya_id or "UMBRA-000467").strip()
+    faq_platform = (
+        f"{hub}/docs/FAQ-FOR-BOT-DEVELOPERS.md"
+        "#i-platform-integrator-plug-in--third-party-systems"
+    )
     return {
         "name": "Umbraxon KYA Hub",
         "display_name": "Umbraxon KYA Hub",
         "about": (
             "Know Your Agent — M2M identity, Lightning registration, reputation. "
-            f"Portal: {hub}/bots/ · GitHub: https://github.com/UMBRAXON/kya-hub · "
+            "Plug-in API: verify KYA agents in your product before the gate runs. "
+            f"FAQ §I: {faq_platform} · "
+            f"Portal: {hub}/#platform · "
+            f"GitHub: https://github.com/UMBRAXON/kya-hub · "
             f"Agent {kya}."
         ),
-        "website": f"{hub}/bots/",
+        "website": f"{hub}/#platform",
         "picture": f"{hub}/favicon.ico",
     }
 

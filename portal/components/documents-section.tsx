@@ -37,7 +37,14 @@ export function DocumentsSection({
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {documents.map((doc) => (
-            <Card key={doc.id} className="neon-card flex flex-col border-0 ring-0">
+            <Card
+              key={doc.id}
+              className={
+                doc.id === "platform-integrator"
+                  ? "neon-card flex flex-col border border-amber-400/35 ring-1 ring-amber-400/20"
+                  : "neon-card flex flex-col border-0 ring-0"
+              }
+            >
               <CardHeader>
                 <DocIcon type={doc.type} />
                 <CardTitle className="mt-4 leading-snug">{doc.title}</CardTitle>

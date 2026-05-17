@@ -22,6 +22,7 @@ from pr.crosspost import crosspost
 from pr.heartbeat import moltbook_heartbeat
 from pr.promote import promote_hub
 from pr.daily_post import run_daily_post
+from pr.platform_post import run_platform_post
 from pr.nostr_post import run_nostr_post
 from pr.nostr_profile import publish_nostr_profile
 from pr.run_cycle import run_cycle
@@ -242,6 +243,16 @@ def cmd_github_scan(args: argparse.Namespace) -> int:
     return 0 if out.get("ok") else 1
 
 
+def cmd_platform_post(args: argparse.Namespace) -> int:
+    s = load_settings()
+    log = new_trace_logger(getattr(args, "log_dir", None) or "logs", prefix="pr-platform")
+    out = run_platform_post(s)
+    log.info("platform_post", publish_ok=(out.get("publish") or {}).get("ok"))
+    print(json.dumps(out, indent=2, ensure_ascii=False)[:8000])
+    pub = out.get("publish") or {}
+    return 0 if pub.get("ok") else 1
+
+
 def cmd_daily_post(args: argparse.Namespace) -> int:
     s = load_settings()
     log = new_trace_logger(getattr(args, "log_dir", None) or "logs", prefix="pr-daily")
@@ -375,6 +386,13 @@ def main() -> int:
     gh = sub.add_parser("github-scan", help="Scan GitHub for AI-agent repos (Phase D)")
     gh.add_argument("--log-dir", default="logs")
     gh.set_defaults(func=cmd_github_scan)
+
+    pp = sub.add_parser(
+        "platform-post",
+        help="One-shot Moltbook post — Platform Integrator API (plug-in layer)",
+    )
+    pp.add_argument("--log-dir", default="logs")
+    pp.set_defaults(func=cmd_platform_post)
 
     dp = sub.add_parser("daily-post", help="Themed daily Moltbook post (cron)")
     dp.add_argument("--log-dir", default="logs")
