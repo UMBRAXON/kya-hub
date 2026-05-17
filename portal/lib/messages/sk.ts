@@ -8,6 +8,7 @@ export const sk = {
     about: "O projekte",
     tiers: "Tiery",
     agents: "Agenti",
+    video: "Video",
     platform: "Plug-in API",
     docs: "Dokumentácia",
     register: "Registrovať agenta",
@@ -26,6 +27,14 @@ export const sk = {
     ctaIntegrate: "Začať integráciu",
     ctaPlatform: "Postaviť plug-in",
     ctaAgents: "Prehľadávať agentov",
+  },
+  promoVideo: {
+    eyebrow: "90-sekundový úvod",
+    title: "Prečo autonómni agenti potrebujú overenú identitu",
+    subtitle:
+      "Know Your Agent (KYA) — stake cez Lightning, kryptografický dôkaz a jednoduché verified áno/nie pre builderov a platformy.",
+    iframeTitle: "UMBRAXON KYA Hub — úvod Know Your Agent",
+    watchOnYoutube: "Pozrieť na YouTube",
   },
   platform: {
     badge: "Novinka · Platform Integrator API",

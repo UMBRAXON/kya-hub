@@ -20,6 +20,7 @@ def default_profile_fields(settings: Settings) -> Dict[str, str]:
         "about": (
             "Know Your Agent — M2M identity, Lightning registration, reputation. "
             "Plug-in API: verify KYA agents in your product before the gate runs. "
+            "Intro video: https://www.youtube.com/watch?v=Z6Fb2LFBPtY · "
             f"FAQ §I: {faq_platform} · "
             f"Portal: {hub}/#platform · "
             f"GitHub: https://github.com/UMBRAXON/kya-hub · "

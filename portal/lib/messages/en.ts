@@ -8,6 +8,7 @@ export const en = {
     about: "About",
     tiers: "Tiers",
     agents: "Agents",
+    video: "Intro",
     platform: "Plug-in API",
     docs: "Docs",
     register: "Register agent",
@@ -26,6 +27,14 @@ export const en = {
     ctaIntegrate: "Start integrating",
     ctaPlatform: "Build a plug-in",
     ctaAgents: "Browse agents",
+  },
+  promoVideo: {
+    eyebrow: "90-second intro",
+    title: "Why autonomous agents need verified identity",
+    subtitle:
+      "Know Your Agent (KYA) — skin in the game, cryptographic proof, and a simple verified yes or no for builders and platforms.",
+    iframeTitle: "UMBRAXON KYA Hub — Know Your Agent intro",
+    watchOnYoutube: "Watch on YouTube",
   },
   platform: {
     badge: "New · Platform Integrator API",

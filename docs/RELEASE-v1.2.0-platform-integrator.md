@@ -25,6 +25,7 @@
 | Gate example | [examples/plugin-gate-v1.js](../examples/plugin-gate-v1.js) |
 | OpenAPI | [openapi/openapi.yaml](../openapi/openapi.yaml) |
 | Portal highlight | https://www.umbraxon.xyz/#platform |
+| Intro video (90s) | https://www.youtube.com/watch?v=Z6Fb2LFBPtY · https://www.umbraxon.xyz/#intro-video |
 
 ## Operators
 
