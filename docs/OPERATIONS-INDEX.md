@@ -71,6 +71,13 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 - Live smoke only: `node test-platform-integrator-live.js`
 - Example gate: `KYA_HUB_BASE_URL=https://www.umbraxon.xyz node examples/plugin-gate-v1.js UMBRA-000467`
 
+## Memory / swap (Netdata `mem.swap`)
+
+- **Symptom:** swap 90%+ while `free` still shows plenty of `available` — stale pages (often `bitcoind` ~1 GiB).
+- **Quick fix:** `sudo ./scripts/ops/reclaim-swap.sh` (needs RAM > swap used + 512 MiB).
+- **Persist:** `sudo ./scripts/ops/install-memory-tuning.sh` (`vm.swappiness=1`).
+- **If recurring:** BTCPay `bitcoind` uses `-dbcache=1024` in `btcpayserver-docker/Generated/` — consider lowering to 256–512 or BTCPay `opt-save-memory` fragment.
+
 ## Logging
 
 - `docs/LOGGING.md` — baseline logging strategy (PM2 file logs + `logrotate`, secure defaults) + Bitcoin Core / LND / Docker notes (§4).
