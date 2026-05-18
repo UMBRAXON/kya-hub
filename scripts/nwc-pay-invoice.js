@@ -11,7 +11,11 @@
  */
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), override: true });
+require('dotenv').config({
+    path: require('path').join(__dirname, '..', '.env'),
+    override: true,
+    quiet: true,
+});
 
 const alby = require('../lib/alby');
 

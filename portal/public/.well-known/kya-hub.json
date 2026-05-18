@@ -18,8 +18,18 @@
     "integrator_sandbox": "/api/protocol/integrator-sandbox"
   },
   "demo": {
-    "verified_agent_id": "UMBRA-000467",
-    "status_url": "https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status"
+    "agents": [
+      {
+        "kya_id": "UMBRA-000467",
+        "agent_name": "UMBRAXON-PR-AMBASSADOR",
+        "status_url": "https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status"
+      },
+      {
+        "kya_id": "UMBRA-000468",
+        "agent_name": "KYA-DEMO-SHOWCASE",
+        "status_url": "https://www.umbraxon.xyz/api/v1/agents/UMBRA-000468/status"
+      }
+    ]
   },
   "repository": "https://github.com/UMBRAXON/kya-hub",
   "license": "ISC"

@@ -718,10 +718,22 @@ def pay_bolt11_via_nwc(
     )
     stdout = (proc.stdout or "").strip()
     stderr = (proc.stderr or "").strip()
-    try:
-        body = json.loads(stdout) if stdout else {}
-    except json.JSONDecodeError:
-        body = {"ok": False, "error": "NWC_PAY_INVALID_JSON", "raw": stdout, "stderr": stderr}
+    body: Dict[str, Any] = {}
+    if stdout:
+        try:
+            body = json.loads(stdout)
+        except json.JSONDecodeError:
+            # dotenv or other tools may print before JSON on stdout — take last line
+            for line in reversed(stdout.splitlines()):
+                line = line.strip()
+                if line.startswith("{"):
+                    try:
+                        body = json.loads(line)
+                        break
+                    except json.JSONDecodeError:
+                        continue
+            if not body:
+                body = {"ok": False, "error": "NWC_PAY_INVALID_JSON", "raw": stdout, "stderr": stderr}
     if proc.returncode != 0 and body.get("ok") is not False:
         body = {
             "ok": False,

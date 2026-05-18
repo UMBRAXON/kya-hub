@@ -23,7 +23,7 @@
 - OpenAPI: https://www.umbraxon.xyz/openapi/openapi.yaml
 - Human API index: https://www.umbraxon.xyz/README_API.md
 - Gate (public): `GET /api/v1/agents/{kya_id}/status` — optional `?include=cert_proof`
-- Live demo agent: `GET https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status`
+- Live demo agents: `UMBRA-000467` (PR ambassador), `UMBRA-000468` (KYA-DEMO-SHOWCASE) — `GET …/api/v1/agents/{id}/status`
 - Health: `GET https://www.umbraxon.xyz/api/health`
 - Integrator sandbox profile: `GET https://www.umbraxon.xyz/api/protocol/integrator-sandbox`
 
