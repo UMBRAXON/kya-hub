@@ -25,9 +25,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   ...buildPageMetadata({
-    title: "UMBRAXON KYA Hub — Verified identity for autonomous systems",
+    title: "UMBRAXON KYA Hub — Know Your Agent registry (Lightning + Ed25519)",
     description:
-      "UMBRAXON KYA Hub — Lightning M2M agent registry, Ed25519 certificates, integrator verify API, public discovery.",
+      "Public bot registry: Ed25519 identity, Lightning registration, integrator status API. Open source on GitHub.",
     path: "/",
   }),
 };

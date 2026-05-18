@@ -35,7 +35,16 @@
 - MCP (local checkout): packages in repo `mcp/` — `@umbraxon/kya-hub-mcp`
 - npm (verify helper): `@umbraxon_kya/kya-verify` — `packages/kya-verify/`
 
+## Trust & operator
+
+- About / transparency: https://www.umbraxon.xyz/about
+- What we are not: https://www.umbraxon.xyz/docs/WHAT-WE-ARE-NOT.md
+- On-chain status (honest): https://www.umbraxon.xyz/docs/ON-CHAIN-STATUS.md
+- Security review (internal): https://github.com/UMBRAXON/kya-hub/blob/main/SECURITY-AUDIT-2026-05-12.md
+
 ## Optional
 
 - Video intro (75s): https://www.youtube.com/watch?v=Z6Fb2LFBPtY
 - Terms: https://www.umbraxon.xyz/terms
+- Contact: hello@umbraxon.xyz (operator inbox via domain routing)
+- Telegram (optional): set NEXT_PUBLIC_OPERATOR_TELEGRAM on portal deploy, e.g. https://t.me/your_handle — then listed on /about

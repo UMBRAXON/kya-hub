@@ -7,11 +7,11 @@ const organizationJsonLd = {
   alternateName: "Know Your Agent Hub",
   url: SITE_URL,
   description:
-    "Lightning-paid M2M identity registry for autonomous AI agents. Ed25519 certificates and integrator verify API.",
+    "Lightning-paid M2M identity registry for software agents and bots. Ed25519 certificates and integrator status API.",
   publisher: {
     "@type": "Organization",
     name: "UMBRAXON",
-    url: SITE_URL,
+    url: "https://github.com/UMBRAXON",
   },
 };
 

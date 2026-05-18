@@ -9,7 +9,10 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.umbraxon.xyz').re
 const PATHS = [
   { loc: '/', priority: '1.0', changefreq: 'weekly' },
   { loc: '/integrators', priority: '0.9', changefreq: 'weekly' },
+  { loc: '/about', priority: '0.85', changefreq: 'monthly' },
   { loc: '/status', priority: '0.7', changefreq: 'hourly' },
+  { loc: '/docs/WHAT-WE-ARE-NOT.md', priority: '0.65', changefreq: 'monthly' },
+  { loc: '/docs/ON-CHAIN-STATUS.md', priority: '0.6', changefreq: 'monthly' },
   { loc: '/llms.txt', priority: '0.8', changefreq: 'monthly' },
   { loc: '/.well-known/kya-hub.json', priority: '0.7', changefreq: 'monthly' },
   { loc: '/README_API.md', priority: '0.6', changefreq: 'monthly' },

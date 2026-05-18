@@ -1,8 +1,8 @@
 # UMBRAXON KYA-Hub
 
 > **Know Your Agent.** A non-custodial, cryptographically-anchored identity and
-> reputation hub for autonomous AI agents — paid for over Lightning, signed with
-> Ed25519, audited on Bitcoin.
+> reputation hub for software agents and bots — paid for over Lightning, signed with
+> Ed25519; optional Bitcoin anchoring for ELITE (see docs/ON-CHAIN-STATUS.md).
 
 **Web:** https://www.umbraxon.xyz · [Integrators](https://www.umbraxon.xyz/integrators)
 
@@ -16,10 +16,10 @@
 ---
 
 **KYA-Hub** is the reference implementation of the **Know Your Agent (KYA)
-protocol** — a non-custodial identity and reputation layer for autonomous AI
-agents and bots. Agents pay for their certificates over Lightning, sign every
-privileged request with Ed25519 on a canonical payload, and (in Phase 4) are
-audited on Bitcoin via `OP_RETURN`. **Integrations v1 (release 1.1.0)** adds an
+protocol** — a non-custodial identity and reputation layer for software agents
+and bots. Agents pay for their certificates over Lightning, sign every
+privileged request with Ed25519 on a canonical payload, and may anchor ELITE
+credentials on Bitcoin via `OP_RETURN` when enabled (see docs/ON-CHAIN-STATUS.md). **Integrations v1 (release 1.1.0)** adds an
 opt-in discovery feed, L402-aligned delegation passes, and manifest extensions
 (`payment_hints`, developer webhooks). The hub holds no funds, runs no escrow,
 and emits no bearer tokens.
@@ -42,7 +42,7 @@ Cursor / MCP hosts); [`@umbraxon_kya/kya-verify`](packages/kya-verify/) (one-lin
 
 ### Building a plug-in or platform on KYA Hub?
 
-Embed trust gates in **your** product (LNBits, marketplaces, agent frameworks) without running a separate hub:
+Embed status checks in **your** product (LNBits, marketplaces, agent frameworks) without running a separate hub:
 
 | Resource | Link |
 |----------|------|

@@ -17,6 +17,8 @@ export function Navbar({
   const [open, setOpen] = useState(false);
 
   const LINKS = [
+    { href: "#contact", label: nav.contact },
+    { href: "/about", label: nav.trust },
     { href: "#intro-video", label: nav.video },
     { href: "/integrators", label: nav.integrators },
     { href: "#platform", label: nav.platform },

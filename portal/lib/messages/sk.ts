@@ -1,10 +1,12 @@
 export const sk = {
   meta: {
-    title: "UMBRAXON KYA Hub — Overená identita pre autonómne systémy",
+    title: "UMBRAXON KYA Hub — Know Your Agent register (Lightning + Ed25519)",
     description:
-      "UMBRAXON KYA Hub — M2M register agentov a Platform Integrator API pre LNBits, marketplace a agent frameworky.",
+      "Verejný register botov: Ed25519 identita, registrácia Lightningom, status API pre integrátorov. Open source na GitHube.",
   },
   nav: {
+    trust: "Dôvera",
+    contact: "Kontakt",
     about: "O projekte",
     tiers: "Tiery",
     agents: "Agenti",
@@ -19,19 +21,19 @@ export const sk = {
   },
   hero: {
     badge: "UMBRAXON · Lightning M2M",
-    titleLead: "Overená identita pre",
-    titleHighlight: "autonómne systémy",
+    titleLead: "Know Your Agent —",
+    titleHighlight: "register botov",
     body:
-      "Register pre botov: Ed25519 identita, platba Lightning, certifikát, ktorý vie overiť aj tretia strana. Žiadne ľudské formuláre — len",
+      "Registrácia softvérových agentov: Ed25519 kľúče a poplatok Lightning. Protistrana overí jedným GET pred platbou. Žiadne ľudské formuláre — len",
     bodyCode: "POST /api/v1/register",
-    bodyTail: "pre autonómne boty.",
+    bodyTail: "pre botov a integrátorov.",
     ctaIntegrate: "Začať integráciu",
     ctaPlatform: "Postaviť plug-in",
     ctaAgents: "Prehľadávať agentov",
   },
   promoVideo: {
     eyebrow: "75-sekundový úvod",
-    title: "Prečo autonómni agenti potrebujú overenú identitu",
+    title: "Prečo boti potrebujú overiteľnú identitu pred platbou",
     subtitle:
       "Jeden endpoint pred platbou alebo akciou. Nízke riziko: snapshot z hubu. Vysoké riziko: over podpis certifikátu.",
     iframeTitle: "UMBRAXON KYA Hub — úvod Know Your Agent",
@@ -41,7 +43,7 @@ export const sk = {
     badge: "Novinka · Platform Integrator API",
     title: "Overujte KYA agentov vo vašom produkte",
     body:
-      "Gate do LNBits, marketplace alebo orchestrátora — bez vlastného hubu. Agent sa identifikuje Ed25519; platforma len číta verejné API.",
+      "Skontroluj KYA status v LNBits, marketplace alebo vo svojej appke — bez vlastného hubu. Agent sa identifikuje Ed25519; platforma len číta verejné API.",
     bullets: [
       "GET /api/v1/agents/{kya_id}/status — rýchly snapshot (cache ~60 s)",
       "?include=cert_proof — kryptografický dôkaz pre väčšie sumy",
@@ -67,7 +69,7 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     hubLabel: "Hub",
     introLead: "UMBRAXON KYA Hub",
     intro:
-      "je register identity a reputácie pre autonómnych softvérových agentov, platený Lightningom a ukotvený Ed25519. Agent preukáže existenciu, zaplatí malý poplatok, podpíše manifest vlastným kľúčom a dostane certifikát, ktorý môžu iní overiť offline. Ďalšie akcie sú autentifikované kryptograficky s nepopierateľnosťou — určené pre botov a integrátorov, nie pre ľudské webové formuláre.",
+      "je register identity a reputácie pre softvérových agentov a botov, platený Lightningom a ukotvený Ed25519. Agent preukáže existenciu, zaplatí malý poplatok, podpíše manifest vlastným kľúčom a dostane certifikát, ktorý môžu iní overiť offline. Privilegované akcie používajú Ed25519 podpisy — určené pre botov a integrátorov, nie pre ľudské webové formuláre.",
     pillars: [
       {
         title: "Ed25519 identita (agent)",
@@ -122,8 +124,8 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
           rest: "pomenovaný agent, hash manifestu, verejné CRL.",
         },
         {
-          lead: "Prenosná identita",
-          rest: "kľúče si držíš ty; reputácia ide s menom agenta a kľúčmi.",
+          lead: "Kľúče ostávajú u teba",
+          rest: "reputácia sa zapisuje na tomto hube pod menom agenta a pubkey.",
         },
       ],
       cta: "Registrovať ako BASIC",
@@ -181,7 +183,7 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     integrateItems: [
       "Preukázať protistrane, že tvoj agent nie je Sybil sockpuppet.",
       "Poskytnúť audit trail, ktorý agent podpísal každú požiadavku.",
-      "Niesť prenosnú reputáciu medzi operátormi (kľúče si držíš ty).",
+      "Budovať reputáciu na tomto hube (Ed25519 kľúče si držíš ty).",
       "Opt-in do verejného discovery feedu podľa capability a tieru.",
     ],
     integrateFoot:
@@ -208,7 +210,7 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
   },
   docs: {
     title: "Dokumentácia a API",
-    subtitle: "Všetko na registráciu a integráciu autonómneho agenta.",
+    subtitle: "Všetko na registráciu a integráciu bota alebo agenta.",
     read: "Otvoriť",
     items: [
       {
@@ -224,7 +226,7 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
       {
         title: "AGENTS.md",
         description:
-          "Integračná príručka pre autonómnych AI agentov pri UMBRAXON KYA Hub.",
+          "Integračná príručka pre AI agentov a vývojárov botov pri UMBRAXON KYA Hub.",
       },
       {
         title: "FAQ pre vývojárov botov",
@@ -244,15 +246,74 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
       },
     ],
   },
+  contactStrip: {
+    builtInEu: "Postavené v EÚ",
+    title: "Kontakt na operátora",
+    body:
+      "Integrátori, bezpečnosť alebo spolupráca — napíš priamo. Žiadna firemná fronta.",
+    maintainerLabel: "Za projektom stojí",
+    maintainerFallback: "solo maintainer",
+    telegram: "Telegram",
+    trustLink: "Dôvera a transparentnosť",
+  },
   footer: {
     tagline:
-      "UMBRAXON KYA Hub — M2M identita cez Lightning pre autonómne systémy.",
-    about: "O projekte",
+      "UMBRAXON KYA Hub — M2M identita cez Lightning pre softvérových agentov. Open source.",
+    contact: "Kontakt",
+    trust: "Dôvera a operátor",
+    github: "GitHub",
+    terms: "Podmienky",
+    security: "Bezpečnostná revízia",
+    status: "Status",
+    whatWeAreNot: "Čo nie sme",
+    about: "O hube",
     agents: "Agenti",
     docs: "Dokumentácia",
     platform: "Plug-in API",
     readme: "README_API",
     health: "Health API",
     copyright: "Umbraxon KYA Hub. Nekustodiálny register agentov.",
+  },
+  trustPage: {
+    metaTitle: "Dôvera a operátor — UMBRAXON KYA Hub",
+    metaDescription:
+      "Kto prevádzkuje hub, open-source dôkazy, interná bezpečnostná revízia, podmienky a kontakt na operátora.",
+    eyebrow: "Transparentnosť",
+    title: "Dôvera a operátor",
+    intro:
+      "KYA Hub je infraštruktúra identity. Mali by ste vidieť, kto ju prevádzkuje, čo je open source a čo netvrdíme (žiadny nezávislý audit, žiadna firemná entita na tejto stránke).",
+    operatorTitle: "Operátor",
+    builtInEu: "Postavené v EÚ",
+    maintainerLabel: "Človek za projektom",
+    operatorRole: "Solo operátor · open source · postavené v EÚ",
+    operatorBody:
+      "UMBRAXON je značka operátora tohto hubu. Backend, portál a protokol sú verejne na GitHube. Produkcia je jedna inštancia na umbraxon.xyz — zatiaľ nie federácia.",
+    telegramOptional:
+      "Telegram kontakt sa zobrazí po nastavení (NEXT_PUBLIC_OPERATOR_TELEGRAM, napr. https://t.me/tvoj_handle).",
+    proofTitle: "Over si tvrdenia sám",
+    proofSource: "Zdrojový kód (GitHub)",
+    proofWhatNot: "Čo nie sme",
+    proofOnChain: "On-chain anchoring (úprimný stav)",
+    proofSecurity: "Interná bezpečnostná revízia (máj 2026)",
+    proofTerms: "Podmienky používania",
+    proofStatus: "Live status a metriky",
+    proofIntegrators: "Integrátor quickstart",
+    auditDisclaimer:
+      "Bezpečnostné súbory sú interné revízie operátora, nie nezávislý pentest ani certifikácia.",
+    honestTitle: "Čo netvrdíme",
+    honestBullets: [
+      "Nie sme banka, escrow ani KYC pre ľudí.",
+      "Odolnosť voči Sybil je ekonomická + kryptografická, nie zaručená.",
+      "Reputácia platí na tomto hube; kľúče sú prenosné, skóre nie automaticky na iných huboch.",
+      "ELITE on-chain anchor je voliteľný a gated — pozri dokument on-chain status.",
+    ],
+    contactTitle: "Kontakt",
+    contactIntro:
+      "Integrátori: formulár na /integrators. Všeobecné otázky: e-mail, Telegram (ak je uvedený) alebo GitHub — žiadne tajomstvá v issue.",
+    contactTelegram: "Telegram",
+    contactDiscussions: "GitHub Discussions",
+    contactIssues: "Otvoriť GitHub issue",
+    contactSla:
+      "Odpoveď best-effort — solo operátor. Pre hello@umbraxon.xyz nastav Cloudflare Email Routing na svoj inbox.",
   },
 };

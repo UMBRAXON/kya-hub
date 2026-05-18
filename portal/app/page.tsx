@@ -6,6 +6,7 @@ import { DocumentsSection } from "@/components/documents-section";
 import { PlatformSection } from "@/components/platform-section";
 import { PromoVideo } from "@/components/promo-video";
 import { Footer } from "@/components/footer";
+import { OperatorContactStrip } from "@/components/operator-contact-strip";
 import { SetHtmlLang } from "@/components/set-html-lang";
 import {
   fetchDiscoveryAgents,
@@ -80,6 +81,7 @@ export default async function Home() {
           t={t.agents}
         />
         <DocumentsSection documents={documents} t={t.docs} />
+        <OperatorContactStrip t={t.contactStrip} />
       </main>
       <Footer t={t.footer} />
     </div>

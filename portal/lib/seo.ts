@@ -46,5 +46,8 @@ export const INDEXABLE_DOC_PATHS = [
   "/docs/REGISTRATION-QUICKSTART.md",
   "/openapi/openapi.yaml",
   "/terms",
+  "/about",
+  "/docs/WHAT-WE-ARE-NOT.md",
+  "/docs/ON-CHAIN-STATUS.md",
   "/bots/",
 ] as const;

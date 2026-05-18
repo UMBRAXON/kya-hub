@@ -1,10 +1,12 @@
 export const en = {
   meta: {
-    title: "UMBRAXON KYA Hub — Verified identity for autonomous systems",
+    title: "UMBRAXON KYA Hub — Know Your Agent registry (Lightning + Ed25519)",
     description:
-      "UMBRAXON KYA Hub — Lightning M2M agent registry plus Platform Integrator API for LNBits, marketplaces, and agent frameworks.",
+      "Public bot registry: Ed25519 identity, Lightning registration, integrator status API. Open source on GitHub.",
   },
   nav: {
+    trust: "Trust",
+    contact: "Contact",
     about: "About",
     tiers: "Tiers",
     agents: "Agents",
@@ -18,20 +20,20 @@ export const en = {
     language: "Language",
   },
   hero: {
-    badge: "UMBRAXON · Lightning-native M2M",
-    titleLead: "Verified identity for",
-    titleHighlight: "autonomous systems",
+    badge: "UMBRAXON · Lightning M2M",
+    titleLead: "Know Your Agent —",
+    titleHighlight: "bot registry",
     body:
-      "UMBRAXON KYA Hub is a public agent registry with Ed25519 identity, Lightning payment, and auditable certificates. No human web forms — only",
+      "Register software agents with Ed25519 keys and a Lightning fee. Counterparties verify with one GET before payment. No human web forms — only",
     bodyCode: "POST /api/v1/register",
-    bodyTail: "for autonomous bots.",
+    bodyTail: "for bots and integrators.",
     ctaIntegrate: "Start integrating",
     ctaPlatform: "Build a plug-in",
     ctaAgents: "Browse agents",
   },
   promoVideo: {
     eyebrow: "75-second intro",
-    title: "Why autonomous agents need verified identity",
+    title: "Why bots need a verifiable identity before payment",
     subtitle:
       "One HTTP check before you allow payment or action. Low risk: hub snapshot. High risk: verify the certificate signature.",
     iframeTitle: "UMBRAXON KYA Hub — Know Your Agent intro",
@@ -41,7 +43,7 @@ export const en = {
     badge: "New · Platform Integrator API",
     title: "Verify KYA agents inside your product",
     body:
-      "Gate LNBits, a marketplace, or your orchestrator without running a hub. Agents use Ed25519; your product only calls the public read API.",
+      "Check KYA status inside LNBits, a marketplace, or your app — without running a hub. Agents use Ed25519; your product only calls the public read API.",
     bullets: [
       "GET /api/v1/agents/{kya_id}/status — fast snapshot (~60s cache)",
       "?include=cert_proof — cryptographic proof for larger actions",
@@ -56,7 +58,7 @@ export const en = {
 GET .../status?include=cert_proof
 
 Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
-    codeFoot: "Guide: docs/INTEGRATOR-TRUST-GATE.md · FAQ §I · plugin-gate-strict.js",
+    codeFoot: "Guide: docs/INTEGRATOR-TRUST-GATE.md (status check) · FAQ §I · plugin-gate-strict.js",
     ctaPrimary: "Platform integrator docs",
     ctaSecondary: "OpenAPI",
     primaryHref: "/integrators",
@@ -67,7 +69,7 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     hubLabel: "Hub",
     introLead: "UMBRAXON KYA Hub",
     intro:
-      "is a Lightning-paid, Ed25519-anchored identity and reputation registry for autonomous software agents. An agent proves it exists, pays a small fee, signs a manifest with its own key, and receives a certificate others can verify offline. Subsequent actions are authenticated with cryptographic non-repudiation — built for bots and integrators, not human web forms.",
+      "is a Lightning-paid, Ed25519-anchored identity and reputation registry for software agents and bots. An agent proves it exists, pays a small fee, signs a manifest with its own key, and receives a certificate others can verify offline. Privileged actions use Ed25519 signatures — built for bots and integrators, not human web forms.",
     pillars: [
       {
         title: "Ed25519 identity (agent)",
@@ -122,8 +124,8 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
           rest: "named agent, manifest hash, public CRL accountability.",
         },
         {
-          lead: "Portable identity",
-          rest: "you keep your keypair; reputation travels with your agent name and keys.",
+          lead: "You keep your keys",
+          rest: "reputation is recorded on this hub under your agent name and pubkey.",
         },
       ],
       cta: "Register as BASIC",
@@ -182,7 +184,7 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     integrateItems: [
       "Prove your agent is not a Sybil sockpuppet to a counterparty.",
       "Provide an audit trail of which agent signed each request.",
-      "Carry portable reputation across operators (you keep your keys).",
+      "Build reputation on this hub (you keep your Ed25519 keys).",
       "Opt into the public discovery feed by capability and tier.",
     ],
     integrateFoot:
@@ -209,7 +211,7 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
   },
   docs: {
     title: "Documentation & API",
-    subtitle: "Everything you need to register and integrate an autonomous agent.",
+    subtitle: "Everything you need to register and integrate a bot or agent.",
     read: "Read",
     items: [
       {
@@ -225,7 +227,7 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
       {
         title: "AGENTS.md",
         description:
-          "Integration guide for autonomous AI agents evaluating UMBRAXON KYA Hub.",
+          "Integration guide for AI agents and bot developers evaluating UMBRAXON KYA Hub.",
       },
       {
         title: "FAQ for Bot Developers",
@@ -245,15 +247,74 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
       },
     ],
   },
+  contactStrip: {
+    builtInEu: "Built in EU",
+    title: "Contact the operator",
+    body:
+      "Integrators, security questions, or partnership — reach out directly. No corporate ticket queue.",
+    maintainerLabel: "Maintained by",
+    maintainerFallback: "solo maintainer",
+    telegram: "Telegram",
+    trustLink: "Trust & transparency",
+  },
   footer: {
     tagline:
-      "UMBRAXON KYA Hub — Lightning-paid M2M identity for autonomous systems.",
-    about: "About",
+      "UMBRAXON KYA Hub — Lightning-paid M2M identity for software agents. Open source.",
+    contact: "Contact",
+    trust: "Trust & operator",
+    github: "GitHub",
+    terms: "Terms",
+    security: "Security review",
+    status: "Status",
+    whatWeAreNot: "What we are not",
+    about: "About hub",
     agents: "Agents",
     docs: "Docs",
     platform: "Plug-in API",
     readme: "README_API",
     health: "Health API",
     copyright: "Umbraxon KYA Hub. Non-custodial agent registry.",
+  },
+  trustPage: {
+    metaTitle: "Trust & operator — UMBRAXON KYA Hub",
+    metaDescription:
+      "Who runs the hub, open-source proof, internal security review, terms, and how to contact the operator.",
+    eyebrow: "Transparency",
+    title: "Trust & operator",
+    intro:
+      "KYA Hub is identity infrastructure. You should see who operates it, what is open source, and what we do not claim (no third-party audit, no corporate entity on this page).",
+    operatorTitle: "Operator",
+    builtInEu: "Built in EU",
+    maintainerLabel: "Person behind the project",
+    operatorRole: "Solo operator · open source · built in the EU",
+    operatorBody:
+      "UMBRAXON is the operator brand behind this hub. The backend, portal, and protocol docs are public on GitHub. Production is a single hub instance at umbraxon.xyz — not a federation yet.",
+    telegramOptional:
+      "Telegram contact appears here when configured (NEXT_PUBLIC_OPERATOR_TELEGRAM, e.g. https://t.me/your_handle).",
+    proofTitle: "Verify claims yourself",
+    proofSource: "Source code (GitHub)",
+    proofWhatNot: "What we are not",
+    proofOnChain: "On-chain anchoring (honest status)",
+    proofSecurity: "Internal security review (May 2026)",
+    proofTerms: "Terms of use",
+    proofStatus: "Live status & traction metrics",
+    proofIntegrators: "Integrator quickstart",
+    auditDisclaimer:
+      "Security files are operator-led reviews, not an independent penetration test or certification.",
+    honestTitle: "What we do not claim",
+    honestBullets: [
+      "Not a bank, escrow, or KYC provider for humans.",
+      "Sybil resistance is economic + cryptographic, not guaranteed.",
+      "Reputation scores apply on this hub; keys are portable, scores are not automatically portable to other hubs.",
+      "ELITE on-chain anchor is optional and gated — see on-chain status doc.",
+    ],
+    contactTitle: "Contact",
+    contactIntro:
+      "Integrators: use the form on /integrators. General questions: email, Telegram (if listed), or GitHub — no secrets in issues.",
+    contactTelegram: "Telegram",
+    contactDiscussions: "GitHub Discussions",
+    contactIssues: "Open a GitHub issue",
+    contactSla:
+      "Best-effort response — solo operator. For hello@umbraxon.xyz, set up Cloudflare Email Routing to your inbox.",
   },
 } as const;

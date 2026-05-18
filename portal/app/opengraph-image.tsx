@@ -26,7 +26,7 @@ export default function OpenGraphImage() {
           Know Your Agent
         </div>
         <div style={{ fontSize: 28, marginTop: 24, opacity: 0.9, maxWidth: 800 }}>
-          Verified identity for autonomous bots — Ed25519 + Lightning
+          Bot registry — Ed25519 keys + Lightning registration
         </div>
         <div style={{ fontSize: 22, marginTop: 40, color: "#38bdf8" }}>www.umbraxon.xyz</div>
       </div>
