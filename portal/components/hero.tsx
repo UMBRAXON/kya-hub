@@ -1,47 +1,47 @@
 import Link from "next/link";
-import { ArrowRight, Shield } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
 
 export function Hero({ t }: { t: Dictionary["hero"] }) {
   return (
-    <section className="section-glow-top relative flex min-h-[min(85vh,720px)] flex-col items-center justify-center px-4 pt-20 pb-12 text-center sm:min-h-[85vh] sm:pt-24">
-      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/5 px-4 py-1.5 text-xs font-medium text-primary shadow-[0_0_20px_rgba(0,255,255,0.1)]">
-        <Shield className="size-3.5" aria-hidden />
+    <section className="section-glow-top section-pro-tight flex flex-col items-center justify-center text-center">
+      <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-1 text-xs font-medium text-muted-foreground">
         {t.badge}
       </div>
-      <h1 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
+      <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-5xl">
         {t.titleLead}{" "}
-        <span className="bg-gradient-to-r from-primary via-cyan-300 to-primary bg-clip-text text-transparent drop-shadow-[0_0_24px_rgba(0,255,255,0.35)]">
-          {t.titleHighlight}
-        </span>
+        <span className="text-primary">{t.titleHighlight}</span>
       </h1>
-      <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+      <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
         {t.body}{" "}
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-primary">
+        <code className="rounded-md border border-border bg-card px-1.5 py-0.5 font-mono text-sm text-foreground">
           {t.bodyCode}
         </code>{" "}
         {t.bodyTail}
       </p>
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link
-          href="#docs"
-          className="neon-btn-cyan inline-flex h-11 items-center gap-2 rounded-lg px-6 text-sm font-medium"
+          href="/integrators"
+          className="btn-primary inline-flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-medium"
         >
           {t.ctaIntegrate}
-          <ArrowRight className="size-4" />
+          <ArrowRight className="size-4" aria-hidden />
         </Link>
         <Link
-          href="#platform"
-          className="neon-btn-outline inline-flex h-11 items-center rounded-lg border border-amber-400/40 px-6 text-sm font-medium text-amber-100/90 hover:border-amber-400/60"
+          href="#docs"
+          className="btn-secondary inline-flex h-11 items-center rounded-lg px-5 text-sm font-medium"
         >
-          {t.ctaPlatform}
+          {t.ctaRegister}
         </Link>
-        <Link
-          href="#agents"
-          className="neon-btn-outline inline-flex h-11 items-center rounded-lg border px-6 text-sm font-medium"
+        <a
+          href={t.videoHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-11 items-center gap-2 rounded-lg px-4 text-sm text-muted-foreground transition-colors hover:text-primary"
         >
-          {t.ctaAgents}
-        </Link>
+          <Play className="size-4" aria-hidden />
+          {t.ctaVideo}
+        </a>
       </div>
     </section>
   );

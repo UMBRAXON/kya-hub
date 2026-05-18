@@ -15,6 +15,7 @@ export const en = {
     platform: "Plug-in API",
     docs: "Docs",
     register: "Register agent",
+    registerShort: "Register",
     langEn: "English",
     langSk: "Slovenčina",
     language: "Language",
@@ -27,9 +28,31 @@ export const en = {
       "Register software agents with Ed25519 keys and a Lightning fee. Counterparties verify with one GET before payment. No human web forms — only",
     bodyCode: "POST /api/v1/register",
     bodyTail: "for bots and integrators.",
-    ctaIntegrate: "Start integrating",
-    ctaPlatform: "Build a plug-in",
-    ctaAgents: "Browse agents",
+    ctaIntegrate: "Integrate in 5 min",
+    ctaRegister: "Register a bot",
+    ctaVideo: "75s intro",
+    videoHref: "https://www.youtube.com/watch?v=Z6Fb2LFBPtY",
+  },
+  quickstart: {
+    eyebrow: "Quick path",
+    title: "Integrate or register",
+    fullGuide: "Integrator quickstart",
+    steps: [
+      {
+        title: "Verify before pay",
+        body: "One GET on /api/v1/agents/{kya_id}/status — snapshot or cert_proof.",
+      },
+      {
+        title: "Register with keys",
+        body: "POST /api/v1/register — Ed25519 manifest, Lightning fee, public certificate.",
+      },
+      {
+        title: "Ship in your stack",
+        body: "LNBits plugin, npm @umbraxon_kya/kya-verify, or the Python reference client.",
+      },
+    ],
+    code:
+      'curl -sS "https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status"',
   },
   promoVideo: {
     eyebrow: "75-second intro",
@@ -202,7 +225,9 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     agentsCount: "agent(s)",
     fetchError: "Could not load live feed ({error}). Showing an empty list.",
     searchPlaceholder: "Search agent, KYA ID, or capability…",
-    empty: "No agents in the discovery feed yet (opt-in + verified).",
+    empty: "No agents in the public discovery feed yet.",
+    showcaseNote:
+      "Showing live production agents you can query now. Full discovery feed fills as more ELITE agents opt in.",
     noMatch: "No agents match your search.",
     reputation: "Reputation",
     tier: "Tier",
@@ -213,6 +238,7 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     title: "Documentation & API",
     subtitle: "Everything you need to register and integrate a bot or agent.",
     read: "Read",
+    viewAll: "All documentation",
     items: [
       {
         title: "Platform Integrator API (plug-ins)",
@@ -251,7 +277,9 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     builtInEu: "Built in EU",
     title: "Contact the operator",
     body:
-      "Integrators, security questions, or partnership — reach out directly. No corporate ticket queue.",
+      "Integrators, security questions, or partnership — Telegram or GitHub. No ticket queue.",
+    operatorStory:
+      "I built KYA because bot-to-bot flows need a name and a key, not another OAuth screen. This hub is the small registry I wanted when wiring Lightning agents — auditable, non-custodial, no human signup forms.",
     maintainerLabel: "Maintained by",
     maintainerFallback: "solo maintainer",
     telegram: "Telegram",
@@ -289,8 +317,8 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     operatorRole: "Solo operator · open source · built in the EU",
     operatorBody:
       "UMBRAXON is the operator brand behind this hub. The backend, portal, and protocol docs are public on GitHub. Production is a single hub instance at umbraxon.xyz — not a federation yet.",
-    telegramOptional:
-      "Telegram contact appears here when configured (NEXT_PUBLIC_OPERATOR_TELEGRAM, e.g. https://t.me/your_handle).",
+    operatorStory:
+      "I built KYA because bot-to-bot flows need a name and a key, not another OAuth screen. This hub is the small registry I wanted when wiring Lightning agents — auditable, non-custodial, no human signup forms.",
     proofTitle: "Verify claims yourself",
     proofSource: "Source code (GitHub)",
     proofWhatNot: "What we are not",
@@ -310,11 +338,9 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     ],
     contactTitle: "Contact",
     contactIntro:
-      "Integrators: use the form on /integrators. General questions: email, Telegram (if listed), or GitHub — no secrets in issues.",
+      "Integrators: form on /integrators. Questions: Telegram or GitHub — never post private keys in issues.",
     contactTelegram: "Telegram",
     contactDiscussions: "GitHub Discussions",
     contactIssues: "Open a GitHub issue",
-    contactSla:
-      "Best-effort response — solo operator. For hello@umbraxon.xyz, set up Cloudflare Email Routing to your inbox.",
   },
 } as const;

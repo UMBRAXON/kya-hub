@@ -46,5 +46,5 @@
 
 - Video intro (75s): https://www.youtube.com/watch?v=Z6Fb2LFBPtY
 - Terms: https://www.umbraxon.xyz/terms
-- Contact: hello@umbraxon.xyz (operator inbox via domain routing)
+- Contact: Telegram via /about (when configured) · GitHub Discussions
 - Telegram (optional): set NEXT_PUBLIC_OPERATOR_TELEGRAM on portal deploy, e.g. https://t.me/your_handle — then listed on /about

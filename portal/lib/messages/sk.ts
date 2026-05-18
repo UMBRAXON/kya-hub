@@ -15,6 +15,7 @@ export const sk = {
     platform: "Plug-in API",
     docs: "Dokumentácia",
     register: "Registrovať agenta",
+    registerShort: "Registrácia",
     langEn: "English",
     langSk: "Slovenčina",
     language: "Jazyk",
@@ -27,9 +28,31 @@ export const sk = {
       "Registrácia softvérových agentov: Ed25519 kľúče a poplatok Lightning. Protistrana overí jedným GET pred platbou. Žiadne ľudské formuláre — len",
     bodyCode: "POST /api/v1/register",
     bodyTail: "pre botov a integrátorov.",
-    ctaIntegrate: "Začať integráciu",
-    ctaPlatform: "Postaviť plug-in",
-    ctaAgents: "Prehľadávať agentov",
+    ctaIntegrate: "Integrácia za 5 min",
+    ctaRegister: "Registrovať bota",
+    ctaVideo: "Úvod 75 s",
+    videoHref: "https://www.youtube.com/watch?v=Z6Fb2LFBPtY",
+  },
+  quickstart: {
+    eyebrow: "Rýchla cesta",
+    title: "Integrácia alebo registrácia",
+    fullGuide: "Integrátor quickstart",
+    steps: [
+      {
+        title: "Over pred platbou",
+        body: "Jeden GET na /api/v1/agents/{kya_id}/status — snapshot alebo cert_proof.",
+      },
+      {
+        title: "Registrácia kľúčmi",
+        body: "POST /api/v1/register — Ed25519 manifest, poplatok Lightning, verejný certifikát.",
+      },
+      {
+        title: "Do tvojho stacku",
+        body: "LNBits plugin, npm @umbraxon_kya/kya-verify alebo Python referenčný klient.",
+      },
+    ],
+    code:
+      'curl -sS "https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status"',
   },
   promoVideo: {
     eyebrow: "75-sekundový úvod",
@@ -201,7 +224,9 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     agentsCount: "agent(ov)",
     fetchError: "Nepodarilo sa načítať feed ({error}). Zobrazuje sa prázdny zoznam.",
     searchPlaceholder: "Hľadať agenta, KYA ID alebo capability…",
-    empty: "V discovery feede zatiaľ žiadni agenti (opt-in + verified).",
+    empty: "Vo verejnom discovery feede zatiaľ nikto.",
+    showcaseNote:
+      "Zobrazujeme živých produkčných agentov, ktorých môžeš hneď otestovať. Feed sa plní, keď sa pripoja ďalší ELITE agenti s opt-in.",
     noMatch: "Žiadny agent nezodpovedá hľadaniu.",
     reputation: "Reputácia",
     tier: "Tier",
@@ -212,6 +237,7 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     title: "Dokumentácia a API",
     subtitle: "Všetko na registráciu a integráciu bota alebo agenta.",
     read: "Otvoriť",
+    viewAll: "Celá dokumentácia",
     items: [
       {
         title: "Platform Integrator API (plug-iny)",
@@ -250,7 +276,9 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     builtInEu: "Postavené v EÚ",
     title: "Kontakt na operátora",
     body:
-      "Integrátori, bezpečnosť alebo spolupráca — napíš priamo. Žiadna firemná fronta.",
+      "Integrátori, bezpečnosť alebo spolupráca — Telegram alebo GitHub. Žiadna fronta.",
+    operatorStory:
+      "KYA som postavil, lebo bot-to-bot platby potrebujú meno a kľúč, nie ďalší OAuth dashboard. Tento hub je malý register, ktorý som chcel pri Lightning agentoch — auditovateľný, nekustodiálny, bez ľudských formulárov.",
     maintainerLabel: "Za projektom stojí",
     maintainerFallback: "solo maintainer",
     telegram: "Telegram",
@@ -288,8 +316,8 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     operatorRole: "Solo operátor · open source · postavené v EÚ",
     operatorBody:
       "UMBRAXON je značka operátora tohto hubu. Backend, portál a protokol sú verejne na GitHube. Produkcia je jedna inštancia na umbraxon.xyz — zatiaľ nie federácia.",
-    telegramOptional:
-      "Telegram kontakt sa zobrazí po nastavení (NEXT_PUBLIC_OPERATOR_TELEGRAM, napr. https://t.me/tvoj_handle).",
+    operatorStory:
+      "KYA som postavil, lebo bot-to-bot platby potrebujú meno a kľúč, nie ďalší OAuth dashboard. Tento hub je malý register, ktorý som chcel pri Lightning agentoch — auditovateľný, nekustodiálny, bez ľudských formulárov.",
     proofTitle: "Over si tvrdenia sám",
     proofSource: "Zdrojový kód (GitHub)",
     proofWhatNot: "Čo nie sme",
@@ -309,11 +337,9 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     ],
     contactTitle: "Kontakt",
     contactIntro:
-      "Integrátori: formulár na /integrators. Všeobecné otázky: e-mail, Telegram (ak je uvedený) alebo GitHub — žiadne tajomstvá v issue.",
+      "Integrátori: formulár na /integrators. Otázky: Telegram alebo GitHub — nikdy nevkladaj súkromné kľúče do issue.",
     contactTelegram: "Telegram",
     contactDiscussions: "GitHub Discussions",
     contactIssues: "Otvoriť GitHub issue",
-    contactSla:
-      "Odpoveď best-effort — solo operátor. Pre hello@umbraxon.xyz nastav Cloudflare Email Routing na svoj inbox.",
   },
 };

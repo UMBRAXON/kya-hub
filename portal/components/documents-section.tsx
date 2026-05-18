@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, KeyRound, BookOpen } from "lucide-react";
+import { ArrowRight, FileText, KeyRound, BookOpen } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -26,8 +26,8 @@ export function DocumentsSection({
   t: Dictionary["docs"];
 }) {
   return (
-    <section id="docs" className="relative px-4 py-20">
-      <div className="glow-divider mx-auto mb-16 max-w-4xl" />
+    <section id="docs" className="section-pro">
+      <div className="glow-divider mx-auto mb-10 max-w-4xl" />
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -66,6 +66,15 @@ export function DocumentsSection({
             </Card>
           ))}
         </div>
+        <p className="mt-8 text-center">
+          <Link
+            href="/AGENTS.md"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            {t.viewAll}
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </p>
       </div>
     </section>
   );

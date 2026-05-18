@@ -81,7 +81,7 @@ export function AboutSection({
   const basicGrade = basic?.grade ?? "B";
   const eliteGrade = elite?.grade ?? "S";
   return (
-    <section id="about" className="relative px-4 py-20">
+    <section id="about" className="section-pro">
       <div className="glow-divider mx-auto mb-16 max-w-4xl" />
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">

@@ -3,62 +3,64 @@ import { OPERATOR, OPERATOR_TELEGRAM_URL } from "@/lib/operator";
 import type { Dictionary } from "@/lib/i18n";
 
 export function Footer({ t }: { t: Dictionary["footer"] }) {
-  const LINKS = [
+  const primary = [
+    { href: "/integrators", label: t.platform },
+    { href: "/about", label: t.trust },
+    { href: "/status", label: t.status },
+    { href: OPERATOR.githubRepo, label: t.github, external: true as const },
+  ];
+
+  const secondary = [
     { href: "#contact", label: t.contact },
-    { href: `mailto:${OPERATOR.contactEmail}`, label: OPERATOR.contactEmail },
     ...(OPERATOR_TELEGRAM_URL
       ? [{ href: OPERATOR_TELEGRAM_URL, label: "Telegram", external: true as const }]
       : []),
-    { href: "/about", label: t.trust },
-    { href: OPERATOR.githubRepo, label: t.github, external: true },
-    { href: "/status", label: t.status },
     { href: "/terms", label: t.terms },
-    { href: OPERATOR.securityAuditPath, label: t.security, external: true },
+    { href: OPERATOR.securityAuditPath, label: t.security, external: true as const },
     { href: "/docs/WHAT-WE-ARE-NOT.md", label: t.whatWeAreNot },
-    { href: "/integrators", label: t.platform },
-    { href: "#about", label: t.about },
-    { href: "#agents", label: t.agents },
-    { href: "#docs", label: t.docs },
     { href: "/README_API.md", label: t.readme },
-    { href: "/api/health", label: t.health },
   ];
 
+  const renderLink = (l: { href: string; label: string; external?: boolean }) =>
+    l.external ? (
+      <a
+        key={l.href}
+        href={l.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {l.label}
+      </a>
+    ) : (
+      <Link
+        key={l.href}
+        href={l.href}
+        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {l.label}
+      </Link>
+    );
+
   return (
-    <footer className="border-t border-cyan-500/10 bg-[#0d0d0d] px-4 py-12">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 md:flex-row">
-        <div>
-          <p className="font-mono text-sm font-semibold tracking-widest text-primary">
-            UMBRAXON KYA HUB
-          </p>
-          <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t.tagline}</p>
+    <footer className="border-t border-border/80 bg-[#0c0c0c] px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl">
+        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="font-mono text-xs font-semibold uppercase tracking-widest text-primary">
+              UMBRAXON KYA HUB
+            </p>
+            <p className="mt-2 max-w-xs text-sm text-muted-foreground">{t.tagline}</p>
+          </div>
+          <nav className="flex flex-col gap-4 sm:flex-row sm:gap-12" aria-label="Footer">
+            <div className="flex flex-col gap-2">{primary.map(renderLink)}</div>
+            <div className="flex flex-col gap-2">{secondary.map(renderLink)}</div>
+          </nav>
         </div>
-        <nav className="flex flex-wrap justify-center gap-x-6 gap-y-3">
-          {LINKS.map((l) =>
-            l.external ? (
-              <a
-                key={l.href}
-                href={l.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-foreground transition-colors hover:text-primary hover:drop-shadow-[0_0_8px_rgba(0,255,255,0.5)]"
-              >
-                {l.label}
-              </a>
-            ) : (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="text-sm text-muted-foreground transition-colors hover:text-primary hover:drop-shadow-[0_0_8px_rgba(0,255,255,0.5)]"
-              >
-                {l.label}
-              </Link>
-            ),
-          )}
-        </nav>
+        <p className="mt-8 border-t border-border/60 pt-6 text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} {t.copyright}
+        </p>
       </div>
-      <p className="mx-auto mt-10 max-w-6xl text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} {t.copyright}
-      </p>
     </footer>
   );
 }

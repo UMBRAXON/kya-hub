@@ -89,6 +89,7 @@ export interface AgentsSectionProps {
   hubBaseUrl: string;
   fetchedAt?: string;
   error?: string | null;
+  showcaseMode?: boolean;
   t: Dictionary["agents"];
 }
 
@@ -97,6 +98,7 @@ export function AgentsSection({
   hubBaseUrl,
   fetchedAt,
   error,
+  showcaseMode = false,
   t,
 }: AgentsSectionProps) {
   const [query, setQuery] = useState("");
@@ -113,8 +115,8 @@ export function AgentsSection({
   }, [agents, query]);
 
   return (
-    <section id="agents" className="relative px-4 py-20">
-      <div className="glow-divider mx-auto mb-16 max-w-4xl" />
+    <section id="agents" className="section-pro">
+      <div className="glow-divider mx-auto mb-10 max-w-4xl" />
       <div className="mx-auto max-w-6xl">
         <div className="mb-10 text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -144,6 +146,11 @@ export function AgentsSection({
               {t.fetchError.replace("{error}", error)}
             </p>
           )}
+          {showcaseMode && (
+            <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground">
+              {t.showcaseNote}
+            </p>
+          )}
         </div>
         <div className="relative mx-auto mb-10 max-w-xl">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -155,10 +162,8 @@ export function AgentsSection({
             className="h-11 border-cyan-500/20 bg-card/60 pl-10 backdrop-blur-sm transition-shadow focus-visible:border-primary focus-visible:ring-primary/30 focus-visible:shadow-[0_0_20px_rgba(0,255,255,0.15)]"
           />
         </div>
-        {agents.length === 0 && !error ? (
-          <p className="py-12 text-center text-muted-foreground">
-            {t.empty}
-          </p>
+        {agents.length === 0 && !error && !showcaseMode ? (
+          <p className="py-12 text-center text-muted-foreground">{t.empty}</p>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((agent) => (

@@ -33,7 +33,9 @@ export default async function AboutPage() {
   ];
 
   const contactLinks: { href: string; label: string; external?: boolean }[] = [
-    { href: `mailto:${OPERATOR.contactEmail}`, label: OPERATOR.contactEmail },
+    ...(OPERATOR.emailEnabled
+      ? [{ href: `mailto:${OPERATOR.contactEmail}`, label: OPERATOR.contactEmail }]
+      : []),
     ...(OPERATOR_TELEGRAM_URL
       ? [{ href: OPERATOR_TELEGRAM_URL, label: p.contactTelegram, external: true as const }]
       : []),
@@ -90,6 +92,7 @@ export default async function AboutPage() {
           <p className="mt-2 font-mono text-xl text-primary">{OPERATOR.displayName}</p>
           <p className="mt-2 text-sm text-muted-foreground">{p.operatorRole}</p>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{p.operatorBody}</p>
+          <p className="mt-4 text-sm leading-relaxed text-foreground/90">{p.operatorStory}</p>
           <ul className="mt-4 flex flex-wrap gap-3">
             <li>
               <a
@@ -127,9 +130,6 @@ export default async function AboutPage() {
               </li>
             ) : null}
           </ul>
-          {!OPERATOR_TELEGRAM_URL ? (
-            <p className="mt-2 text-xs text-muted-foreground">{p.telegramOptional}</p>
-          ) : null}
         </section>
 
         <section className="mb-10">
@@ -199,10 +199,6 @@ export default async function AboutPage() {
               ),
             )}
           </ul>
-          {!OPERATOR_TELEGRAM_URL ? (
-            <p className="mt-3 text-xs text-muted-foreground">{p.telegramOptional}</p>
-          ) : null}
-          <p className="mt-4 text-xs text-muted-foreground">{p.contactSla}</p>
         </section>
       </main>
     </div>

@@ -8,7 +8,7 @@ export function PlatformSection({ t }: { t: Dictionary["platform"] }) {
   return (
     <section
       id="platform"
-      className="relative scroll-mt-20 px-4 py-16 sm:py-20"
+      className="section-pro scroll-mt-20"
       aria-labelledby="platform-heading"
     >
       <div className="mx-auto max-w-6xl">
