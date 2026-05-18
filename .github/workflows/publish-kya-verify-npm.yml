@@ -1,4 +1,4 @@
-name: Publish @umbraxon/kya-verify to npm
+name: Publish @umbraxon_kya/kya-verify to npm
 on:
   workflow_dispatch:
     inputs:

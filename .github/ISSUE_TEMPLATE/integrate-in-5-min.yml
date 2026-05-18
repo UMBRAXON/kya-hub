@@ -31,5 +31,5 @@ body:
       label: I tried
       options:
         - label: Live integrator page sandbox steps
-        - label: npm/file package @umbraxon/kya-verify or examples/plugin-gate-v1.js
+        - label: npm @umbraxon_kya/kya-verify or examples/plugin-gate-v1.js
         - label: OpenAPI / README_API.md

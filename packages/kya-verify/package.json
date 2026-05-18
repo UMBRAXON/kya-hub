@@ -1,5 +1,5 @@
 {
-  "name": "@umbraxon/kya-verify",
+  "name": "@umbraxon_kya/kya-verify",
   "version": "0.1.0",
   "description": "One-call KYA agent status check for marketplaces, wallets, and bot orchestrators",
   "type": "module",

@@ -32,9 +32,9 @@ export default function IntegratorsPage() {
         </p>
         <IntegratorQuickstart hubBase={HUB_BASE} />
         <pre className="mt-10 overflow-x-auto rounded-lg border border-border bg-muted/30 p-4 font-mono text-xs text-foreground">
-{`npm install @umbraxon/kya-verify   # packages/kya-verify in repo until npm publish
+{`npm install @umbraxon_kya/kya-verify
 
-import { verifyAgentStatus } from '@umbraxon/kya-verify';
+import { verifyAgentStatus } from '@umbraxon_kya/kya-verify';
 const { verified } = await verifyAgentStatus('${HUB_BASE}', 'UMBRA-000467');`}
         </pre>
         <p className="mt-6 text-sm text-muted-foreground">

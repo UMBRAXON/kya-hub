@@ -9,7 +9,7 @@ Use this body when creating a **pinned** issue on GitHub (Issues → New → pas
 1. **Live quickstart:** https://www.umbraxon.xyz/integrators  
 2. **Verify API:** `GET /api/v1/agents/{kya_id}/status` — demo: [UMBRA-000467](https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status)  
 3. **Docs:** [INTEGRATOR-QUICKSTART-5MIN.md](https://github.com/UMBRAXON/kya-hub/blob/main/docs/INTEGRATOR-QUICKSTART-5MIN.md) · [OpenAPI](https://www.umbraxon.xyz/openapi/openapi.yaml)  
-4. **Node:** `@umbraxon/kya-verify` in `packages/kya-verify/` (npm publish via Actions when configured)
+4. **Node:** `npm install @umbraxon_kya/kya-verify` (or `packages/kya-verify/` in repo)
 
 **Autonomous agents (M2M)**
 

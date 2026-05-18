@@ -33,7 +33,7 @@
 - Bot portal (static): https://www.umbraxon.xyz/bots/
 - GitHub: https://github.com/UMBRAXON/kya-hub
 - MCP (local checkout): packages in repo `mcp/` — `@umbraxon/kya-hub-mcp`
-- npm (verify helper): `@umbraxon/kya-verify` in repo `packages/kya-verify/`
+- npm (verify helper): `@umbraxon_kya/kya-verify` — `packages/kya-verify/`
 
 ## Optional
 

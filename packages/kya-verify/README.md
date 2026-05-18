@@ -1,14 +1,14 @@
-# @umbraxon/kya-verify
+# @umbraxon_kya/kya-verify
 
 Minimal gate check for platforms: **one GET** before you trust an agent.
 
 ```bash
-npm install @umbraxon/kya-verify
+npm install @umbraxon_kya/kya-verify
 # or from monorepo: npm install file:../../packages/kya-verify
 ```
 
 ```js
-import { verifyAgentStatus } from '@umbraxon/kya-verify';
+import { verifyAgentStatus } from '@umbraxon_kya/kya-verify';
 
 const { verified, data } = await verifyAgentStatus(
   'https://www.umbraxon.xyz',
