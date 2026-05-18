@@ -12,26 +12,35 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     permissions:
-      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
+
       - name: Require NPM_TOKEN secret
         run: |
-          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "::error::Missing repository secret NPM_TOKEN. Add it at Settings → Secrets and variables → Actions → Repository secrets"
+          if [ -z "${NODE_AUTH_TOKEN}" ]; then
+            echo "::error::Missing repository secret NPM_TOKEN."
+            echo "Add: github.com/UMBRAXON/kya-hub/settings/secrets/actions → New repository secret → Name NPM_TOKEN"
             exit 1
           fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
+          always-auth: true
+
       - name: npm whoami (verify token)
-        run: npm whoami
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm whoami
+          npm config get registry
+
+      - name: Dry-run pack contents
+        working-directory: packages/kya-verify
+        run: npm publish --dry-run --access public
+
       - name: Publish @umbraxon_kya/kya-verify
         working-directory: packages/kya-verify
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

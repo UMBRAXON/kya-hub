@@ -1,6 +1,6 @@
 {
   "name": "@umbraxon_kya/kya-verify",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "One-call KYA agent status check for marketplaces, wallets, and bot orchestrators",
   "type": "module",
   "main": "index.js",
@@ -20,7 +20,12 @@
   },
   "homepage": "https://www.umbraxon.xyz/integrators",
   "license": "ISC",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
