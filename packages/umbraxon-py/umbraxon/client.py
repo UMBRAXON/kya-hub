@@ -78,19 +78,23 @@ class UmbraxonIntegratorClient:
             raise RuntimeError(f"get_agent failed: HTTP {r['status']} {r['json']}")
         return r["json"]
 
-    def get_agent_status(self, kya_id: str) -> Dict[str, Any]:
-        r = self._request(
-            "GET",
-            f"/api/v1/agents/{urllib.parse.quote(kya_id, safe='')}/status",
-        )
+    def get_agent_status(self, kya_id: str, *, cert_proof: bool = False) -> Dict[str, Any]:
+        path = f"/api/v1/agents/{urllib.parse.quote(kya_id, safe='')}/status"
+        if cert_proof:
+            path += "?include=cert_proof"
+        r = self._request("GET", path)
         if r["status"] != 200:
             raise RuntimeError(f"get_agent_status failed: HTTP {r['status']} {r['json']}")
         return r["json"]
 
-    def is_verified(self, kya_id: str) -> bool:
-        body = self.get_agent_status(kya_id)
-        trust = body.get("trust") or {}
-        return bool(trust.get("verified"))
+    def is_verified(self, kya_id: str, *, strict: bool = False) -> bool:
+        body = self.get_agent_status(kya_id, cert_proof=strict)
+        if not body.get("verified"):
+            return False
+        if strict:
+            proof = body.get("cert_proof") or {}
+            return proof.get("cert_signature_valid") is True
+        return True
 
     def create_lsat_invoice(self) -> Dict[str, Any]:
         r = self._request("POST", "/api/v1/integrator/lsat/invoice", body={})

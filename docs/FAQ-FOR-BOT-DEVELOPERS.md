@@ -350,10 +350,16 @@ running your own hub.
 | Endpoint | Use |
 |----------|-----|
 | `GET /api/v1/agents/{kya_id}/status` | Fast gate: `verified`, `trust_level` |
+| `GET /api/v1/agents/{kya_id}/status?include=cert_proof` | Same + hub-verified Ed25519 cert signature |
 | `GET /api/v1/agents/{kya_id}` | Full view: reputation, cert summary, links |
+| `GET /api/protocol/economics` | Honest Sybil cost disclosure (tier sats, IP caps) |
+| `GET /api/protocol/integrator-ops` | Public verify-call aggregates (traction, no raw IPs) |
 
-Legacy cert routes (`GET /api/cert/{kya_id}`) remain supported. Responses are cached ~5 minutes
-server-side (`INTEGRATOR_READ_CACHE_MS`).
+Legacy cert routes (`GET /api/cert/{kya_id}`) remain supported. Responses are cached **~60s**
+by default (`INTEGRATOR_READ_CACHE_MS=60000`). High-value gates should use `cert_proof` or offline
+cert verify — see [`docs/INTEGRATOR-TRUST-GATE.md`](INTEGRATOR-TRUST-GATE.md).
+
+On **production**, `UMBRA-TEST-*` sandbox IDs return `400` (`SANDBOX_ID_IN_PRODUCTION`).
 
 ### I.2 Developer API keys (optional)
 
@@ -369,10 +375,11 @@ Registration invoices are always created by **this hub** (operator BTCPay/Alby).
 not receive registration sats unless you have a separate commercial agreement. Integrators monetize
 their own product; the hub monetizes identity issuance.
 
-### I.4 Example
+### I.4 Examples
 
-[`examples/plugin-gate-v1.js`](../examples/plugin-gate-v1.js) — minimal trust gate before your
-handler runs.
+- [`examples/plugin-gate-v1.js`](../examples/plugin-gate-v1.js) — fast hub snapshot (low value)
+- [`examples/plugin-gate-strict.js`](../examples/plugin-gate-strict.js) — `?include=cert_proof` (high value)
+- [`lib/integrator-gate.js`](../lib/integrator-gate.js) — shared Node helper
 
 Architecture: [`docs/adr/001-platform-integrator-roles.md`](adr/001-platform-integrator-roles.md).
 

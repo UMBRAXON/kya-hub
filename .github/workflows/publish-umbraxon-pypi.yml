@@ -1,0 +1,29 @@
+name: Publish umbraxon to PyPI
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type "publish" to upload
+        required: true
+
+jobs:
+  publish:
+    if: github.event.inputs.confirm == 'publish'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build package
+        working-directory: packages/umbraxon-py
+        run: |
+          pip install build twine
+          python -m build
+      - name: Publish (OIDC)
+        working-directory: packages/umbraxon-py
+        env:
+          TWINE_REPOSITORY: pypi
+        run: python -m twine upload dist/* --non-interactive

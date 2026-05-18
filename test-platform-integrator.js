@@ -77,6 +77,10 @@ const mockPool = {
     const miss = await platform.getAgentStatusGate(mockPool, 'UMBRA-000001', { skipCache: true });
     ok('missing agent 404', miss.status === 404);
 
+    const sb = await platform.getAgentStatusGate(mockPool, 'UMBRA-TEST-0001', { skipCache: true });
+    ok('sandbox verified', sb.status === 200 && sb.body.verified === true);
+    ok('sandbox flag', sb.body._sandbox === true);
+
     console.log(`\n${passed} passed, ${failed} failed`);
     process.exit(failed ? 1 : 0);
 })().catch((e) => {

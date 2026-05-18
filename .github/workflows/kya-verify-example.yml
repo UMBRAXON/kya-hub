@@ -1,0 +1,19 @@
+name: KYA verify (example)
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/actions/kya-verify/**'
+      - 'examples/plugin-gate-v1.js'
+
+jobs:
+  sandbox-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify sandbox agent
+        uses: ./.github/actions/kya-verify
+        with:
+          kya-id: UMBRA-TEST-0001
+      - name: Node gate example
+        run: node examples/plugin-gate-v1.js UMBRA-TEST-0001

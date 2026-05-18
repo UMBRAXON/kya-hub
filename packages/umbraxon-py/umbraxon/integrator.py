@@ -25,7 +25,8 @@ def agent_status(
     *,
     api_key: Optional[str] = None,
     lsat_token: Optional[str] = None,
+    strict: bool = False,
 ) -> bool:
-    """Return True when hub reports trust.verified for the agent."""
+    """Return True when hub reports verified (strict adds cert_proof check)."""
     client = UmbraxonIntegratorClient(base_url, api_key=api_key, lsat_token=lsat_token)
-    return client.is_verified(kya_id)
+    return client.is_verified(kya_id, strict=strict)

@@ -9,6 +9,7 @@ export const sk = {
     tiers: "Tiery",
     agents: "Agenti",
     video: "Video",
+    integrators: "Začíname",
     platform: "Plug-in API",
     docs: "Dokumentácia",
     register: "Registrovať agenta",
@@ -21,7 +22,7 @@ export const sk = {
     titleLead: "Overená identita pre",
     titleHighlight: "autonómne systémy",
     body:
-      "UMBRAXON KYA Hub je verejný register agentov s Ed25519 identitou, platbou Lightning a auditovateľnými certifikátmi. Žiadne webové formuláre pre ľudí — len",
+      "Register pre botov: Ed25519 identita, platba Lightning, certifikát, ktorý vie overiť aj tretia strana. Žiadne ľudské formuláre — len",
     bodyCode: "POST /api/v1/register",
     bodyTail: "pre autonómne boty.",
     ctaIntegrate: "Začať integráciu",
@@ -32,7 +33,7 @@ export const sk = {
     eyebrow: "75-sekundový úvod",
     title: "Prečo autonómni agenti potrebujú overenú identitu",
     subtitle:
-      "Know Your Agent (KYA) — stake cez Lightning, kryptografický dôkaz a jednoduché verified áno/nie pre builderov a platformy.",
+      "Jeden endpoint pred platbou alebo akciou. Nízke riziko: snapshot z hubu. Vysoké riziko: over podpis certifikátu.",
     iframeTitle: "UMBRAXON KYA Hub — úvod Know Your Agent",
     watchOnYoutube: "Pozrieť na YouTube",
   },
@@ -40,22 +41,25 @@ export const sk = {
     badge: "Novinka · Platform Integrator API",
     title: "Overujte KYA agentov vo vašom produkte",
     body:
-      "Trust gate do LNBits, agent marketplaces alebo orchestrátorov — bez vlastného identity hubu. Verejné read API, voliteľné partner kľúče, webhook fronta.",
+      "Gate do LNBits, marketplace alebo orchestrátora — bez vlastného hubu. Agent sa identifikuje Ed25519; platforma len číta verejné API.",
     bullets: [
-      "Jeden call: GET /api/v1/agents/{kya_id}/status → verified + trust_level",
-      "Voliteľné umb_live_… API kľúče s vlastným rate limitom",
-      "Developer webhooky pri registrácii a zmene reputácie",
-      "Python SDK (umbraxon) + OpenAPI — registrácia stále Ed25519 + Lightning",
+      "GET /api/v1/agents/{kya_id}/status — rýchly snapshot (cache ~60 s)",
+      "?include=cert_proof — kryptografický dôkaz pre väčšie sumy",
+      "umb_live_… = billing/rate limit platformy, nie identita agenta",
+      "Webhooky + Python SDK · registrácia agenta ostáva Ed25519 + Lightning",
     ],
     codeLabel: "Plug-in gate (príklad)",
     codeSample: `GET /api/v1/agents/UMBRA-000467/status
 → { "verified": true, "trust_level": "TRUSTED" }
 
-Authorization: Bearer umb_live_…  (voliteľné)`,
-    codeFoot: "Kompletný návod: FAQ §I · Roadmap · examples/plugin-gate-v1.js",
+# väčšie sumy:
+GET .../status?include=cert_proof
+
+Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`,
+    codeFoot: "Návod: docs/INTEGRATOR-TRUST-GATE.md · FAQ §I · plugin-gate-strict.js",
     ctaPrimary: "Dokumentácia pre platformy",
     ctaSecondary: "OpenAPI",
-    primaryHref: "/docs/FAQ-FOR-BOT-DEVELOPERS.md#i-platform-integrator-plug-in--third-party-systems",
+    primaryHref: "/integrators",
     secondaryHref: "/openapi/openapi.yaml",
   },
   about: {
@@ -66,9 +70,9 @@ Authorization: Bearer umb_live_…  (voliteľné)`,
       "je register identity a reputácie pre autonómnych softvérových agentov, platený Lightningom a ukotvený Ed25519. Agent preukáže existenciu, zaplatí malý poplatok, podpíše manifest vlastným kľúčom a dostane certifikát, ktorý môžu iní overiť offline. Ďalšie akcie sú autentifikované kryptograficky s nepopierateľnosťou — určené pre botov a integrátorov, nie pre ľudské webové formuláre.",
     pillars: [
       {
-        title: "Ed25519 identita",
+        title: "Ed25519 identita (agent)",
         description:
-          "Agenti dokazujú kontrolu vlastným kľúčovým párom. Privilegované akcie používajú odpojené podpisy nad kanonickými payloadmi — nie bearer tokeny, API kľúče ani session.",
+          "Bot podpisuje privilegované akcie vlastným kľúčom. Platformové umb_live_ kľúče sú len na čítanie API a limity — nenahrádzajú identitu agenta.",
       },
       {
         title: "Registrácia cez Lightning",
@@ -111,7 +115,7 @@ Authorization: Bearer umb_live_…  (voliteľné)`,
         },
         {
           lead: "Kryptografická nepopierateľnosť",
-          rest: "privilegovaných akcií — žiadne API kľúče ani session na únik.",
+          rest: "privilegovaných akcií — agent podpisuje sám; nie session ani integrátorský umb_live_ kľúč.",
         },
         {
           lead: "Záznam odolný voči Sybil útokom",
@@ -210,7 +214,7 @@ Authorization: Bearer umb_live_…  (voliteľné)`,
       {
         title: "Platform Integrator API (plug-iny)",
         description:
-          "Overenie agentov vo vašej app: status gate, API kľúče, webhooky, SDK umbraxon-py. FAQ §I.",
+          "Status gate, cert_proof, webhooky, umbraxon-py. umb_live_ = limity platformy, nie identita bota. FAQ §I.",
       },
       {
         title: "README_API.md — M2M Register",

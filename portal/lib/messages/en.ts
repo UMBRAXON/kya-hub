@@ -9,6 +9,7 @@ export const en = {
     tiers: "Tiers",
     agents: "Agents",
     video: "Intro",
+    integrators: "Quickstart",
     platform: "Plug-in API",
     docs: "Docs",
     register: "Register agent",
@@ -32,7 +33,7 @@ export const en = {
     eyebrow: "75-second intro",
     title: "Why autonomous agents need verified identity",
     subtitle:
-      "Know Your Agent (KYA) — skin in the game, cryptographic proof, and a simple verified yes or no for builders and platforms.",
+      "One HTTP check before you allow payment or action. Low risk: hub snapshot. High risk: verify the certificate signature.",
     iframeTitle: "UMBRAXON KYA Hub — Know Your Agent intro",
     watchOnYoutube: "Watch on YouTube",
   },
@@ -40,22 +41,25 @@ export const en = {
     badge: "New · Platform Integrator API",
     title: "Verify KYA agents inside your product",
     body:
-      "Embed trust gates in LNBits, agent marketplaces, or orchestration stacks — without running your own identity hub. Public read API, optional partner keys, queued webhooks.",
+      "Gate LNBits, a marketplace, or your orchestrator without running a hub. Agents use Ed25519; your product only calls the public read API.",
     bullets: [
-      "One-line gate: GET /api/v1/agents/{kya_id}/status → verified + trust_level",
-      "Optional umb_live_… API keys with dedicated rate limits",
-      "Developer webhooks on registration and reputation events",
-      "Python SDK (umbraxon) + OpenAPI — registration still uses Ed25519 + Lightning",
+      "GET /api/v1/agents/{kya_id}/status — fast snapshot (~60s cache)",
+      "?include=cert_proof — cryptographic proof for larger actions",
+      "umb_live_… keys are platform billing/rate limits, not agent identity",
+      "Webhooks + Python SDK · agent registration stays Ed25519 + Lightning",
     ],
     codeLabel: "Plug-in gate (example)",
     codeSample: `GET /api/v1/agents/UMBRA-000467/status
 → { "verified": true, "trust_level": "TRUSTED" }
 
-Authorization: Bearer umb_live_…  (optional)`,
-    codeFoot: "Full guide: FAQ §I · Roadmap · examples/plugin-gate-v1.js",
+# higher-value actions:
+GET .../status?include=cert_proof
+
+Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
+    codeFoot: "Guide: docs/INTEGRATOR-TRUST-GATE.md · FAQ §I · plugin-gate-strict.js",
     ctaPrimary: "Platform integrator docs",
     ctaSecondary: "OpenAPI",
-    primaryHref: "/docs/FAQ-FOR-BOT-DEVELOPERS.md#i-platform-integrator-plug-in--third-party-systems",
+    primaryHref: "/integrators",
     secondaryHref: "/openapi/openapi.yaml",
   },
   about: {
@@ -66,9 +70,9 @@ Authorization: Bearer umb_live_…  (optional)`,
       "is a Lightning-paid, Ed25519-anchored identity and reputation registry for autonomous software agents. An agent proves it exists, pays a small fee, signs a manifest with its own key, and receives a certificate others can verify offline. Subsequent actions are authenticated with cryptographic non-repudiation — built for bots and integrators, not human web forms.",
     pillars: [
       {
-        title: "Ed25519 identity",
+        title: "Ed25519 identity (agent)",
         description:
-          "Agents prove control with their own keypair. Privileged actions use detached signatures over canonical payloads — not bearer tokens, API keys, or sessions.",
+          "Bots sign privileged actions with their own key. Platform umb_live_ keys are read-API rate limits only — they do not replace agent identity.",
       },
       {
         title: "Lightning registration",
@@ -211,7 +215,7 @@ Authorization: Bearer umb_live_…  (optional)`,
       {
         title: "Platform Integrator API (plug-ins)",
         description:
-          "Verify agents in your app: status gate, API keys, webhooks, umbraxon-py SDK. FAQ §I.",
+          "Status gate, cert_proof, webhooks, umbraxon-py. umb_live_ = platform rate limits, not bot identity. FAQ §I.",
       },
       {
         title: "README_API.md — M2M Register",

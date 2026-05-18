@@ -1,6 +1,5 @@
 /**
- * Plug-in gate — hub snapshot (fast, low-value actions).
- * For payouts / high value use: node examples/plugin-gate-strict.js UMBRA-…
+ * Strict plug-in gate — hub status + cert Ed25519 proof (?include=cert_proof).
  */
 'use strict';
 
@@ -10,16 +9,20 @@ const BASE = (process.env.KYA_HUB_BASE_URL || 'https://www.umbraxon.xyz').replac
 const API_KEY = process.env.KYA_INTEGRATOR_API_KEY || '';
 
 async function main() {
-    const kyaId = process.argv[2] || 'UMBRA-000467';
+    const kyaId = process.argv[2];
+    if (!kyaId) {
+        console.error('Usage: node examples/plugin-gate-strict.js UMBRA-000467');
+        process.exit(1);
+    }
     const out = await verifyAgentGate(BASE, kyaId, {
         apiKey: API_KEY || undefined,
-        requireCertProof: false,
+        requireCertProof: true,
     });
     if (!out.ok) {
-        console.error('Gate FAIL', out);
-        process.exit(out.stage === 'trust' ? 2 : 1);
+        console.error('Strict gate FAIL', out);
+        process.exit(1);
     }
-    console.log('Gate OK (hub snapshot)', out.kya_id, out.trust?.trust_level);
+    console.log('Strict gate OK', out.stage, out.kya_id);
 }
 
 main().catch((e) => {

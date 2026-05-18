@@ -23,6 +23,20 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 - `docs/RESTORE-PROCEDURES.md` — full restore playbook (channel state + PostgreSQL).
 - `scripts/backup-offsite-smoketest.sh` — low-risk check that `BACKUP_S3_*` creds can PUT/LIST/GET/DELETE a probe.
 
+## Operator daily digest (Telegram)
+
+- **One-shot (full text in terminal):** `node scripts/operator-daily-report.js --dry-run`
+- **Send to Telegram now:** `node scripts/operator-daily-report.js --telegram`
+- **JSON export:** `node scripts/operator-daily-report.js --json`
+- **Window:** `--hours 48` or `OPERATOR_REPORT_HOURS=48`
+- **PM2 cron:** `kya-operator-daily-report` — default **07:00 UTC** daily (`ecosystem.config.js`)
+- **Disable:** `OPERATOR_DAILY_REPORT_ENABLED=false`
+- Requires `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` in hub `.env`
+
+Includes: production agent counts (tests excluded), new bots in window, registrations, pending payments, integrator API call totals, heartbeats, reputation events, top rejected API paths, webhook outbox, LSAT orders. Override allowlist: `OPERATOR_REPORT_ALLOW_KYA_IDS=UMBRA-000467`.
+
+**Integrator traction:** `GET /api/protocol/integrator-ops` · **Sybil economics:** `GET /api/protocol/economics` · **Trust gate guide:** `docs/INTEGRATOR-TRUST-GATE.md`
+
 ## Monitoring / alerting
 
 - `docs/NETDATA-ACCESS.md` — access Netdata safely (SSH tunnel only) + what’s monitored.

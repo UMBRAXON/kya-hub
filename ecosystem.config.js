@@ -303,6 +303,28 @@ module.exports = {
             time: true,
         },
         {
+            // Operator daily digest — agents, registrations, integrator requests,
+            // heartbeats, reputation, rejected API → Telegram (07:00 UTC ≈ 09:00 CET).
+            name: 'kya-operator-daily-report',
+            script: 'scripts/prod/operator-daily-report.sh',
+            interpreter: 'bash',
+            cwd: '/root/kya-hub',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '0 7 * * *',
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+                DOTENV_CONFIG_QUIET: 'true',
+            },
+            error_file: '/root/.pm2/logs/kya-operator-daily-report-error.log',
+            out_file: '/root/.pm2/logs/kya-operator-daily-report-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
             // Strategic Sprint §31 A.3 — Quarterly DB-restore drill.
             // Picks the most recent kyahub/db/*.dump.gz.enc from R2, downloads
             // to /tmp/restore-drill-<ts>/, verifies HMAC tail + decrypts +

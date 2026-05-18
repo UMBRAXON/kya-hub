@@ -304,6 +304,13 @@ def sign_action_body(
     return body, sign_ed25519(seed, digest)
 
 
+def sign_heartbeat(seed: bytes, kya_id: str, nonce: str, timestamp: str) -> str:
+    """POST /api/agent/{kya_id}/heartbeat — digest = sha256(kya_id|nonce|timestamp)."""
+    msg = f"{kya_id}|{nonce}|{timestamp}".encode("utf-8")
+    digest = hashlib.sha256(msg).digest()
+    return sign_ed25519(seed, digest)
+
+
 # ===========================================================================
 # Proof-of-Work solver (matches lib/pow.js)
 # ===========================================================================
@@ -373,6 +380,7 @@ class HubClient:
         backoff_base_sec: float = 1.0,
         backoff_cap_sec: float = 30.0,
         admin_key: Optional[str] = None,
+        api_bearer: Optional[str] = None,
         user_agent: str = "umbrexon-bot-client/1.0",
     ) -> None:
         self.base_url = base_url.rstrip("/")
@@ -382,6 +390,7 @@ class HubClient:
         self.backoff_base = max(0.1, backoff_base_sec)
         self.backoff_cap = max(self.backoff_base, backoff_cap_sec)
         self.admin_key = admin_key
+        self.api_bearer = api_bearer
         self.user_agent = user_agent
 
     def _build_request(self, method: str, path: str, body: Optional[Dict[str, Any]]) -> urllib.request.Request:
@@ -393,6 +402,8 @@ class HubClient:
             headers["Content-Type"] = "application/json; charset=utf-8"
         if self.admin_key:
             headers["X-Admin-Key"] = self.admin_key
+        if self.api_bearer:
+            headers["Authorization"] = f"Bearer {self.api_bearer}"
         return urllib.request.Request(url, data=data, method=method, headers=headers)
 
     def request(
@@ -1130,6 +1141,54 @@ def _cmd_solve_pow(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_heartbeat(args: argparse.Namespace) -> int:
+    _require_nacl()
+    seed = load_seed(args.privkey_file, args.privkey_env)
+    nonce = args.nonce or secrets.token_hex(16)
+    timestamp = args.timestamp or time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
+    sig = sign_heartbeat(seed, args.kya_id, nonce, timestamp)
+    payload = {"signature": sig, "nonce": nonce, "timestamp": timestamp}
+    if args.dry_run:
+        print(json.dumps(payload, indent=2))
+        return 0
+    client = HubClient(
+        base_url=args.base_url,
+        connect_timeout=args.connect_timeout,
+        read_timeout=args.read_timeout,
+    )
+    res = client.post(f"/api/agent/{args.kya_id}/heartbeat", payload)
+    print(json.dumps({"status": res["status"], "response": res["json"]}, indent=2, ensure_ascii=False))
+    if args.fetch_reputation and 200 <= int(res["status"]) < 300:
+        rep = client.get(f"/api/agent/{args.kya_id}/reputation")
+        print(json.dumps({"reputation_status": rep["status"], "reputation": rep["json"]}, indent=2))
+    return 0 if 200 <= int(res["status"]) < 300 else 1
+
+
+def _cmd_integrator_status(args: argparse.Namespace) -> int:
+    bearer = (args.api_key or os.environ.get("KYA_INTEGRATOR_API_KEY") or "").strip() or None
+    client = HubClient(
+        base_url=args.base_url,
+        connect_timeout=args.connect_timeout,
+        read_timeout=args.read_timeout,
+        api_bearer=bearer,
+    )
+    path = f"/api/v1/agents/{args.kya_id}/status"
+    res = client.get(path)
+    print(json.dumps({"status": res["status"], "response": res["json"]}, indent=2, ensure_ascii=False))
+    return 0 if res["status"] == 200 else 1
+
+
+def _cmd_reputation(args: argparse.Namespace) -> int:
+    client = HubClient(
+        base_url=args.base_url,
+        connect_timeout=args.connect_timeout,
+        read_timeout=args.read_timeout,
+    )
+    res = client.get(f"/api/agent/{args.kya_id}/reputation")
+    print(json.dumps({"status": res["status"], "response": res["json"]}, indent=2, ensure_ascii=False))
+    return 0 if res["status"] == 200 else 1
+
+
 def _cmd_action(args: argparse.Namespace) -> int:
     _require_nacl()
     seed = load_seed(args.privkey_file, args.privkey_env)
@@ -1293,6 +1352,31 @@ def _build_parser() -> argparse.ArgumentParser:
     a.add_argument("--admin-key")
     a.add_argument("--dry-run", action="store_true")
 
+    hb = sub.add_parser("heartbeat", help="KYA Hub liveness ping (reputation / decay).")
+    hb.add_argument("--base-url", required=True)
+    hb.add_argument("--kya-id", required=True)
+    hb.add_argument("--privkey-file")
+    hb.add_argument("--privkey-env")
+    hb.add_argument("--nonce")
+    hb.add_argument("--timestamp")
+    hb.add_argument("--fetch-reputation", action="store_true", help="After OK, GET /api/agent/.../reputation")
+    hb.add_argument("--connect-timeout", type=float, default=5.0)
+    hb.add_argument("--read-timeout", type=float, default=20.0)
+    hb.add_argument("--dry-run", action="store_true")
+
+    st = sub.add_parser("integrator-status", help="GET /api/v1/agents/{id}/status (plug-in gate).")
+    st.add_argument("--base-url", required=True)
+    st.add_argument("--kya-id", required=True)
+    st.add_argument("--api-key", help="umb_live_… or env KYA_INTEGRATOR_API_KEY")
+    st.add_argument("--connect-timeout", type=float, default=5.0)
+    st.add_argument("--read-timeout", type=float, default=20.0)
+
+    rp = sub.add_parser("reputation", help="GET /api/agent/{id}/reputation (public score).")
+    rp.add_argument("--base-url", required=True)
+    rp.add_argument("--kya-id", required=True)
+    rp.add_argument("--connect-timeout", type=float, default=5.0)
+    rp.add_argument("--read-timeout", type=float, default=20.0)
+
     return p
 
 
@@ -1310,6 +1394,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         "delegation-pass": _cmd_delegation_pass,
         "solve-pow": _cmd_solve_pow,
         "action": _cmd_action,
+        "heartbeat": _cmd_heartbeat,
+        "integrator-status": _cmd_integrator_status,
+        "reputation": _cmd_reputation,
     }
     return handlers[args.cmd](args)
 

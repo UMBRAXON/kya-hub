@@ -9,6 +9,8 @@ node test-platform-integrator.js
 node test-developer-api-keys.js
 node test-developer-webhook-queue.js
 node test-integrator-lsat.js
+node test-integrator-onboarding.js
+node test-integrator-trust.js
 
 echo ""
 echo "== DB migrations =="

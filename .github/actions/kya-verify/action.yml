@@ -1,0 +1,41 @@
+name: KYA verify agent
+description: Fail the job if a KYA agent is not verified on UMBRAXON KYA Hub
+inputs:
+  kya-id:
+    description: KYA ID (e.g. UMBRA-000467 or sandbox UMBRA-TEST-0001)
+    required: true
+  hub-url:
+    description: Hub base URL
+    required: false
+    default: https://www.umbraxon.xyz
+  api-key:
+    description: Optional umb_live_ integrator API key
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Verify KYA status
+      shell: bash
+      env:
+        KYA_ID: ${{ inputs.kya-id }}
+        HUB_URL: ${{ inputs.hub-url }}
+        API_KEY: ${{ inputs.api-key }}
+      run: |
+        set -euo pipefail
+        URL="${HUB_URL%/}/api/v1/agents/${KYA_ID}/status"
+        HDR=(-H "Accept: application/json")
+        if [ -n "${API_KEY:-}" ]; then
+          HDR+=(-H "Authorization: Bearer ${API_KEY}")
+        fi
+        CODE=$(curl -sS -o /tmp/kya-status.json -w "%{http_code}" "${HDR[@]}" "$URL")
+        echo "HTTP $CODE — $URL"
+        cat /tmp/kya-status.json
+        if [ "$CODE" != "200" ]; then
+          echo "::error::KYA status HTTP $CODE"
+          exit 1
+        fi
+        if ! grep -q '"verified"[[:space:]]*:[[:space:]]*true' /tmp/kya-status.json; then
+          echo "::error::Agent $KYA_ID not verified"
+          exit 1
+        fi
+        echo "KYA gate OK for $KYA_ID"

@@ -86,6 +86,7 @@ class Settings:
     pr_max_links_per_post: int
     pr_hub_url_required: bool
     pr_publish_platforms: tuple[str, ...]
+    pr_kya_heartbeat: bool
 
     auto_pay_registration: bool
     nwc_pay_uri_file: str
@@ -160,6 +161,7 @@ def load_settings() -> Settings:
         pr_max_links_per_post=int(os.getenv("PR_MAX_LINKS_PER_POST", "3")),
         pr_hub_url_required=_bool("PR_HUB_URL_REQUIRED", "true"),
         pr_publish_platforms=platforms,
+        pr_kya_heartbeat=_bool("PR_KYA_HEARTBEAT", "true"),
         auto_pay_registration=_bool("AUTO_PAY_REGISTRATION", "false"),
         nwc_pay_uri_file=os.getenv("NWC_PAY_URI_FILE", ""),
         kya_id=os.getenv("KYA_ID", ""),

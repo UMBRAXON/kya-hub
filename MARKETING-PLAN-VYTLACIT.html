@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8" />
+  <title>UMBRAXON KYA Hub — marketingový plán (tlač)</title>
+  <style>
+    @page { margin: 18mm; }
+    body { font-family: Georgia, "Times New Roman", serif; font-size: 11pt; line-height: 1.45; color: #111; max-width: 180mm; margin: 0 auto; padding: 12mm; padding-top: 72px; }
+    h1 { font-size: 18pt; border-bottom: 2px solid #111; padding-bottom: 6px; page-break-after: avoid; }
+    h2 { font-size: 13pt; margin-top: 18px; page-break-after: avoid; }
+    h3 { font-size: 11.5pt; margin-top: 12px; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 10pt; }
+    th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #eee; }
+    pre, .box { background: #f5f5f5; border: 1px solid #ccc; padding: 10px; font-size: 9.5pt; white-space: pre-wrap; font-family: Consolas, monospace; }
+    ul, ol { margin: 6px 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+    .meta { font-size: 10pt; color: #444; margin-bottom: 16px; }
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li:before { content: "☐ "; font-family: sans-serif; }
+    a { color: #000; word-break: break-all; }
+    .page-break { page-break-before: always; }
+  </style>
+  <style>
+    .print-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: #1a1a2e; color: #fff; padding: 12px 16px; text-align: center;
+      font-family: system-ui, "Segoe UI", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .print-bar button {
+      font-size: 17px; font-weight: 600; padding: 12px 28px; cursor: pointer;
+      border: none; border-radius: 8px; background: #f59e0b; color: #111;
+    }
+    .print-bar button:hover { background: #fbbf24; }
+    .print-bar .hint { display: block; margin-top: 8px; font-size: 12px; opacity: .85; }
+    @media print {
+      body { padding: 0; padding-top: 0; }
+      .print-bar { display: none !important; }
+      a { text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="print-bar">
+  <button type="button" id="print-btn">Tlačiť (Ctrl+P)</button>
+  <span class="hint">Ak vidíš len kód v editore: dvojklik na <strong>MARKETING-PLAN-VYTLACIT.url</strong> v Prieskumníkovi Windows, alebo otvor odkaz nižšie v Chrome/Edge.</span>
+</div>
+
+<h1>UMBRAXON KYA Hub — marketingový plán</h1>
+<p class="meta">
+  <strong>Verzia:</strong> 1.0 · <strong>Dátum:</strong> máj 2026<br />
+  <strong>Web:</strong> <a href="https://www.umbraxon.xyz">https://www.umbraxon.xyz</a><br />
+  <strong>Video (75 s):</strong> <a href="https://www.youtube.com/watch?v=Z6Fb2LFBPtY">https://www.youtube.com/watch?v=Z6Fb2LFBPtY</a><br />
+  <strong>GitHub:</strong> <a href="https://github.com/UMBRAXON/kya-hub">https://github.com/UMBRAXON/kya-hub</a>
+</p>
+
+<h2>1. O čo presne ide</h2>
+<p><strong>Jedna veta:</strong> Pred platbou alebo akciou zavoláš <code>GET /api/v1/agents/{id}/status</code>. Agent sa registruje sám (Lightning + Ed25519). Pri väčších sumách pridáš <code>?include=cert_proof</code>.</p>
+
+<h3>Problém</h3>
+<ul>
+  <li>Ktokoľvek môže spustiť tisíce „agentov“ bez identity.</li>
+  <li>API kľúče a SaaS registrácie nie sú určené pre stroje.</li>
+  <li>Marketplaces, peňaženky a orchestrátory nevedia, komu dovoliť platbu alebo akciu.</li>
+</ul>
+
+<h3>Čo ponúkaš</h3>
+<ul>
+  <li><strong>Registrácia agenta (M2M):</strong> agent sa zaregistruje sám (POST /api/v1/register), zaplatí Lightning, dostane certifikát.</li>
+  <li><strong>Overenie pre tretie strany:</strong> GET /api/v1/agents/{id}/status → verified áno/nie.</li>
+  <li><strong>Plug-in API</strong> pre LNBits, marketplace, frameworky (bez vlastného hubu).</li>
+  <li><strong>Nekustodiálne:</strong> hub nedrží prostriedky agentov.</li>
+</ul>
+
+<h3>Cieľové skupiny</h3>
+<table>
+  <tr><th>Segment</th><th>Čo ich zaujíme</th></tr>
+  <tr><td>Vývojári botov / AI agentov</td><td>Identita, reputácia, nie ďalší API kľúč</td></tr>
+  <tr><td>Platformy (LNBits, trhoviská)</td><td>Gate pred akciou — plug-in API</td></tr>
+  <tr><td>Lightning / Bitcoin komunita</td><td>Platba v satoshi</td></tr>
+  <tr><td>Technickí early adopters</td><td>OpenAPI, GitHub</td></tr>
+</table>
+
+<h2>2. Čo už máš hotové</h2>
+<table>
+  <tr><th>Kanál</th><th>Stav</th><th>URL</th></tr>
+  <tr><td>Web + video</td><td>Live</td><td>umbraxon.xyz/#intro-video</td></tr>
+  <tr><td>Plug-in API</td><td>Live</td><td>umbraxon.xyz/#platform</td></tr>
+  <tr><td>GitHub + docs</td><td>Live</td><td>github.com/UMBRAXON/kya-hub</td></tr>
+  <tr><td>YouTube</td><td>Live</td><td>youtu.be/Z6Fb2LFBPtY (75 s)</td></tr>
+  <tr><td>Moltbook + Nostr</td><td>Automat (PR bot)</td><td>Nie metrika adopcie — len distribúcia</td></tr>
+  <tr><td>X / Reddit / HN</td><td>Plán</td><td>tento dokument</td></tr>
+</table>
+
+<h2>3. Strategické fázy</h2>
+<pre>FÁZA A (týždeň 1)   Účty + YouTube SEO + launch príspevky
+FÁZA B (týždeň 2–4) HN Show HN / Reddit / X 3–5× týždenne
+FÁZA C (mesiac 2+)   Partneri, odpovede, žiadny spam</pre>
+<p><strong>Zásada:</strong> buď užitočný. Jedna silná správa + link na video a #intro-video.</p>
+
+<div class="page-break"></div>
+
+<h2>4. Registrácia účtov — postup</h2>
+
+<h3>4.1 X (x.com)</h3>
+<ol>
+  <li>https://x.com/signup — e-mail (ideálne hello@umbraxon.xyz)</li>
+  <li>Handle: @UMBRAXON alebo @UmbraxonKYA</li>
+  <li>Názov: UMBRAXON KYA Hub · 2FA povinne</li>
+  <li>Bio + banner + link https://www.umbraxon.xyz</li>
+</ol>
+<pre>Bio (EN):
+Know Your Agent — public trust layer for autonomous bots.
+Lightning + crypto identity. Verify before you trust.
+https://www.umbraxon.xyz</pre>
+
+<h3>4.2 Reddit</h3>
+<ol>
+  <li>reddit.com/register — username napr. UMBRAXON_KYA</li>
+  <li>1–2 týždne karma: užitočné komentáre, nie promo</li>
+  <li>V poste vždy: „I built this“ (disclosure)</li>
+  <li>Pravidlo 9:1 — 9 užitočných komentárov na 1 promo</li>
+</ol>
+
+<h3>4.3 Hacker News</h3>
+<ol>
+  <li>news.ycombinator.com → Create account</li>
+  <li>5–10 dní komentáre pred Show HN</li>
+  <li>Show HN: Ut–Št 15:00–17:00 CET, jeden hlavný post</li>
+</ol>
+
+<h2>5. Kanálová matica</h2>
+
+<h3>X</h3>
+<table>
+  <tr><th>Typ</th><th>Frekvencia</th></tr>
+  <tr><td>Launch tweet</td><td>1× deň D</td></tr>
+  <tr><td>Thread 5–7 tweetov</td><td>1× týždeň 1</td></tr>
+  <tr><td>Odpovede</td><td>2–3× týždenne</td></tr>
+  <tr><td>Tip / link</td><td>1× týždenne</td></tr>
+</table>
+
+<h3>Hacker News</h3>
+<ul>
+  <li><strong>Show HN</strong> — 1× (title + URL na web alebo GitHub)</li>
+  <li>Prvých 6–8 h odpovedať na každý komentár</li>
+</ul>
+<pre>Title: Show HN: KYA Hub – Know Your Agent (Lightning-paid identity for autonomous bots)
+
+Prvý komentár (hned po poste):
+Hi HN — author here. 75s intro: https://www.youtube.com/watch?v=Z6Fb2LFBPtY
+Problem: disposable AI agents with no accountability.
+KYA Hub: M2M register, Lightning, Ed25519 cert. Platforms: GET /api/v1/agents/{id}/status.
+Open source: https://github.com/UMBRAXON/kya-hub
+Site: https://www.umbraxon.xyz/#intro-video</pre>
+
+<h3>Reddit — vhodné subreddity</h3>
+<table>
+  <tr><th>Subreddit</th><th>Poznámka</th></tr>
+  <tr><td>r/sideproject</td><td>Show & tell — dobrý na launch</td></tr>
+  <tr><td>r/lightningnetwork</td><td>Prečítaj pravidlá</td></tr>
+  <tr><td>r/selfhosted</td><td>Open-source / ops</td></tr>
+  <tr><td>r/MachineLearning</td><td>Skôr diskusia, nie čistý promo</td></tr>
+  <tr><td>r/artificial</td><td>Komentáre najprv</td></tr>
+</table>
+<pre>Title: I built a public "Know Your Agent" registry – Lightning + Ed25519 for autonomous bots
+
+Body: (skráť podľa pravidiel subu)
+75s intro: https://www.youtube.com/watch?v=Z6Fb2LFBPtY
+Site: https://www.umbraxon.xyz
+Code: https://github.com/UMBRAXON/kya-hub
+Looking for feedback from bot builders and LNBits/marketplace integrators.</pre>
+
+<div class="page-break"></div>
+
+<h2>6. Harmonogram</h2>
+
+<h3>Týždeň 0 — príprava</h3>
+<ul class="checklist">
+  <li>YouTube: title, popis, tags, kapitoly, pinned comment</li>
+  <li>X: účet, 2FA, bio, banner</li>
+  <li>Reddit + HN: účet, karma</li>
+  <li>1 screenshot webu + API verified:true</li>
+</ul>
+
+<h3>Týždeň 1 — launch</h3>
+<table>
+  <tr><th>Deň</th><th>Akcia</th><th>Kto</th></tr>
+  <tr><td>Po</td><td>YouTube SEO + pinned comment</td><td>Ty</td></tr>
+  <tr><td>Ut</td><td>Show HN 15:00 CET</td><td>Ty</td></tr>
+  <tr><td>Ut–St</td><td>Odpovede HN 6 h</td><td>Ty</td></tr>
+  <tr><td>St</td><td>X launch + thread</td><td>Ty</td></tr>
+  <tr><td>Št</td><td>Reddit post</td><td>Ty</td></tr>
+  <tr><td>Pi</td><td>GitHub Discussion</td><td>Ty</td></tr>
+</table>
+
+<h3>Týždeň 2–4</h3>
+<ul>
+  <li>X: 3× týždenne</li>
+  <li>Reddit: 2× týždenne komentáre (nie nové posty)</li>
+  <li>GitHub issues 1× týždenne</li>
+  <li>Moltbook/Nostr: automat (PR agent cron)</li>
+</ul>
+
+<h2>7. Denná a týždenná obsluha</h2>
+
+<h3>Denne (10–15 min) — ty</h3>
+<ol>
+  <li>X: odpovede na zmienky (max 1–2)</li>
+  <li>HN: ak aktívny thread</li>
+  <li>GitHub: 1 odpoveď</li>
+  <li>Reddit: inbox</li>
+</ol>
+
+<h3>Týždenne (30–45 min) — ty</h3>
+<ol>
+  <li>1 plánovaný X post (Po/St 14:00–16:00 CET)</li>
+  <li>./scripts/platform-integrator-ready.sh na serveri</li>
+  <li>PM2: kya-hub, kya-portal, kya-dev-webhook-worker</li>
+</ol>
+
+<h3>Automaticky — server / AI</h3>
+<table>
+  <tr><th>Úloha</th><th>Frekvencia</th></tr>
+  <tr><td>Moltbook daily</td><td>PM2 cron</td></tr>
+  <tr><td>Nostr Po/St/Pi</td><td>PM2 cron</td></tr>
+  <tr><td>Webhook worker</td><td>každú minútu</td></tr>
+</table>
+
+<h2>8. Šablóny copy-paste</h2>
+
+<h3>X — launch</h3>
+<pre>Anyone can spin up 1,000 fake AI agents overnight.
+
+We built Know Your Agent (KYA) — a public trust layer:
+cryptographic identity + Lightning skin-in-the-game + one question: verified?
+
+75s intro:
+https://www.youtube.com/watch?v=Z6Fb2LFBPtY
+
+https://www.umbraxon.xyz
+#AIAgents #Lightning #KnowYourAgent</pre>
+
+<h3>X — thread (5 bodov)</h3>
+<ol>
+  <li>Problem: API keys ≠ identity for autonomous bots.</li>
+  <li>KYA Hub: M2M register, Lightning, Ed25519 cert.</li>
+  <li>Platforms: GET /api/v1/agents/{id}/status before the gate.</li>
+  <li>Non-custodial. Open source.</li>
+  <li>Watch: video · umbraxon.xyz/#platform · GitHub.</li>
+</ol>
+
+<h3>Reddit — krátky komentár</h3>
+<pre>We use a public registry (KYA Hub) — agent pays sats to register,
+gets a cert; third parties check verified via API. Non-custodial.
+Intro: https://www.youtube.com/watch?v=Z6Fb2LFBPtY</pre>
+
+<h2>9. Čomu sa vyhnúť</h2>
+<ul>
+  <li>Ten istý link 10× denne na Reddite</li>
+  <li>Hype („revolutionary“, „Web3 killer“)</li>
+  <li>Alt účty / fake recenzie</li>
+  <li>Spam r/Bitcoin</li>
+  <li>Platené X bez cielenia (na začiatku)</li>
+  <li>Investičné sľuby</li>
+</ul>
+
+<h2>10. Metriky (mesiac 1)</h2>
+<table>
+  <tr><th>Metrika</th><th>Cieľ</th></tr>
+  <tr><td>YouTube views</td><td>500+</td></tr>
+  <tr><td>GitHub stars</td><td>+20–50</td></tr>
+  <tr><td>HN points</td><td>10+ = dobré</td></tr>
+  <tr><td>Registrácie agentov</td><td>3–10 reálnych</td></tr>
+  <tr><td>Integrator dopyt</td><td>1</td></tr>
+</table>
+
+<h2>11. Jednostránkový checklist</h2>
+<ul class="checklist">
+  <li>YouTube SEO + pinned comment</li>
+  <li>X: účet, 2FA, bio, banner, launch tweet</li>
+  <li>HN: karma, Show HN (Ut–Št 15:00), odpovede 6 h</li>
+  <li>Reddit: karma, 1 post, 9:1 komentáre</li>
+  <li>Web: #intro-video 75 s, #platform</li>
+  <li>Týždenne: 3× X, PM2 OK, platform-integrator-ready</li>
+  <li>Mesačne: 1 partner, metriky</li>
+</ul>
+
+<h2>12. Ty vs AI / server</h2>
+<table>
+  <tr><th>Oblasť</th><th>Ty</th><th>AI + server</th></tr>
+  <tr><td>X / Reddit / HN posty</td><td>áno</td><td>texty pripraví</td></tr>
+  <tr><td>YouTube Studio</td><td>áno</td><td>checklist</td></tr>
+  <tr><td>Web, API, PM2</td><td>rozhodnutia</td><td>kód, deploy</td></tr>
+  <tr><td>Moltbook / Nostr</td><td>schválenie</td><td>automat</td></tr>
+  <tr><td>Partner API kľúče</td><td>áno</td><td>—</td></tr>
+</table>
+
+<script>
+  document.getElementById('print-btn').addEventListener('click', function () { window.print(); });
+  window.addEventListener('load', function () {
+    setTimeout(function () { window.print(); }, 400);
+  });
+</script>
+</body>
+</html>

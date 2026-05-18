@@ -8,6 +8,7 @@ from connectors.telegram_bot import TelegramConnector
 from leads.github import process_leads
 from pr.daily_post import run_daily_post
 from pr.heartbeat import moltbook_heartbeat
+from pr.kya_heartbeat import kya_hub_heartbeat
 from pr.moltbook_engage import run_moltbook_engage
 
 
@@ -22,6 +23,7 @@ def run_cycle(
     del audience, force_weekly  # daily themes replace generic promote / monday report
     result: Dict[str, Any] = {"steps": {}}
 
+    result["steps"]["kya_hub_heartbeat"] = kya_hub_heartbeat(settings)
     result["steps"]["moltbook_heartbeat"] = moltbook_heartbeat(settings)
     result["steps"]["moltbook_engage"] = run_moltbook_engage(settings)
 

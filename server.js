@@ -92,6 +92,11 @@ const developerApiAuth = require('./lib/developer-api-auth');
 const developerApiKeys = require('./lib/developer-api-keys');
 const developerWebhookQueue = require('./lib/developer-webhook-queue');
 const integratorLsat = require('./lib/integrator-lsat');
+const integratorKeyRequests = require('./lib/integrator-key-requests');
+const integratorSandbox = require('./lib/platform-integrator-sandbox');
+const platformIntegratorRoutes = require('./lib/routes/platform-integrator-routes');
+const registrationIpCap = require('./lib/registration-ip-cap');
+const protocolEconomics = require('./lib/protocol-economics');
 // Strategic Sprint §31 C — PDF invoice generator.
 const invoicePdf = require('./lib/invoice-pdf');
 
@@ -2069,8 +2074,29 @@ async function handleRegisterInitiate(req, res) {
     }
 }
 
-app.post('/api/v1/register', v1RegisterLimiter, registerAdmissionGate, apiV1Register.normalizeMiddleware, handleRegisterInitiate);
-app.post('/api/register/initiate', payLimiter, registerAdmissionGate, handleRegisterInitiate);
+const registrationIpDailyCap = registrationIpCap.buildMiddleware({
+    poolGetter: () => pool,
+    adminBypass: (req) => {
+        const k = req.headers['x-admin-key'];
+        return !!(k && cfg.ADMIN_API_KEY && k === cfg.ADMIN_API_KEY);
+    },
+});
+
+app.post(
+    '/api/v1/register',
+    v1RegisterLimiter,
+    registrationIpDailyCap,
+    registerAdmissionGate,
+    apiV1Register.normalizeMiddleware,
+    handleRegisterInitiate,
+);
+app.post(
+    '/api/register/initiate',
+    payLimiter,
+    registrationIpDailyCap,
+    registerAdmissionGate,
+    handleRegisterInitiate,
+);
 
 app.get('/api/sponsor-invite/:invite_id', async (req, res) => {
     const inviteId = String(req.params.invite_id || '');
@@ -2210,115 +2236,27 @@ app.get('/api/cert/:kya_id/status', async (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// 10b) Platform API — integrator / plug-in read model (v1)
+// 10b–10c) Platform integrator routes (lib/routes/platform-integrator-routes.js)
 // ----------------------------------------------------------------------------
-function _integratorKeyMiddleware(req, res, next) {
-    return developerApiAuth.optionalDeveloperKey(pool)(req, res, next);
-}
-
-app.get(
-    '/api/v1/agents/:kya_id',
-    _integratorKeyMiddleware,
+platformIntegratorRoutes.register(app, {
+    pool,
+    cfg,
+    axios,
+    logger,
+    platformIntegrator,
+    integratorLsat,
+    integratorSandbox,
+    developerApiAuth,
     integratorReadLimiter,
-    async (req, res) => {
-        const kya_id = req.params.kya_id;
-        try {
-            const out = await platformIntegrator.getAgentIntegratorView(pool, kya_id);
-            if (out.error) return res.status(out.status).json({ error: out.error });
-            if (req.integrator) {
-                out.body._integrator = { tier: req.integrator.tier, label: req.integrator.label };
-            }
-            return res.json(out.body);
-        } catch (err) {
-            logger.error({ err: err.message, kya_id }, 'GET /api/v1/agents/:kya_id FAIL');
-            return res.status(500).json({ error: 'DB_ERROR' });
-        }
-    }
-);
-
-app.get(
-    '/api/v1/agents/:kya_id/status',
-    _integratorKeyMiddleware,
-    integratorReadLimiter,
-    async (req, res) => {
-        const kya_id = req.params.kya_id;
-        try {
-            const out = await platformIntegrator.getAgentStatusGate(pool, kya_id);
-            if (out.error) return res.status(out.status).json({ error: out.error });
-            return res.json(out.body);
-        } catch (err) {
-            logger.error({ err: err.message, kya_id }, 'GET /api/v1/agents/:kya_id/status FAIL');
-            return res.status(500).json({ error: 'DB_ERROR' });
-        }
-    }
-);
-
-// ----------------------------------------------------------------------------
-// 10c) Integrator LSAT — paid API day pass (Lightning via BTCPay)
-// ----------------------------------------------------------------------------
-app.post('/api/v1/integrator/lsat/invoice', _integratorKeyMiddleware, async (req, res) => {
-    if (!cfg.BTCPAY_URL || !cfg.BTCPAY_STORE_ID || !cfg.BTCPAY_API_KEY) {
-        return res.status(503).json({ error: 'BTCPAY_UNAVAILABLE' });
-    }
-    try {
-        const integratorKeyId = req.integrator && req.integrator.auth === 'api_key' ? req.integrator.id : null;
-        const order = await integratorLsat.createInvoiceOrder(pool, { integratorKeyId });
-        const inv = await integratorLsat.createBtcpayInvoice(cfg, axios, {
-            access_id: order.access_id,
-            amount_sats: order.amount_sats,
-            integratorKeyId,
-        });
-        await integratorLsat.attachInvoice(pool, order.access_id, inv);
-        return res.status(201).json({
-            access_id: order.access_id,
-            amount_sats: order.amount_sats,
-            invoice_id: inv.invoiceId,
-            bolt11: inv.bolt11,
-            checkout_link: inv.checkoutLink,
-            status_url: `/api/v1/integrator/lsat/status?access_id=${encodeURIComponent(order.access_id)}`,
-            redeem_url: '/api/v1/integrator/lsat/redeem',
-            profile: '/api/protocol/integrator-lsat-profile',
-        });
-    } catch (err) {
-        logger.error({ err: err.message }, 'POST /api/v1/integrator/lsat/invoice FAIL');
-        return res.status(500).json({ error: 'INVOICE_CREATE_FAILED' });
-    }
 });
 
-app.get('/api/v1/integrator/lsat/status', async (req, res) => {
-    const access_id = (req.query.access_id || '').trim();
-    if (!access_id) return res.status(400).json({ error: 'MISSING_ACCESS_ID' });
+app.get('/api/protocol/economics', async (req, res) => {
     try {
-        const out = await integratorLsat.getStatus(pool, access_id);
-        if (!out.ok) return res.status(404).json({ error: out.error });
-        return res.json(out);
+        const doc = await protocolEconomics.buildEconomicsDoc(pool);
+        res.set('Cache-Control', 'public, max-age=600');
+        return res.json(doc);
     } catch (err) {
-        logger.error({ err: err.message }, 'GET integrator lsat status FAIL');
-        return res.status(500).json({ error: 'DB_ERROR' });
-    }
-});
-
-app.post('/api/v1/integrator/lsat/redeem', async (req, res) => {
-    const access_id = (req.body && req.body.access_id) || (req.query && req.query.access_id);
-    if (!access_id || typeof access_id !== 'string') {
-        return res.status(400).json({ error: 'MISSING_ACCESS_ID' });
-    }
-    try {
-        const out = await integratorLsat.redeemToken(pool, access_id.trim());
-        if (!out.ok) {
-            const status = out.error === 'NOT_FOUND' ? 404 : out.error === 'NOT_PAID' ? 402 : 409;
-            return res.status(status).json({ error: out.error, status: out.status });
-        }
-        return res.json({
-            access_id: out.access_id,
-            lsat_token: out.lsat_token,
-            expires_at: out.expires_at,
-            rate_limit_per_min: out.rate_limit_per_min,
-            scopes: out.scopes,
-            usage: 'Authorization: Bearer <lsat_token>',
-        });
-    } catch (err) {
-        logger.error({ err: err.message }, 'POST integrator lsat redeem FAIL');
+        logger.error({ err: err.message }, 'GET /api/protocol/economics FAIL');
         return res.status(500).json({ error: 'DB_ERROR' });
     }
 });
@@ -2328,6 +2266,17 @@ app.post('/api/v1/integrator/lsat/redeem', async (req, res) => {
 // ----------------------------------------------------------------------------
 app.get('/api/agent/:kya_id/reputation', async (req, res) => {
     const kya_id = req.params.kya_id;
+    if (integratorSandbox.isSandboxKyaId(kya_id)) {
+        const out = integratorSandbox.agentBody(kya_id);
+        if (out.error) return res.status(out.status).json({ error: out.error });
+        return res.json({
+            kya_id,
+            agent_name: out.body.agent_name,
+            reputation: out.body.reputation,
+            liveness: out.body.liveness,
+            _sandbox: true,
+        });
+    }
     if (!/^UMBRA-[A-F0-9]{6}$/.test(kya_id)) {
         return res.status(400).json({ error: 'INVALID_KYA_ID' });
     }
@@ -2609,6 +2558,41 @@ async function findAgent(kya_id) {
     if (r.rowCount === 0) return { row: null, status: 404, error: 'AGENT_NOT_FOUND' };
     return { row: r.rows[0] };
 }
+
+app.post('/api/v1/integrator/key-request', phase2Limiter, async (req, res) => {
+    const v = integratorKeyRequests.validateSubmit(req.body || {});
+    if (!v.ok) return res.status(400).json({ error: v.error });
+    try {
+        const recent = await integratorKeyRequests.countRecentByIp(pool, req.ip);
+        if (recent >= integratorKeyRequests.MAX_PENDING_PER_IP_24H) {
+            return res.status(429).json({
+                error: 'RATE_LIMITED',
+                message: 'Max integrator key requests per IP per 24h exceeded',
+            });
+        }
+        const row = await integratorKeyRequests.submit(pool, {
+            ...v.data,
+            client_ip: req.ip,
+        });
+        notifications.notifyIntegratorKeyRequest({
+            request_id: row.id,
+            organization: v.data.organization,
+            contact_email: v.data.contact_email,
+            use_case: v.data.use_case,
+            website: v.data.website,
+            client_ip: req.ip,
+        }).catch(() => {});
+        return res.status(201).json({
+            ok: true,
+            request_id: row.id,
+            status: row.status,
+            message: 'Request received. Operator will review (Telegram alert) and contact you with your umb_live_… key.',
+        });
+    } catch (err) {
+        logger.error({ err: err.message }, 'integrator key-request FAIL');
+        return res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
 
 // ----------------------------------------------------------------------------
 // Sponsor invite — ELITE anchored agents invite others (PoW bypass only)
@@ -4793,6 +4777,53 @@ app.post('/api/admin/developer-keys', security.adminAuth, async (req, res) => {
         res.status(201).json(created);
     } catch (e) {
         logger.error({ err: e.message }, 'admin developer-keys create FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+// GET /api/admin/integrator-key-requests — pending partner key requests
+app.get('/api/admin/integrator-key-requests', security.adminAuth, async (req, res) => {
+    try {
+        const rows = await integratorKeyRequests.list(pool, {
+            status: (req.query.status || '').trim() || undefined,
+        });
+        res.json({ count: rows.length, requests: rows });
+    } catch (e) {
+        logger.error({ err: e.message }, 'admin integrator-key-requests list FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+app.post('/api/admin/integrator-key-requests/:id/approve', security.adminAuth, async (req, res) => {
+    const id = (req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'MISSING_ID' });
+    try {
+        const out = await integratorKeyRequests.approve(pool, id, {
+            tier: (req.body || {}).tier,
+            label: (req.body || {}).label,
+            admin_notes: (req.body || {}).admin_notes,
+            admin_user: req.headers['x-admin-user'] || 'admin',
+        });
+        if (out.error) return res.status(out.status).json({ error: out.error });
+        logger.info({ request_id: id, key_prefix: out.key_prefix }, 'integrator key request approved');
+        res.json(out);
+    } catch (e) {
+        logger.error({ err: e.message, id }, 'integrator-key-request approve FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+app.post('/api/admin/integrator-key-requests/:id/reject', security.adminAuth, async (req, res) => {
+    const id = (req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'MISSING_ID' });
+    try {
+        const out = await integratorKeyRequests.reject(pool, id, {
+            admin_notes: (req.body || {}).admin_notes,
+        });
+        if (out.error) return res.status(out.status).json({ error: out.error });
+        res.json(out);
+    } catch (e) {
+        logger.error({ err: e.message, id }, 'integrator-key-request reject FAIL');
         res.status(500).json({ error: 'DB_ERROR' });
     }
 });
