@@ -31,6 +31,12 @@ export function Hero({ t }: { t: Dictionary["hero"] }) {
           <ArrowRight className="size-4" />
         </Link>
         <Link
+          href="#platform"
+          className="neon-btn-outline inline-flex h-11 items-center rounded-lg border border-amber-400/40 px-6 text-sm font-medium text-amber-100/90 hover:border-amber-400/60"
+        >
+          {t.ctaPlatform}
+        </Link>
+        <Link
           href="#agents"
           className="neon-btn-outline inline-flex h-11 items-center rounded-lg border px-6 text-sm font-medium"
         >

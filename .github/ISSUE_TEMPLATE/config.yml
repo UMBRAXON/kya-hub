@@ -9,3 +9,9 @@ contact_links:
   - name: FAQ for bot developers
     url: https://github.com/UMBRAXON/kya-hub/blob/main/docs/FAQ-FOR-BOT-DEVELOPERS.md
     about: PoW, sponsor invite, ELITE listing, integrations v1
+  - name: Platform Integrator API (plug-ins)
+    url: https://www.umbraxon.xyz/#platform
+    about: Verify KYA agents in LNBits, marketplaces, frameworks — FAQ §I
+  - name: Release — Platform Integrator
+    url: https://github.com/UMBRAXON/kya-hub/blob/main/docs/RELEASE-v1.2.0-platform-integrator.md
+    about: v1.2 plug-in layer: status API, API keys, webhooks, umbraxon-py

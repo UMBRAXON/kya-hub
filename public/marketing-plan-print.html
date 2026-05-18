@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8" />
+  <title>UMBRAXON KYA Hub — marketingový plán (tlač)</title>
+  <style>
+    @page { margin: 16mm; }
+    body { font-family: Georgia, "Times New Roman", serif; font-size: 11pt; line-height: 1.45; color: #111; max-width: 180mm; margin: 0 auto; padding: 12mm; padding-top: 76px; }
+    h1 { font-size: 18pt; border-bottom: 2px solid #111; padding-bottom: 6px; page-break-after: avoid; }
+    h2 { font-size: 13pt; margin-top: 18px; page-break-after: avoid; }
+    h3 { font-size: 11.5pt; margin-top: 12px; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 10pt; }
+    th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #eee; }
+    pre, .box { background: #f5f5f5; border: 1px solid #ccc; padding: 10px; font-size: 9.5pt; white-space: pre-wrap; font-family: Consolas, monospace; }
+    ul, ol { margin: 6px 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+    .meta { font-size: 10pt; color: #444; margin-bottom: 16px; }
+    .done { list-style: none; padding-left: 0; }
+    .done li:before { content: "☑ "; font-family: sans-serif; }
+    .todo { list-style: none; padding-left: 0; }
+    .todo li:before { content: "☐ "; font-family: sans-serif; }
+    a { color: #000; word-break: break-all; }
+    .page-break { page-break-before: always; }
+    .open-hint { font-size: 10pt; background: #f0f9ff; border: 1px solid #7dd3fc; padding: 8px; margin-bottom: 12px; }
+    @media print {
+      body { padding: 0; padding-top: 0; }
+      .print-bar, .open-hint { display: none !important; }
+      a { text-decoration: none; }
+    }
+  </style>
+  <style>
+    .print-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: #1a1a2e; color: #fff; padding: 12px 16px; text-align: center;
+      font-family: system-ui, "Segoe UI", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .print-bar button, .print-bar a.btn {
+      font-size: 16px; font-weight: 600; padding: 11px 22px; cursor: pointer;
+      border: none; border-radius: 8px; background: #f59e0b; color: #111;
+      text-decoration: none; display: inline-block; margin: 0 6px;
+    }
+    .print-bar a.btn.secondary { background: #e2e8f0; color: #111; }
+    .print-bar button:hover, .print-bar a.btn:hover { filter: brightness(1.08); }
+    .print-bar .hint { display: block; margin-top: 8px; font-size: 12px; opacity: .9; }
+  </style>
+</head>
+<body>
+
+<div class="print-bar">
+  <button type="button" id="print-btn">Tlačiť (Ctrl+P)</button>
+  <a class="btn secondary" href="https://www.umbraxon.xyz/public/marketing-plan-print.html" target="_blank" rel="noopener">Otvoriť v prehliadači</a>
+  <span class="hint">1 klik: Tlačiť · 2 kliky: dvojklik <strong>MARKETING-PLAN-VYTLACIT.url</strong> → Tlačiť</span>
+</div>
+
+<p class="open-hint no-print">
+  <strong>Tlač:</strong> tlačidlo hore alebo <kbd>Ctrl+P</kbd> → cieľ „Uložiť ako PDF“ alebo tlačiareň.
+  Súbor: <code>MARKETING-PLAN-VYTLACIT.html</code> v koreni repa.
+</p>
+
+<h1>UMBRAXON KYA Hub — marketingový plán</h1>
+<p class="meta">
+  <strong>Verzia:</strong> 1.1 · <strong>Aktualizácia:</strong> máj 2026<br />
+  <strong>Web:</strong> <a href="https://www.umbraxon.xyz">https://www.umbraxon.xyz</a><br />
+  <strong>Integrátori:</strong> <a href="https://www.umbraxon.xyz/integrators">/integrators</a><br />
+  <strong>Video (75 s):</strong> <a href="https://www.youtube.com/watch?v=Z6Fb2LFBPtY">youtu.be/Z6Fb2LFBPtY</a><br />
+  <strong>GitHub:</strong> <a href="https://github.com/UMBRAXON/kya-hub">github.com/UMBRAXON/kya-hub</a>
+</p>
+
+<h2>0. Hotovo (máj 2026)</h2>
+<ul class="done">
+  <li>Cloudflare: redirect umbraxon.xyz → www (301)</li>
+  <li>Google Search Console: vlastníctvo overené</li>
+  <li>Sitemap odoslaná (stav môže dobehnúť)</li>
+  <li>Bing Webmaster + backlinky: GitHub README, YouTube popis + pinned</li>
+  <li>Web: sitemap.xml, robots.txt, SEO metadata na portáli</li>
+</ul>
+<ul class="todo">
+  <li>GSC: Požiadať o indexovanie / a /integrators (ak ešte nie)</li>
+  <li>Show HN / Reddit launch</li>
+  <li>X účet + launch</li>
+</ul>
+
+<h2>1. O čo presne ide</h2>
+<p><strong>Jedna veta:</strong> Pred platbou alebo akciou zavoláš <code>GET /api/v1/agents/{id}/status</code>. Agent sa registruje sám (Lightning + Ed25519). Pri väčších sumách: <code>?include=cert_proof</code>.</p>
+
+<h3>Problém</h3>
+<ul>
+  <li>Ktokoľvek môže spustiť tisíce „agentov“ bez identity.</li>
+  <li>API kľúče a SaaS registrácie nie sú určené pre stroje.</li>
+  <li>Platformy nevedia, komu dovoliť platbu alebo akciu.</li>
+</ul>
+
+<h3>Čo ponúkaš</h3>
+<ul>
+  <li><strong>M2M registrácia:</strong> POST /api/v1/register, platba Lightning, certifikát.</li>
+  <li><strong>Gate:</strong> GET /api/v1/agents/{id}/status → verified.</li>
+  <li><strong>Plug-in:</strong> /integrators, umb_live_ len rate limit (nie identita agenta).</li>
+  <li><strong>Nekustodiálne:</strong> hub nedrží prostriedky agentov.</li>
+</ul>
+
+<h3>Cieľové skupiny</h3>
+<table>
+  <tr><th>Segment</th><th>Čo ich zaujíme</th></tr>
+  <tr><td>Vývojári botov</td><td>Ed25519 + reputácia, nie ďalší API kľúč</td></tr>
+  <tr><td>Platformy (LNBits, marketplace)</td><td>Jeden GET pred akciou</td></tr>
+  <tr><td>Lightning / Bitcoin</td><td>Platba v sats</td></tr>
+  <tr><td>Early adopters</td><td>OpenAPI, GitHub, open source</td></tr>
+</table>
+
+<h2>2. Čo už máš hotové</h2>
+<table>
+  <tr><th>Kanál</th><th>Stav</th><th>URL</th></tr>
+  <tr><td>Web + SEO</td><td>Live</td><td>www.umbraxon.xyz/sitemap.xml</td></tr>
+  <tr><td>Plug-in API</td><td>Live</td><td>www.umbraxon.xyz/integrators</td></tr>
+  <tr><td>GitHub README</td><td>Live + link na web</td><td>github.com/UMBRAXON/kya-hub</td></tr>
+  <tr><td>YouTube</td><td>Live (popis opravený)</td><td>youtu.be/Z6Fb2LFBPtY</td></tr>
+  <tr><td>GSC / Bing</td><td>Nastavené</td><td>Search Console, Webmaster</td></tr>
+  <tr><td>Moltbook + Nostr</td><td>Automat (PR bot)</td><td>Distribúcia, nie metrika adopcie</td></tr>
+  <tr><td>X / Reddit / HN</td><td>Plán</td><td>tento dokument</td></tr>
+</table>
+
+<h2>3. Strategické fázy</h2>
+<pre>FÁZA A (týždeň 1)   Launch: HN, Reddit, X — 1 silný post na kanál
+FÁZA B (týždeň 2–4) Odpovede, 2–3× X týždenne, žiadny spam
+FÁZA C (mesiac 2+)   Partneri (integrator API keys), metriky v GSC</pre>
+<p><strong>Zásada:</strong> technická pravda, žiadne „revolučný / trust layer“. Jeden link + 75 s video.</p>
+
+<div class="page-break"></div>
+
+<h2>4. Indexácia (referencia)</h2>
+<p>Detailný postup: <code>docs/SEO-INDEXING.md</code> v repe.</p>
+<ol>
+  <li>Property GSC: <code>https://www.umbraxon.xyz</code></li>
+  <li>Sitemap: <code>sitemap.xml</code></li>
+  <li>Request indexing: / a /integrators</li>
+  <li>Kontrola o týždeň: <code>site:www.umbraxon.xyz</code></li>
+</ol>
+
+<h2>5. Registrácia účtov</h2>
+
+<h3>5.1 X (x.com)</h3>
+<ol>
+  <li>https://x.com/signup · handle @UMBRAXON alebo @UmbraxonKYA</li>
+  <li>2FA · bio + banner · link https://www.umbraxon.xyz</li>
+</ol>
+<pre>Bio (EN):
+Know Your Agent — Lightning-paid identity for autonomous bots.
+One GET before you trust: /api/v1/agents/{id}/status
+https://www.umbraxon.xyz</pre>
+
+<h3>5.2 Reddit</h3>
+<ol>
+  <li>reddit.com/register · karma 1–2 týždne</li>
+  <li>„I built this“ · pravidlo 9:1</li>
+</ol>
+
+<h3>5.3 Hacker News</h3>
+<ol>
+  <li>news.ycombinator.com · karma pred Show HN</li>
+  <li>Show HN: Ut–Št 15:00–17:00 CET</li>
+</ol>
+
+<h2>6. Kanálová matica — Show HN</h2>
+<pre>Title: Show HN: KYA Hub – Lightning-paid identity for autonomous bots
+
+Prvý komentár (hned po poste):
+Hi HN — author here. 75s: https://www.youtube.com/watch?v=Z6Fb2LFBPtY
+Problem: fake agents are free; KYA charges sats + issues Ed25519 cert.
+Platforms: GET /api/v1/agents/{id}/status (optional ?include=cert_proof).
+Open source: https://github.com/UMBRAXON/kya-hub
+Site: https://www.umbraxon.xyz/integrators</pre>
+
+<h3>Reddit — r/sideproject</h3>
+<pre>Title: I built a KYA registry – M2M agents pay sats, platforms verify via one API call
+
+Body:
+75s intro: https://www.youtube.com/watch?v=Z6Fb2LFBPtY
+https://www.umbraxon.xyz · https://www.umbraxon.xyz/integrators
+Code: https://github.com/UMBRAXON/kya-hub
+Feedback from bot builders welcome.</pre>
+
+<div class="page-break"></div>
+
+<h2>7. Harmonogram</h2>
+
+<h3>Týždeň 1 — launch (zvyšok)</h3>
+<table>
+  <tr><th>Deň</th><th>Akcia</th></tr>
+  <tr><td>Ut</td><td>Show HN 15:00 CET + odpovede 6 h</td></tr>
+  <tr><td>St</td><td>X launch (1 tweet + krátky thread)</td></tr>
+  <tr><td>Št</td><td>Reddit r/sideproject</td></tr>
+  <tr><td>Pi</td><td>GitHub Discussion (integrators)</td></tr>
+</table>
+
+<h3>Týždeň 2–4</h3>
+<ul>
+  <li>X: max 3× týždenne</li>
+  <li>Reddit: komentáre, nie spam posty</li>
+  <li>GSC: sleduj Pages / Performance</li>
+</ul>
+
+<h2>8. Šablóny copy-paste</h2>
+
+<h3>X — launch</h3>
+<pre>Anyone can spin up 1,000 fake AI agents overnight.
+
+KYA Hub: pay sats, get an Ed25519 cert. Platforms check one URL:
+
+GET /api/v1/agents/{kya_id}/status
+
+75s intro: https://www.youtube.com/watch?v=Z6Fb2LFBPtY
+https://www.umbraxon.xyz/integrators
+#Lightning #AIAgents</pre>
+
+<h3>YouTube pinned (hotovo v popise; toto do komentára)</h3>
+<pre>Integrators: GET https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status
+Quickstart: https://www.umbraxon.xyz/integrators
+GitHub: https://github.com/UMBRAXON/kya-hub</pre>
+
+<h2>9. Čomu sa vyhnúť</h2>
+<ul>
+  <li>„Revolutionary“, „trust layer“, „skin in the game“ (klišé)</li>
+  <li>Nesprávne URL (/api/v1/kya neexistuje)</li>
+  <li>Ten istý link 10× denne na Reddite</li>
+  <li>Alt účty / fake recenzie</li>
+  <li>Investičné sľuby</li>
+</ul>
+
+<h2>10. Metriky (mesiac 1)</h2>
+<table>
+  <tr><th>Metrika</th><th>Cieľ</th></tr>
+  <tr><td>GSC indexed pages</td><td>5+</td></tr>
+  <tr><td>YouTube views</td><td>500+</td></tr>
+  <tr><td>GitHub stars</td><td>+20–50</td></tr>
+  <tr><td>HN points</td><td>10+ = dobré</td></tr>
+  <tr><td>Reálni agenti (mimo testov)</td><td>2–5</td></tr>
+  <tr><td>Integrator dopyt</td><td>1</td></tr>
+</table>
+
+<h2>11. Checklist na tlač</h2>
+<ul class="done">
+  <li>Redirect www + GSC + Bing</li>
+  <li>GitHub + YouTube backlinky</li>
+  <li>YouTube popis + pinned</li>
+</ul>
+<ul class="todo">
+  <li>GSC request indexing (2 URL)</li>
+  <li>Show HN</li>
+  <li>Reddit post</li>
+  <li>X launch</li>
+</ul>
+
+<p class="meta" style="margin-top:24px;">
+  Tlač/PDF: tlačidlo hore · Runbook SEO: docs/SEO-INDEXING.md
+</p>
+
+<script>
+  document.getElementById('print-btn').addEventListener('click', function () { window.print(); });
+</script>
+</body>
+</html>

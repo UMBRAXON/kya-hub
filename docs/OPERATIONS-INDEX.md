@@ -23,6 +23,25 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 - `docs/RESTORE-PROCEDURES.md` — full restore playbook (channel state + PostgreSQL).
 - `scripts/backup-offsite-smoketest.sh` — low-risk check that `BACKUP_S3_*` creds can PUT/LIST/GET/DELETE a probe.
 
+## Operator daily digest (Telegram)
+
+- **One-shot (full text in terminal):** `node scripts/operator-daily-report.js --dry-run`
+- **Send to Telegram now:** `node scripts/operator-daily-report.js --telegram`
+- **JSON export:** `node scripts/operator-daily-report.js --json`
+- **Window:** `--hours 48` or `OPERATOR_REPORT_HOURS=48`
+- **PM2 cron:** `kya-operator-daily-report` — default **07:00 UTC** daily (`ecosystem.config.js`)
+- **Disable:** `OPERATOR_DAILY_REPORT_ENABLED=false`
+- Requires `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` in hub `.env`
+
+Includes: production agent counts (tests excluded), new bots in window, registrations, pending payments, integrator API breakdown (my vs partner vs no-key), heartbeats, reputation events, top rejected API paths, webhook outbox, LSAT orders. Override allowlist: `OPERATOR_REPORT_ALLOW_KYA_IDS=UMBRA-000467`. Own integrator keys: `OPERATOR_REPORT_OWN_KEY_IDS` (UUID list).
+
+**Integrator traction:** `GET /api/protocol/integrator-ops` · **Sybil economics:** `GET /api/protocol/economics` · **Trust gate guide:** `docs/INTEGRATOR-TRUST-GATE.md`
+
+## SEO / Google indexácia
+
+- Runbook (operátor): [`docs/SEO-INDEXING.md`](SEO-INDEXING.md) — Search Console, Cloudflare, sitemap
+- Po zmene portálu: `cd portal && npm run build && pm2 restart kya-portal`
+
 ## Monitoring / alerting
 
 - `docs/NETDATA-ACCESS.md` — access Netdata safely (SSH tunnel only) + what’s monitored.
@@ -39,6 +58,44 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 - `migrations/022_sponsor_invites.sql` — schema + `kyahub_app` grants.
 - `scripts/test-sponsor-invite-e2e.js` — smoke test (requires `SPONSOR_INVITE_ENABLED=true` + hub on `PORT`).
 - Env: `SPONSOR_INVITE_ENABLED`, optional `SPONSOR_AGENT_ALLOWLIST` for staged rollout.
+
+## GitHub promo (integrators)
+
+- `docs/REGISTRATION-QUICKSTART.md` — pin or link from a GitHub issue.
+- `.github/ISSUE_TEMPLATE/` + `.github/DISCUSSION_TEMPLATE/` — registration help forms.
+- `.github/PINNED_ISSUE_BODY.md` — copy-paste for a pinned welcome issue.
+- `scripts/github-promo-verify.sh` — local smoke (templates + `github-scan` dry-run).
+- **Manual (once):** Repo **Settings → General → Features → Discussions** → enable; **Topics:** `ai-agents`, `lightning`, `ed25519`, `ky-a`, `m2m`.
+- **Release:** tag `v1.1.0` — publish notes from `docs/RELEASE-v1.1.0.md` at https://github.com/UMBRAXON/kya-hub/releases
+
+## Platform integrator API (plug-in layer)
+
+- ADR: `docs/adr/001-platform-integrator-roles.md`
+- Roadmap: `docs/PLATFORM-INTEGRATOR-ROADMAP.md`
+- Public: `GET /api/v1/agents/{kya_id}`, `GET /api/v1/agents/{kya_id}/status`
+- Migration: `023_developer_api_keys.sql`
+- Admin keys: `GET/POST /api/admin/developer-keys`, `POST .../:id/revoke` (`X-Admin-Key`)
+- Tests: `node test-platform-integrator.js`, `node test-developer-api-keys.js`
+- Example: `examples/plugin-gate-v1.js`
+- Env: `INTEGRATOR_READ_CACHE_MS`, `RATE_INTEGRATOR_READ_PER_MIN`, `DEVKEY_RATE_*_PER_MIN`
+- Webhooks: `024_developer_webhook_outbox.sql`, PM2 `kya-dev-webhook-worker` (`*/1 * * * *`)
+- Admin: `GET /api/admin/developer-webhooks/deliveries`, `POST .../process`
+- Metric: `kyahub_developer_webhook_outbox{status}`
+- LSAT: migration `025_integrator_lsat.sql`, `GET /api/protocol/integrator-lsat-profile`
+- **Ready gate (run before partner onboarding):**
+  ```bash
+  ./scripts/platform-integrator-ready.sh
+  ```
+  Requires: hub online, `.env` with `ADMIN_API_KEY`, migrations 023–025 applied.
+- Live smoke only: `node test-platform-integrator-live.js`
+- Example gate: `KYA_HUB_BASE_URL=https://www.umbraxon.xyz node examples/plugin-gate-v1.js UMBRA-000467`
+
+## Memory / swap (Netdata `mem.swap`)
+
+- **Symptom:** swap 90%+ while `free` still shows plenty of `available` — stale pages (often `bitcoind` ~1 GiB).
+- **Quick fix:** `sudo ./scripts/ops/reclaim-swap.sh` (needs RAM > swap used + 512 MiB).
+- **Persist:** `sudo ./scripts/ops/install-memory-tuning.sh` (`vm.swappiness=1`).
+- **If recurring:** BTCPay `bitcoind` uses `-dbcache=1024` in `btcpayserver-docker/Generated/` — consider lowering to 256–512 or BTCPay `opt-save-memory` fragment.
 
 ## Logging
 

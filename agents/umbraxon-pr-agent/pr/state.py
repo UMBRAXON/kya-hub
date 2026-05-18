@@ -46,6 +46,15 @@ def record_post(platform: str, content_hash: str, *, title: Optional[str] = None
     save_state(st)
 
 
+def hours_since_last_post_for_platform(platform: str) -> Optional[float]:
+    st = load_state()
+    posts: List[Dict[str, Any]] = st.get("posts") or []
+    for p in reversed(posts):
+        if p.get("platform") == platform:
+            return (time.time() - float(p["ts"])) / 3600.0
+    return None
+
+
 def hours_since_last_post() -> Optional[float]:
     st = load_state()
     ts = st.get("last_post_ts")

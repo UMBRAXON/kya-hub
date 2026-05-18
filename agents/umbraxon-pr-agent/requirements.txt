@@ -3,3 +3,4 @@ openai>=1.30.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 pynostr>=0.2.0
+websocket-client>=1.6.0

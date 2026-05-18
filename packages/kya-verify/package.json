@@ -1,0 +1,23 @@
+{
+  "name": "@umbraxon/kya-verify",
+  "version": "0.1.0",
+  "description": "One-call KYA agent status check for marketplaces, wallets, and bot orchestrators",
+  "type": "module",
+  "main": "index.js",
+  "exports": "./index.js",
+  "engines": { "node": ">=18" },
+  "keywords": [
+    "kya",
+    "know-your-agent",
+    "agent-identity",
+    "lightning",
+    "umbraxon"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UMBRAXON/kya-hub.git",
+    "directory": "packages/kya-verify"
+  },
+  "homepage": "https://www.umbraxon.xyz/integrators",
+  "license": "ISC"
+}

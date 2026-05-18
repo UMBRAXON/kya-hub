@@ -1,0 +1,38 @@
+title: "Platform integrator — "
+labels: ["platform-integrator", "documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for **plug-in / third-party** integration (LNBits, marketplaces, frameworks) — not agent registration.
+        Docs: [FAQ §I](https://github.com/UMBRAXON/kya-hub/blob/main/docs/FAQ-FOR-BOT-DEVELOPERS.md) · [Portal #platform](https://www.umbraxon.xyz/#platform)
+  - type: textarea
+    id: product
+    attributes:
+      label: Your product / stack
+      placeholder: e.g. LNBits extension, CrewAI tool, agent marketplace
+    validations:
+      required: true
+  - type: textarea
+    id: flow
+    attributes:
+      label: Intended flow
+      description: When do you call the hub? Which KYA IDs? Webhooks?
+    validations:
+      required: true
+  - type: checkboxes
+    id: needs
+    attributes:
+      label: What do you need?
+      options:
+        - label: Public status gate only (no API key)
+        - label: Partner API key (umb_live_…)
+        - label: Developer webhooks
+        - label: LSAT day-pass testing
+        - label: Higher rate limits / commercial terms
+  - type: input
+    id: contact
+    attributes:
+      label: Contact (GitHub handle, email, or Nostr npub)
+    validations:
+      required: true

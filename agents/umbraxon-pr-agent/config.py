@@ -51,6 +51,16 @@ def _llm_api_key() -> str:
     return os.getenv("OPENAI_API_KEY", "").strip()
 
 
+def _nostr_private_key() -> str:
+    direct = os.getenv("NOSTR_PRIVATE_KEY", os.getenv("NOSTR_nsec", "")).strip()
+    if direct:
+        return direct
+    file_path = os.getenv("NOSTR_PRIVATE_KEY_FILE", "").strip()
+    if file_path:
+        return _read_secret_file(file_path)
+    return ""
+
+
 @dataclass(frozen=True)
 class Settings:
     kya_hub_base_url: str
@@ -76,6 +86,7 @@ class Settings:
     pr_max_links_per_post: int
     pr_hub_url_required: bool
     pr_publish_platforms: tuple[str, ...]
+    pr_kya_heartbeat: bool
 
     auto_pay_registration: bool
     nwc_pay_uri_file: str
@@ -89,6 +100,7 @@ class Settings:
     # Phase B — cross-post
     nostr_private_key: str
     nostr_relays: tuple[str, ...]
+    nostr_min_hours_between_posts: float
     x_api_key: str
     x_api_secret: str
     x_access_token: str
@@ -149,6 +161,7 @@ def load_settings() -> Settings:
         pr_max_links_per_post=int(os.getenv("PR_MAX_LINKS_PER_POST", "3")),
         pr_hub_url_required=_bool("PR_HUB_URL_REQUIRED", "true"),
         pr_publish_platforms=platforms,
+        pr_kya_heartbeat=_bool("PR_KYA_HEARTBEAT", "true"),
         auto_pay_registration=_bool("AUTO_PAY_REGISTRATION", "false"),
         nwc_pay_uri_file=os.getenv("NWC_PAY_URI_FILE", ""),
         kya_id=os.getenv("KYA_ID", ""),
@@ -156,10 +169,13 @@ def load_settings() -> Settings:
         kya_registration_id=os.getenv("KYA_REGISTRATION_ID", ""),
         kya_register_wait=_bool("KYA_REGISTER_WAIT", "true"),
         kya_admin_api_key=os.getenv("KYA_ADMIN_API_KEY", os.getenv("ADMIN_API_KEY", "")),
-        nostr_private_key=os.getenv("NOSTR_PRIVATE_KEY", os.getenv("NOSTR_nsec", "")),
+        nostr_private_key=_nostr_private_key(),
         nostr_relays=_csv(
             "NOSTR_RELAYS",
             "wss://relay.damus.io,wss://nos.lol,wss://relay.nostr.band",
+        ),
+        nostr_min_hours_between_posts=float(
+            os.getenv("NOSTR_MIN_HOURS_BETWEEN_POSTS", "48")
         ),
         x_api_key=os.getenv("X_API_KEY", os.getenv("TWITTER_API_KEY", "")),
         x_api_secret=os.getenv("X_API_SECRET", os.getenv("TWITTER_API_SECRET", "")),

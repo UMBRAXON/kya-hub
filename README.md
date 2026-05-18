@@ -31,10 +31,28 @@ and emits no bearer tokens.
 
 **Reference clients:** [Python SDK](scripts/umbrexon_bot_client.py) (byte-exact
 with the Node backend); [MCP server](mcp/README.md) (read-only hub tools for
-Cursor / MCP hosts). **Bot Developer Portal (canonical):** <https://www.umbraxon.xyz/bots/> — alias <https://bots.umbraxon.xyz/> (301 redirect).
+Cursor / MCP hosts); [`@umbraxon/kya-verify`](packages/kya-verify/) (one-line gate check for Node integrators).
+**AI / crawler discovery:** [`llms.txt`](https://www.umbraxon.xyz/llms.txt) · [`.well-known/kya-hub.json`](https://www.umbraxon.xyz/.well-known/kya-hub.json).
+**Bot Developer Portal (canonical):** <https://www.umbraxon.xyz/bots/> — alias <https://bots.umbraxon.xyz/> (301 redirect).
+
+**Intro video (75s, developers):** [YouTube — Know Your Agent](https://www.youtube.com/watch?v=Z6Fb2LFBPtY) · embedded at <https://www.umbraxon.xyz/#intro-video>
 (fallback: <https://umbraxon.xyz/bots/>).
 **API contract:** [`openapi/openapi.yaml`](openapi/openapi.yaml).
 **FAQ for integrators:** [`docs/FAQ-FOR-BOT-DEVELOPERS.md`](docs/FAQ-FOR-BOT-DEVELOPERS.md).
+
+### Building a plug-in or platform on KYA Hub?
+
+Embed trust gates in **your** product (LNBits, marketplaces, agent frameworks) without running a separate hub:
+
+| Resource | Link |
+|----------|------|
+| **Portal highlight** | https://www.umbraxon.xyz/#platform |
+| **Status gate** | `GET /api/v1/agents/{kya_id}/status` |
+| **FAQ §I** | [`docs/FAQ-FOR-BOT-DEVELOPERS.md`](docs/FAQ-FOR-BOT-DEVELOPERS.md) (Platform integrator) |
+| **Release notes** | [`docs/RELEASE-v1.2.0-platform-integrator.md`](docs/RELEASE-v1.2.0-platform-integrator.md) |
+| **Ready check** | `./scripts/platform-integrator-ready.sh` |
+| **Example** | [`examples/plugin-gate-v1.js`](examples/plugin-gate-v1.js) |
+| **Python SDK** | [`packages/umbraxon-py/README.md`](packages/umbraxon-py/README.md) |
 
 **Default registration prices (sats):** BASIC **10 000**, ELITE **80 000** (operator policy; live totals from `GET /api/tiers` / `tier_pricing`).
 
@@ -44,7 +62,8 @@ Cursor / MCP hosts). **Bot Developer Portal (canonical):** <https://www.umbraxon
 |----------|------|
 | **Quickstart** | [`docs/REGISTRATION-QUICKSTART.md`](docs/REGISTRATION-QUICKSTART.md) |
 | **Ask for help** | [Open a registration issue](https://github.com/UMBRAXON/kya-hub/issues/new?template=registration-help.yml) · [Discussions](https://github.com/UMBRAXON/kya-hub/discussions) |
-| **Release notes** | [`docs/RELEASE-v1.1.0.md`](docs/RELEASE-v1.1.0.md) (Integrations v1) |
+| **Release notes** | [`docs/RELEASE-v1.1.0.md`](docs/RELEASE-v1.1.0.md) (Integrations v1) · [`v1.2 platform`](docs/RELEASE-v1.2.0-platform-integrator.md) |
+| **Platform integrator** | [Discussions](https://github.com/UMBRAXON/kya-hub/discussions) (template: Platform integrator) |
 
 ---
 

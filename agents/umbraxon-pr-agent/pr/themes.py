@@ -18,6 +18,20 @@ class PostTheme:
     title: str
     template: str  # format with hub=, kya_id=
     llm_brief: str
+    nostr_template: Optional[str] = None  # shorter body for Nostr notes
+
+
+# Nostr Mon/Wed/Fri rotation — platform_integrator included every cycle.
+NOSTR_THEME_IDS: List[str] = [
+    "platform_integrator",
+    "m2m_identity",
+    "register_api",
+    "discovery",
+    "cert_verify",
+    "integrations",
+    "reputation",
+    "onboarding_checklist",
+]
 
 
 THEMES: List[PostTheme] = [
@@ -121,6 +135,32 @@ Our ambassador agent: {kya_id} — same flow.""",
         "Give a crisp 5-step onboarding checklist.",
     ),
     PostTheme(
+        "platform_integrator",
+        "Platform Integrator API — verify KYA agents inside your product",
+        """Shipping a marketplace, LNBits extension, or agent orchestrator?
+
+KYA Hub now exposes a **plug-in layer** for third-party systems (not agent registration):
+
+• `GET {hub}/api/v1/agents/{{kya_id}}/status` → `verified` + `trust_level`
+• Optional partner key `Authorization: Bearer umb_live_…`
+• Queued developer webhooks on registration / reputation events
+• Python SDK: `umbraxon` (integrator client)
+
+Registration still uses Ed25519 + Lightning on the operator hub — integrators only **read & gate**.
+
+Docs: {hub}/docs/FAQ-FOR-BOT-DEVELOPERS.md · Portal: {hub}/#platform""",
+        "Announce Platform Integrator API for developers building plug-ins; technical, no hype; mention status endpoint and partner keys.",
+        nostr_template="""Platform Integrator API — plug-in layer for LNBits, marketplaces, agent frameworks.
+
+Before your handler runs:
+GET {hub}/api/v1/agents/{{kya_id}}/status → verified + trust_level
+
+Optional umb_live_ partner keys · developer webhooks · umbraxon SDK
+
+FAQ §I: {hub}/docs/FAQ-FOR-BOT-DEVELOPERS.md#i-platform-integrator-plug-in--third-party-systems
+{hub}/#platform""",
+    ),
+    PostTheme(
         "cert_verify",
         "Verifying a KYA certificate (for integrators)",
         """Integrators can fetch the current cert:
@@ -194,6 +234,32 @@ We're an ambassador agent ({kya_id}), not a human marketing team — ask technic
 ]
 
 
+def _pick_nostr_theme(settings: Settings) -> PostTheme:
+    """Rotate Nostr notes across NOSTR_THEME_IDS (includes platform_integrator)."""
+    pool = [t for t in THEMES if t.id in NOSTR_THEME_IDS]
+    if not pool:
+        return THEMES[0]
+    st = load_state()
+    last_id = st.get("last_nostr_theme_id")
+    offset = int(st.get("nostr_theme_offset") or 0)
+    utc = datetime.now(timezone.utc)
+    # Wednesday Nostr slot → platform integrator highlight
+    if utc.weekday() == 2:
+        platform = next((t for t in pool if t.id == "platform_integrator"), None)
+        if platform and platform.id != last_id:
+            put("last_nostr_theme_id", platform.id)
+            return platform
+    for attempt in range(len(pool)):
+        candidate = pool[(offset + attempt) % len(pool)]
+        if candidate.id != last_id:
+            put("last_nostr_theme_id", candidate.id)
+            put("nostr_theme_offset", (offset + attempt + 1) % len(pool))
+            return candidate
+    t = pool[offset % len(pool)]
+    put("last_nostr_theme_id", t.id)
+    return t
+
+
 def _pick_theme(settings: Settings) -> PostTheme:
     st = load_state()
     last_id = st.get("last_theme_id")
@@ -246,4 +312,30 @@ def build_daily_post(settings: Settings, *, audience: str = "m2m_developers") ->
             pass
     title = theme.title
     put("last_daily_post_theme", theme.id)
+    return title, body.strip(), theme.id
+
+
+def build_nostr_post(settings: Settings, *, audience: str = "m2m_developers") -> Tuple[str, str, str]:
+    """Returns (title, body, theme_id) for Nostr — shorter templates, dedicated rotation."""
+    theme = _pick_nostr_theme(settings)
+    kya_id = settings.kya_id or "UMBRA-XXXXXX"
+    raw_tpl = theme.nostr_template or theme.template
+    body = raw_tpl.format(
+        hub=settings.kya_hub_base_url.rstrip("/"),
+        kya_id=kya_id,
+        metrics_blurb=_metrics_blurb(settings),
+    )
+    if settings.llm_api_key:
+        docs = summarize_for_prompt(fetch_hub_api_docs(settings.kya_hub_base_url), max_chars=4000)
+        user = (
+            f"Audience: {audience}\nTheme: {theme.id}\nTitle: {theme.title}\n"
+            f"Brief: {theme.llm_brief}\n\nFacts to preserve:\n{body}\n\nAPI excerpt:\n{docs}\n\n"
+            "Write a Nostr note body only (no title). Max 280 words. Plain text, minimal markdown."
+        )
+        try:
+            body = _openai_chat(settings, user, system=system_prompt_for_posts(settings))
+        except Exception:
+            pass
+    title = theme.title
+    put("last_nostr_post_theme", theme.id)
     return title, body.strip(), theme.id

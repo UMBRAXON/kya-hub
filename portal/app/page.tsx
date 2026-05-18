@@ -3,6 +3,8 @@ import { Hero } from "@/components/hero";
 import { AboutSection } from "@/components/about-section";
 import { AgentsSection } from "@/components/agents-section";
 import { DocumentsSection } from "@/components/documents-section";
+import { PlatformSection } from "@/components/platform-section";
+import { PromoVideo } from "@/components/promo-video";
 import { Footer } from "@/components/footer";
 import { SetHtmlLang } from "@/components/set-html-lang";
 import {
@@ -13,16 +15,18 @@ import {
 } from "@/lib/hub-api";
 import { DOCUMENT_LINKS, type DocCard } from "@/lib/data";
 import { getServerDictionary } from "@/lib/locale-server";
+import { buildPageMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getServerDictionary();
-  return {
+  return buildPageMetadata({
     title: t.meta.title,
     description: t.meta.description,
-  };
+    path: "/",
+  });
 }
 
 export default async function Home() {
@@ -59,6 +63,8 @@ export default async function Home() {
       <Navbar locale={locale} nav={t.nav} />
       <main>
         <Hero t={t.hero} />
+        <PromoVideo t={t.promoVideo} />
+        <PlatformSection t={t.platform} />
         <AboutSection
           locale={locale}
           t={t.about}

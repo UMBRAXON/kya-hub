@@ -132,4 +132,31 @@ export async function fetchHubRelease(): Promise<{
   }
 }
 
+export interface IntegratorAgentStatus {
+  kya_id: string;
+  verified: boolean;
+  trust_level: string;
+  tier?: string;
+  agent_status?: string;
+  serial?: string;
+  reasons?: string[];
+}
+
+/** Plug-in gate — lightweight trust check (Platform API v1). */
+export async function fetchIntegratorAgentStatus(
+  kyaId: string
+): Promise<IntegratorAgentStatus | null> {
+  const url = `${HUB_BASE}/api/v1/agents/${encodeURIComponent(kyaId)}/status`;
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: "application/json", "User-Agent": "kya-portal/1.0" },
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as IntegratorAgentStatus;
+  } catch {
+    return null;
+  }
+}
+
 export { HUB_BASE };

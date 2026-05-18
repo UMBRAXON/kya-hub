@@ -3,6 +3,7 @@ import type { Dictionary } from "@/lib/i18n";
 
 export function Footer({ t }: { t: Dictionary["footer"] }) {
   const LINKS = [
+    { href: "#platform", label: t.platform },
     { href: "#about", label: t.about },
     { href: "#agents", label: t.agents },
     { href: "#docs", label: t.docs },

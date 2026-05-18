@@ -163,6 +163,46 @@ module.exports = {
             time: true,
         },
         {
+            // Developer webhook outbox — retry integrator HTTPS callbacks (every minute).
+            name: 'kya-dev-webhook-worker',
+            script: 'scripts/prod/developer-webhook-worker.sh',
+            cwd: '/root/kya-hub',
+            interpreter: 'bash',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '*/1 * * * *',
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-dev-webhook-worker-error.log',
+            out_file: '/root/.pm2/logs/kya-dev-webhook-worker-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // UMBRAXON-PR-AMBASSADOR — themed Nostr note (Mon/Wed/Fri 14:00 UTC).
+            name: 'kya-pr-nostr',
+            script: 'scripts/prod/pr-agent-nostr-post.sh',
+            cwd: '/root/kya-hub',
+            interpreter: 'bash',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '0 14 * * 1,3,5',
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-pr-nostr-error.log',
+            out_file: '/root/.pm2/logs/kya-pr-nostr-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
             // Strategic Sprint §30 Item 6 — Lightning inbound liquidity monitor.
             // PM2 cron: every 15 min. Uses Alby Hub HTTP API if unlock password
             // is dropped in /root/kya-hub/.secrets/alby-unlock.txt; else falls
@@ -259,6 +299,28 @@ module.exports = {
             },
             error_file: '/root/.pm2/logs/kya-dac8-export-error.log',
             out_file: '/root/.pm2/logs/kya-dac8-export-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // Operator daily digest — agents, registrations, integrator requests,
+            // heartbeats, reputation, rejected API → Telegram (07:00 UTC ≈ 09:00 CET).
+            name: 'kya-operator-daily-report',
+            script: 'scripts/prod/operator-daily-report.sh',
+            interpreter: 'bash',
+            cwd: '/root/kya-hub',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '0 7 * * *',
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+                DOTENV_CONFIG_QUIET: 'true',
+            },
+            error_file: '/root/.pm2/logs/kya-operator-daily-report-error.log',
+            out_file: '/root/.pm2/logs/kya-operator-daily-report-out.log',
             merge_logs: true,
             time: true,
         },

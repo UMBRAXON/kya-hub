@@ -87,6 +87,16 @@ const manufacturer = require('./lib/manufacturer');
 // with re-registration multiplier + pubkey deny-list cooldown).
 const regQuote = require('./lib/registration-quote');
 const sponsorInvite = require('./lib/sponsor-invite');
+const platformIntegrator = require('./lib/platform-integrator');
+const developerApiAuth = require('./lib/developer-api-auth');
+const developerApiKeys = require('./lib/developer-api-keys');
+const developerWebhookQueue = require('./lib/developer-webhook-queue');
+const integratorLsat = require('./lib/integrator-lsat');
+const integratorKeyRequests = require('./lib/integrator-key-requests');
+const integratorSandbox = require('./lib/platform-integrator-sandbox');
+const platformIntegratorRoutes = require('./lib/routes/platform-integrator-routes');
+const registrationIpCap = require('./lib/registration-ip-cap');
+const protocolEconomics = require('./lib/protocol-economics');
 // Strategic Sprint §31 C — PDF invoice generator.
 const invoicePdf = require('./lib/invoice-pdf');
 
@@ -872,12 +882,35 @@ const mfrAttestLimiter = rateLimit({
     skip: (req) => _adminBypass(req),
 });
 
+// Platform / plug-in read API (GET /api/v1/agents/*) — per-IP or per API key bucket
+const integratorReadLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: (req) => {
+        if (req.integrator && req.integrator.rate_limit_per_min) {
+            return req.integrator.rate_limit_per_min;
+        }
+        return parseInt(process.env.RATE_INTEGRATOR_READ_PER_MIN || '120', 10);
+    },
+    keyGenerator: (req) => {
+        if (req.integrator && req.integrator.id) return `devkey:${req.integrator.id}`;
+        return req.ip || 'unknown';
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        error: 'RATE_LIMITED',
+        message: 'Integrator read rate limit exceeded. Honor Retry-After or use a developer API key.',
+    },
+    skip: (req) => _adminBypass(req),
+});
+
 // Registrácia rate-limit referencií pre admin reset (Phase 2.2 testovacie pomôcky)
 const _rateLimiters = {
     global: globalLimiter,
     pay: payLimiter,
     v1_register: v1RegisterLimiter,
     mfr_attest: mfrAttestLimiter,
+    integrator_read: integratorReadLimiter,
 };
 
 // ----------------------------------------------------------------------------
@@ -931,6 +964,26 @@ app.post('/api/webhook/btcpay', express.raw({ type: 'application/json', limit: '
         if (payload.type === 'InvoiceSettled') {
             const metadata = payload.metadata || {};
             // ELITE public listing — heartbeat / reactivation (not registration)
+            if (metadata.integratorLsatAccessId) {
+                try {
+                    const settled = await integratorLsat.markPaid(
+                        pool,
+                        metadata.integratorLsatAccessId,
+                        payload.invoiceId
+                    );
+                    await markWebhookProcessed({
+                        source: 'btcpay',
+                        deliveryId,
+                        success: !!settled.ok,
+                        message: settled.already ? 'lsat_dup' : `lsat:${settled.access_id || 'fail'}`,
+                    });
+                } catch (e) {
+                    log.error({ err: e.message }, 'integrator LSAT BTCPay webhook FAIL');
+                    await markWebhookProcessed({ source: 'btcpay', deliveryId, success: false, message: e.message });
+                }
+                return res.status(200).send('OK');
+            }
+
             if (metadata.eliteListingPayment === 'heartbeat' || metadata.eliteListingPayment === 'reactivation') {
                 try {
                     const amt = parseInt(metadata.eliteListingExpectedSats || metadata.amount || 0, 10)
@@ -1452,6 +1505,11 @@ app.get('/api/protocol/manifest-schema', (req, res) => {
 app.get('/api/protocol/l402-delegation-profile', (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.json(delegationPass.l402DelegationProfileDoc());
+});
+
+app.get('/api/protocol/integrator-lsat-profile', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.json(integratorLsat.profileDoc());
 });
 
 app.post('/api/delegation-pass/verify', async (req, res) => {
@@ -2016,8 +2074,29 @@ async function handleRegisterInitiate(req, res) {
     }
 }
 
-app.post('/api/v1/register', v1RegisterLimiter, registerAdmissionGate, apiV1Register.normalizeMiddleware, handleRegisterInitiate);
-app.post('/api/register/initiate', payLimiter, registerAdmissionGate, handleRegisterInitiate);
+const registrationIpDailyCap = registrationIpCap.buildMiddleware({
+    poolGetter: () => pool,
+    adminBypass: (req) => {
+        const k = req.headers['x-admin-key'];
+        return !!(k && cfg.ADMIN_API_KEY && k === cfg.ADMIN_API_KEY);
+    },
+});
+
+app.post(
+    '/api/v1/register',
+    v1RegisterLimiter,
+    registrationIpDailyCap,
+    registerAdmissionGate,
+    apiV1Register.normalizeMiddleware,
+    handleRegisterInitiate,
+);
+app.post(
+    '/api/register/initiate',
+    payLimiter,
+    registrationIpDailyCap,
+    registerAdmissionGate,
+    handleRegisterInitiate,
+);
 
 app.get('/api/sponsor-invite/:invite_id', async (req, res) => {
     const inviteId = String(req.params.invite_id || '');
@@ -2157,10 +2236,47 @@ app.get('/api/cert/:kya_id/status', async (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
+// 10b–10c) Platform integrator routes (lib/routes/platform-integrator-routes.js)
+// ----------------------------------------------------------------------------
+platformIntegratorRoutes.register(app, {
+    pool,
+    cfg,
+    axios,
+    logger,
+    platformIntegrator,
+    integratorLsat,
+    integratorSandbox,
+    developerApiAuth,
+    integratorReadLimiter,
+});
+
+app.get('/api/protocol/economics', async (req, res) => {
+    try {
+        const doc = await protocolEconomics.buildEconomicsDoc(pool);
+        res.set('Cache-Control', 'public, max-age=600');
+        return res.json(doc);
+    } catch (err) {
+        logger.error({ err: err.message }, 'GET /api/protocol/economics FAIL');
+        return res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+// ----------------------------------------------------------------------------
 // 11.5) Agent reputation info (verejné — pre dashboardy aj samotného bota)
 // ----------------------------------------------------------------------------
 app.get('/api/agent/:kya_id/reputation', async (req, res) => {
     const kya_id = req.params.kya_id;
+    if (integratorSandbox.isSandboxKyaId(kya_id)) {
+        const out = integratorSandbox.agentBody(kya_id);
+        if (out.error) return res.status(out.status).json({ error: out.error });
+        return res.json({
+            kya_id,
+            agent_name: out.body.agent_name,
+            reputation: out.body.reputation,
+            liveness: out.body.liveness,
+            _sandbox: true,
+        });
+    }
     if (!/^UMBRA-[A-F0-9]{6}$/.test(kya_id)) {
         return res.status(400).json({ error: 'INVALID_KYA_ID' });
     }
@@ -2442,6 +2558,41 @@ async function findAgent(kya_id) {
     if (r.rowCount === 0) return { row: null, status: 404, error: 'AGENT_NOT_FOUND' };
     return { row: r.rows[0] };
 }
+
+app.post('/api/v1/integrator/key-request', phase2Limiter, async (req, res) => {
+    const v = integratorKeyRequests.validateSubmit(req.body || {});
+    if (!v.ok) return res.status(400).json({ error: v.error });
+    try {
+        const recent = await integratorKeyRequests.countRecentByIp(pool, req.ip);
+        if (recent >= integratorKeyRequests.MAX_PENDING_PER_IP_24H) {
+            return res.status(429).json({
+                error: 'RATE_LIMITED',
+                message: 'Max integrator key requests per IP per 24h exceeded',
+            });
+        }
+        const row = await integratorKeyRequests.submit(pool, {
+            ...v.data,
+            client_ip: req.ip,
+        });
+        notifications.notifyIntegratorKeyRequest({
+            request_id: row.id,
+            organization: v.data.organization,
+            contact_email: v.data.contact_email,
+            use_case: v.data.use_case,
+            website: v.data.website,
+            client_ip: req.ip,
+        }).catch(() => {});
+        return res.status(201).json({
+            ok: true,
+            request_id: row.id,
+            status: row.status,
+            message: 'Request received. Operator will review (Telegram alert) and contact you with your umb_live_… key.',
+        });
+    } catch (err) {
+        logger.error({ err: err.message }, 'integrator key-request FAIL');
+        return res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
 
 // ----------------------------------------------------------------------------
 // Sponsor invite — ELITE anchored agents invite others (PoW bypass only)
@@ -4595,6 +4746,131 @@ app.post('/api/admin/pricing', security.adminAuth, async (req, res) => {
 });
 
 // POST /api/admin/pricing/reload — force reload z DB (ak edit prebehol mimo API)
+// GET /api/admin/developer-keys — list integrator API keys (no secrets)
+app.get('/api/admin/developer-keys', security.adminAuth, async (req, res) => {
+    try {
+        const keys = await developerApiKeys.listKeys(pool);
+        res.json({ count: keys.length, keys });
+    } catch (e) {
+        logger.error({ err: e.message }, 'admin developer-keys list FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+// POST /api/admin/developer-keys — create umb_live_… key (shown once)
+app.post('/api/admin/developer-keys', security.adminAuth, async (req, res) => {
+    const body = req.body || {};
+    try {
+        const created = await developerApiKeys.createKey(pool, {
+            label: body.label,
+            owner_contact: body.owner_contact,
+            scopes: body.scopes,
+            tier: body.tier,
+            rate_limit_per_min: body.rate_limit_per_min,
+        });
+        logger.info({
+            id: created.id,
+            prefix: created.key_prefix,
+            tier: created.tier,
+            admin: req.headers['x-admin-user'] || 'admin',
+        }, 'developer API key created');
+        res.status(201).json(created);
+    } catch (e) {
+        logger.error({ err: e.message }, 'admin developer-keys create FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+// GET /api/admin/integrator-key-requests — pending partner key requests
+app.get('/api/admin/integrator-key-requests', security.adminAuth, async (req, res) => {
+    try {
+        const rows = await integratorKeyRequests.list(pool, {
+            status: (req.query.status || '').trim() || undefined,
+        });
+        res.json({ count: rows.length, requests: rows });
+    } catch (e) {
+        logger.error({ err: e.message }, 'admin integrator-key-requests list FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+app.post('/api/admin/integrator-key-requests/:id/approve', security.adminAuth, async (req, res) => {
+    const id = (req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'MISSING_ID' });
+    try {
+        const out = await integratorKeyRequests.approve(pool, id, {
+            tier: (req.body || {}).tier,
+            label: (req.body || {}).label,
+            admin_notes: (req.body || {}).admin_notes,
+            admin_user: req.headers['x-admin-user'] || 'admin',
+        });
+        if (out.error) return res.status(out.status).json({ error: out.error });
+        logger.info({ request_id: id, key_prefix: out.key_prefix }, 'integrator key request approved');
+        res.json(out);
+    } catch (e) {
+        logger.error({ err: e.message, id }, 'integrator-key-request approve FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+app.post('/api/admin/integrator-key-requests/:id/reject', security.adminAuth, async (req, res) => {
+    const id = (req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'MISSING_ID' });
+    try {
+        const out = await integratorKeyRequests.reject(pool, id, {
+            admin_notes: (req.body || {}).admin_notes,
+        });
+        if (out.error) return res.status(out.status).json({ error: out.error });
+        res.json(out);
+    } catch (e) {
+        logger.error({ err: e.message, id }, 'integrator-key-request reject FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+// POST /api/admin/developer-keys/:id/revoke
+app.post('/api/admin/developer-keys/:id/revoke', security.adminAuth, async (req, res) => {
+    const id = (req.params.id || '').trim();
+    if (!id) return res.status(400).json({ error: 'MISSING_ID' });
+    try {
+        const row = await developerApiKeys.revokeKey(pool, id);
+        if (!row) return res.status(404).json({ error: 'KEY_NOT_FOUND' });
+        logger.warn({ id, prefix: row.key_prefix }, 'developer API key revoked');
+        res.json({ ok: true, id: row.id, key_prefix: row.key_prefix, revoked_at: row.revoked_at });
+    } catch (e) {
+        logger.error({ err: e.message, id }, 'admin developer-keys revoke FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+// GET /api/admin/developer-webhooks/deliveries — outbox queue inspection
+app.get('/api/admin/developer-webhooks/deliveries', security.adminAuth, async (req, res) => {
+    try {
+        const rows = await developerWebhookQueue.listDeliveries(pool, {
+            status: req.query.status,
+            kya_id: req.query.kya_id,
+            limit: parseInt(req.query.limit || '50', 10),
+        });
+        const counts = await developerWebhookQueue.countByStatus(pool);
+        res.json({ counts, deliveries: rows });
+    } catch (e) {
+        logger.error({ err: e.message }, 'admin developer-webhooks deliveries FAIL');
+        res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+// POST /api/admin/developer-webhooks/process — run one worker batch (ops)
+app.post('/api/admin/developer-webhooks/process', security.adminAuth, async (req, res) => {
+    try {
+        const limit = parseInt(req.body?.limit || req.query?.limit || String(developerWebhookQueue.BATCH_SIZE), 10);
+        const out = await developerWebhookQueue.processPending(pool, { limit });
+        res.json({ ok: true, ...out });
+    } catch (e) {
+        logger.error({ err: e.message }, 'admin developer-webhooks process FAIL');
+        res.status(500).json({ error: 'WORKER_ERROR', message: e.message });
+    }
+});
+
 app.post('/api/admin/pricing/reload', security.adminAuth, async (req, res) => {
     try {
         const snap = await pricing.reload(pool);

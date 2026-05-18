@@ -2,12 +2,15 @@ export const en = {
   meta: {
     title: "UMBRAXON KYA Hub — Verified identity for autonomous systems",
     description:
-      "UMBRAXON KYA Hub — Lightning-native M2M agent registry, Ed25519 certificates, public discovery.",
+      "UMBRAXON KYA Hub — Lightning M2M agent registry plus Platform Integrator API for LNBits, marketplaces, and agent frameworks.",
   },
   nav: {
     about: "About",
     tiers: "Tiers",
     agents: "Agents",
+    video: "Intro",
+    integrators: "Quickstart",
+    platform: "Plug-in API",
     docs: "Docs",
     register: "Register agent",
     langEn: "English",
@@ -23,7 +26,41 @@ export const en = {
     bodyCode: "POST /api/v1/register",
     bodyTail: "for autonomous bots.",
     ctaIntegrate: "Start integrating",
+    ctaPlatform: "Build a plug-in",
     ctaAgents: "Browse agents",
+  },
+  promoVideo: {
+    eyebrow: "75-second intro",
+    title: "Why autonomous agents need verified identity",
+    subtitle:
+      "One HTTP check before you allow payment or action. Low risk: hub snapshot. High risk: verify the certificate signature.",
+    iframeTitle: "UMBRAXON KYA Hub — Know Your Agent intro",
+    watchOnYoutube: "Watch on YouTube",
+  },
+  platform: {
+    badge: "New · Platform Integrator API",
+    title: "Verify KYA agents inside your product",
+    body:
+      "Gate LNBits, a marketplace, or your orchestrator without running a hub. Agents use Ed25519; your product only calls the public read API.",
+    bullets: [
+      "GET /api/v1/agents/{kya_id}/status — fast snapshot (~60s cache)",
+      "?include=cert_proof — cryptographic proof for larger actions",
+      "umb_live_… keys are platform billing/rate limits, not agent identity",
+      "Webhooks + Python SDK · agent registration stays Ed25519 + Lightning",
+    ],
+    codeLabel: "Plug-in gate (example)",
+    codeSample: `GET /api/v1/agents/UMBRA-000467/status
+→ { "verified": true, "trust_level": "TRUSTED" }
+
+# higher-value actions:
+GET .../status?include=cert_proof
+
+Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
+    codeFoot: "Guide: docs/INTEGRATOR-TRUST-GATE.md · FAQ §I · plugin-gate-strict.js",
+    ctaPrimary: "Platform integrator docs",
+    ctaSecondary: "OpenAPI",
+    primaryHref: "/integrators",
+    secondaryHref: "/openapi/openapi.yaml",
   },
   about: {
     title: "About UMBRAXON KYA Hub",
@@ -33,9 +70,9 @@ export const en = {
       "is a Lightning-paid, Ed25519-anchored identity and reputation registry for autonomous software agents. An agent proves it exists, pays a small fee, signs a manifest with its own key, and receives a certificate others can verify offline. Subsequent actions are authenticated with cryptographic non-repudiation — built for bots and integrators, not human web forms.",
     pillars: [
       {
-        title: "Ed25519 identity",
+        title: "Ed25519 identity (agent)",
         description:
-          "Agents prove control with their own keypair. Privileged actions use detached signatures over canonical payloads — not bearer tokens, API keys, or sessions.",
+          "Bots sign privileged actions with their own key. Platform umb_live_ keys are read-API rate limits only — they do not replace agent identity.",
       },
       {
         title: "Lightning registration",
@@ -149,7 +186,9 @@ export const en = {
       "Opt into the public discovery feed by capability and tier.",
     ],
     integrateFoot:
-      "Integrations v1 adds discovery (/api/discovery/v1/agents.json), L402-aligned delegation passes, manifest payment hints, and developer webhooks. Start with",
+      "Integrations v1 adds discovery, L402 delegation passes, and developer webhooks. **Platform Integrator API** (plug-in layer) adds GET /api/v1/agents/{id} for third-party products — see",
+    platformLink: "Plug-in API",
+    platformHref: "#platform",
     readme: "README_API.md",
     or: "or",
     agentsMd: "AGENTS.md",
@@ -173,6 +212,11 @@ export const en = {
     subtitle: "Everything you need to register and integrate an autonomous agent.",
     read: "Read",
     items: [
+      {
+        title: "Platform Integrator API (plug-ins)",
+        description:
+          "Status gate, cert_proof, webhooks, umbraxon-py. umb_live_ = platform rate limits, not bot identity. FAQ §I.",
+      },
       {
         title: "README_API.md — M2M Register",
         description:
@@ -207,6 +251,7 @@ export const en = {
     about: "About",
     agents: "Agents",
     docs: "Docs",
+    platform: "Plug-in API",
     readme: "README_API",
     health: "Health API",
     copyright: "Umbraxon KYA Hub. Non-custodial agent registry.",
