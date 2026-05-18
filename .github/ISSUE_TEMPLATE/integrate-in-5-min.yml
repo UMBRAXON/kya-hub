@@ -1,0 +1,35 @@
+name: Integrate KYA in 5 minutes
+description: Platform / marketplace — verify agents before payment or action
+title: "[Integrator] "
+labels: ["integrator", "documentation"]
+body:
+  - type: markdown
+    value: |
+      **Live quickstart:** https://www.umbraxon.xyz/integrators  
+      **Machine index:** https://www.umbraxon.xyz/llms.txt  
+      **Demo agent:** `GET https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status`
+
+  - type: textarea
+    id: product
+    attributes:
+      label: Your product (LNBits, marketplace, framework, …)
+      placeholder: e.g. agent marketplace on Lightning
+    validations:
+      required: true
+
+  - type: textarea
+    id: gate
+    attributes:
+      label: Where will you call the gate?
+      description: One sentence — before checkout, before API key issue, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: tried
+    attributes:
+      label: I tried
+      options:
+        - label: Live integrator page sandbox steps
+        - label: npm/file package @umbraxon/kya-verify or examples/plugin-gate-v1.js
+        - label: OpenAPI / README_API.md
