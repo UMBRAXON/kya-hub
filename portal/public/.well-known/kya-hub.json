@@ -1,0 +1,26 @@
+{
+  "name": "UMBRAXON KYA Hub",
+  "description": "Know Your Agent — Lightning-paid Ed25519 identity and reputation for autonomous software agents. Non-custodial. Public verify API for platforms.",
+  "version": "1.1.0",
+  "homepage": "https://www.umbraxon.xyz",
+  "documentation": {
+    "agents": "https://www.umbraxon.xyz/AGENTS.md",
+    "integrators": "https://www.umbraxon.xyz/integrators",
+    "openapi": "https://www.umbraxon.xyz/openapi/openapi.yaml",
+    "llms_txt": "https://www.umbraxon.xyz/llms.txt",
+    "faq_bots": "https://www.umbraxon.xyz/docs/FAQ-FOR-BOT-DEVELOPERS.md"
+  },
+  "api": {
+    "base_url": "https://www.umbraxon.xyz",
+    "health": "/api/health",
+    "agent_status": "/api/v1/agents/{kya_id}/status",
+    "register": "/api/v1/register",
+    "integrator_sandbox": "/api/protocol/integrator-sandbox"
+  },
+  "demo": {
+    "verified_agent_id": "UMBRA-000467",
+    "status_url": "https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status"
+  },
+  "repository": "https://github.com/UMBRAXON/kya-hub",
+  "license": "ISC"
+}

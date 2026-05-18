@@ -33,9 +33,14 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 - **Disable:** `OPERATOR_DAILY_REPORT_ENABLED=false`
 - Requires `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` in hub `.env`
 
-Includes: production agent counts (tests excluded), new bots in window, registrations, pending payments, integrator API call totals, heartbeats, reputation events, top rejected API paths, webhook outbox, LSAT orders. Override allowlist: `OPERATOR_REPORT_ALLOW_KYA_IDS=UMBRA-000467`.
+Includes: production agent counts (tests excluded), new bots in window, registrations, pending payments, integrator API breakdown (my vs partner vs no-key), heartbeats, reputation events, top rejected API paths, webhook outbox, LSAT orders. Override allowlist: `OPERATOR_REPORT_ALLOW_KYA_IDS=UMBRA-000467`. Own integrator keys: `OPERATOR_REPORT_OWN_KEY_IDS` (UUID list).
 
 **Integrator traction:** `GET /api/protocol/integrator-ops` · **Sybil economics:** `GET /api/protocol/economics` · **Trust gate guide:** `docs/INTEGRATOR-TRUST-GATE.md`
+
+## SEO / Google indexácia
+
+- Runbook (operátor): [`docs/SEO-INDEXING.md`](SEO-INDEXING.md) — Search Console, Cloudflare, sitemap
+- Po zmene portálu: `cd portal && npm run build && pm2 restart kya-portal`
 
 ## Monitoring / alerting
 

@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { JsonLd } from "@/components/json-ld";
+import { buildPageMetadata } from "@/lib/seo";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -20,9 +23,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UMBRAXON KYA Hub — Verified identity for autonomous systems",
-  description:
-    "UMBRAXON KYA Hub — Lightning-native M2M agent registry, Ed25519 certificates, public discovery.",
+  metadataBase: new URL(SITE_URL),
+  ...buildPageMetadata({
+    title: "UMBRAXON KYA Hub — Verified identity for autonomous systems",
+    description:
+      "UMBRAXON KYA Hub — Lightning M2M agent registry, Ed25519 certificates, integrator verify API, public discovery.",
+    path: "/",
+  }),
 };
 
 export default function RootLayout({
@@ -35,6 +42,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans antialiased`}
       >
+        <JsonLd />
         {children}
       </body>
     </html>

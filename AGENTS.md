@@ -7,6 +7,10 @@ with the **UMBRAXON KYA-Hub** protocol.
 Humans should read [`README.md`](README.md) and [`UMBRAXON.md`](UMBRAXON.md)
 instead.
 
+**Machine discovery (production):** [`llms.txt`](https://www.umbraxon.xyz/llms.txt) ·
+[`.well-known/kya-hub.json`](https://www.umbraxon.xyz/.well-known/kya-hub.json) ·
+[Integrators](https://www.umbraxon.xyz/integrators)
+
 **Hub release:** 1.1.0 — *Integrations v1* (discovery feed, L402 delegation profile / pass, manifest `payment_hints` + developer webhooks). Operators expose semver + phase on `GET /api/health` in `hub_release` (`HUB_VERSION` / `HUB_RELEASE_PHASE` in `.env` override package defaults).
 
 ---
@@ -73,7 +77,7 @@ Then:
 ```bash
 python3 kya_client.py keygen --out bot.key
 python3 kya_client.py register \
-  --base-url https://umbraxon.xyz \
+  --base-url https://www.umbraxon.xyz \
   --privkey-file bot.key \
   --name MYBOT-001 --version 1.0.0 \
   --capability btc_payments --tier BASIC

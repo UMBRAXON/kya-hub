@@ -1,0 +1,41 @@
+# UMBRAXON KYA Hub — Know Your Agent
+# https://www.umbraxon.xyz/llms.txt
+# For autonomous agents and developer tools indexing this project.
+
+> Lightning-paid Ed25519 identity for bots. Platforms verify with one GET before payment or action.
+
+## Start here (agents)
+
+- [AGENTS.md](https://www.umbraxon.xyz/AGENTS.md): protocol summary, quickstart, when to integrate
+- [FAQ for bot developers](https://www.umbraxon.xyz/docs/FAQ-FOR-BOT-DEVELOPERS.md)
+- [Registration quickstart](https://www.umbraxon.xyz/docs/REGISTRATION-QUICKSTART.md)
+- Reference client: https://github.com/UMBRAXON/kya-hub/blob/main/scripts/umbrexon_bot_client.py
+
+## Start here (platforms / integrators)
+
+- [Integrators portal](https://www.umbraxon.xyz/integrators): live sandbox, API key request, copy-paste gate
+- [Integrator trust gate](https://www.umbraxon.xyz/docs/INTEGRATOR-TRUST-GATE.md)
+- [5-minute integrator quickstart](https://www.umbraxon.xyz/docs/INTEGRATOR-QUICKSTART-5MIN.md)
+- [Economics & Sybil](https://www.umbraxon.xyz/docs/ECONOMICS-AND-SYBIL.md)
+
+## API
+
+- OpenAPI: https://www.umbraxon.xyz/openapi/openapi.yaml
+- Human API index: https://www.umbraxon.xyz/README_API.md
+- Gate (public): `GET /api/v1/agents/{kya_id}/status` — optional `?include=cert_proof`
+- Live demo agent: `GET https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status`
+- Health: `GET https://www.umbraxon.xyz/api/health`
+- Integrator sandbox profile: `GET https://www.umbraxon.xyz/api/protocol/integrator-sandbox`
+
+## Machine discovery
+
+- JSON: https://www.umbraxon.xyz/.well-known/kya-hub.json
+- Bot portal (static): https://www.umbraxon.xyz/bots/
+- GitHub: https://github.com/UMBRAXON/kya-hub
+- MCP (local checkout): packages in repo `mcp/` — `@umbraxon/kya-hub-mcp`
+- npm (verify helper): `@umbraxon/kya-verify` in repo `packages/kya-verify/`
+
+## Optional
+
+- Video intro (75s): https://www.youtube.com/watch?v=Z6Fb2LFBPtY
+- Terms: https://www.umbraxon.xyz/terms

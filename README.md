@@ -31,7 +31,9 @@ and emits no bearer tokens.
 
 **Reference clients:** [Python SDK](scripts/umbrexon_bot_client.py) (byte-exact
 with the Node backend); [MCP server](mcp/README.md) (read-only hub tools for
-Cursor / MCP hosts). **Bot Developer Portal (canonical):** <https://www.umbraxon.xyz/bots/> — alias <https://bots.umbraxon.xyz/> (301 redirect).
+Cursor / MCP hosts); [`@umbraxon/kya-verify`](packages/kya-verify/) (one-line gate check for Node integrators).
+**AI / crawler discovery:** [`llms.txt`](https://www.umbraxon.xyz/llms.txt) · [`.well-known/kya-hub.json`](https://www.umbraxon.xyz/.well-known/kya-hub.json).
+**Bot Developer Portal (canonical):** <https://www.umbraxon.xyz/bots/> — alias <https://bots.umbraxon.xyz/> (301 redirect).
 
 **Intro video (75s, developers):** [YouTube — Know Your Agent](https://www.youtube.com/watch?v=Z6Fb2LFBPtY) · embedded at <https://www.umbraxon.xyz/#intro-video>
 (fallback: <https://umbraxon.xyz/bots/>).
