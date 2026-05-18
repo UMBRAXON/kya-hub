@@ -12,35 +12,59 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     permissions:
+      id-token: write
       contents: read
     steps:
       - uses: actions/checkout@v4
-
-      - name: Require NPM_TOKEN secret
-        run: |
-          if [ -z "${NODE_AUTH_TOKEN}" ]; then
-            echo "::error::Missing repository secret NPM_TOKEN."
-            echo "Add: github.com/UMBRAXON/kya-hub/settings/secrets/actions → New repository secret → Name NPM_TOKEN"
-            exit 1
-          fi
 
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
-          always-auth: true
 
-      - name: npm whoami (verify token)
+      # Preferred: npm Trusted Publisher (no NPM_TOKEN). Configure once on npmjs.com:
+      # Organization umbraxon_kya → Trusted publishing → GitHub Actions
+      # Repository UMBRAXON/kya-hub, workflow publish-kya-verify-npm.yml, env (empty)
+      - name: Publish via OIDC (trusted publisher)
+        id: oidc_publish
+        working-directory: packages/kya-verify
+        continue-on-error: true
+        run: npm publish --provenance --access public
+
+      - name: Publish via NPM_TOKEN (fallback)
+        id: npm_token_publish
+        if: steps.oidc_publish.outcome == 'failure'
+        working-directory: packages/kya-verify
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          set -euo pipefail
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::OIDC publish failed and NPM_TOKEN secret is missing."
+            echo "Fix A: npm Trusted Publisher for UMBRAXON/kya-hub (see docs/PUBLISH-NPM.md)"
+            echo "Fix B: Settings → Secrets → NPM_TOKEN (Classic Automation token, no spaces)"
+            exit 1
+          fi
+          # Trim accidental newline/space from copy-paste
+          TOKEN="$(printf '%s' "$NODE_AUTH_TOKEN" | tr -d '\n\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          export NODE_AUTH_TOKEN="$TOKEN"
+          npm config set //registry.npmjs.org/:_authToken "$TOKEN"
+          echo "npm registry check (curl)…"
+          CODE="$(curl -fsS -o /tmp/whoami.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://registry.npmjs.org/-/whoami || true)"
+          echo "whoami HTTP ${CODE}"
+          cat /tmp/whoami.json 2>/dev/null || true
+          if [ "$CODE" != "200" ]; then
+            echo "::error::NPM_TOKEN rejected by registry (HTTP ${CODE}). Use npm Classic → Automation token."
+            exit 1
+          fi
           npm whoami
-          npm config get registry
+          npm publish --access public
 
-      - name: Dry-run pack contents
-        working-directory: packages/kya-verify
-        run: npm publish --dry-run --access public
-
-      - name: Publish @umbraxon_kya/kya-verify
-        working-directory: packages/kya-verify
-        run: npm publish --access public
+      - name: Fail if both methods failed
+        if: always() && steps.oidc_publish.outcome == 'failure' && (steps.npm_token_publish.outcome == 'failure' || steps.npm_token_publish.outcome == 'skipped')
+        run: |
+          echo "::error::Publish failed (OIDC + NPM_TOKEN). See docs/PUBLISH-NPM.md"
+          exit 1
