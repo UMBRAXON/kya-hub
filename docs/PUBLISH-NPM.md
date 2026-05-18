@@ -1,32 +1,41 @@
 # Publish `@umbraxon_kya/kya-verify` to npm
 
-## A) Trusted Publisher (recommended — no `NPM_TOKEN`)
+npm už **nemá Classic tokeny** (od 11/2025). Používaj **Granular access token** alebo **Trusted Publishing**.
 
-1. https://www.npmjs.com → prihlás sa → organizácia **umbraxon_kya**
-2. **Access** → **Trusted publishing** (alebo package → Publishing)
-3. **Add trusted publisher** → **GitHub Actions**
+## A) Trusted Publisher (najlepšie — bez tokenu v GitHube)
+
+1. https://www.npmjs.com → org **umbraxon_kya**
+2. **Access** → **Trusted publishing** → **GitHub Actions**
    - Repository: `UMBRAXON/kya-hub`
    - Workflow: `publish-kya-verify-npm.yml`
-   - Environment: *(prázdne)*
-4. GitHub → **Actions** → **Publish @umbraxon_kya/kya-verify to npm** → Run → `publish`
+3. Actions → **Publish @umbraxon_kya/kya-verify to npm** → `publish`
 
-## B) Fallback: `NPM_TOKEN` secret
+## B) Granular access token (tvoj screenshot)
 
-Secret musí byť v **tom istom** repozitári ako workflow: `UMBRAXON/kya-hub`.
+Pri vytváraní tokenu:
 
-1. npm → **Access Tokens** → **Classic Token** → type **Automation**
-2. GitHub → `kya-hub` → **Settings → Secrets → Actions** → `NPM_TOKEN`
-3. Pri vkladaní **bez medzier a bez Enter na konci**
+| Pole | Hodnota |
+|------|---------|
+| Token name | `github-actions-publish` |
+| Bypass 2FA | **áno** (pre CI / server publish) |
+| Packages | **Read and write** → All packages |
+| Organization | **umbraxon_kya** (presný názov — scope `@umbraxon_kya`) |
 
-Granular token často zlyhá na `npm whoami` v CI — používaj Classic Automation.
+Po **Generate token** skopíruj **celý** reťazec (dlhý, začína `npm_`).
 
-## C) Publish zo servera (núdzovo)
+### Server (možnosť C)
 
 ```bash
-echo 'npm_xxxx' > /root/kya-hub/.secrets/npm-publish-token.txt
+echo -n 'CELY_TOKEN_Z_NPM' > /root/kya-hub/.secrets/npm-publish-token.txt
 chmod 600 /root/kya-hub/.secrets/npm-publish-token.txt
 /root/kya-hub/scripts/publish-kya-verify-local.sh
 ```
+
+`echo -n` = bez Enter na konci. **Nepridávaj** druhé `npm_`.
+
+### GitHub secret
+
+Settings → Secrets → `NPM_TOKEN` = ten istý celý token.
 
 ## Overenie
 

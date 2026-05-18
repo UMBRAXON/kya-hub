@@ -43,7 +43,7 @@ jobs:
           if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
             echo "::error::OIDC publish failed and NPM_TOKEN secret is missing."
             echo "Fix A: npm Trusted Publisher for UMBRAXON/kya-hub (see docs/PUBLISH-NPM.md)"
-            echo "Fix B: Settings → Secrets → NPM_TOKEN (Classic Automation token, no spaces)"
+            echo "Fix B: Settings → Secrets → NPM_TOKEN (granular token, Read+write, org umbraxon_kya)"
             exit 1
           fi
           # Trim accidental newline/space from copy-paste
@@ -57,7 +57,7 @@ jobs:
           echo "whoami HTTP ${CODE}"
           cat /tmp/whoami.json 2>/dev/null || true
           if [ "$CODE" != "200" ]; then
-            echo "::error::NPM_TOKEN rejected by registry (HTTP ${CODE}). Use npm Classic → Automation token."
+            echo "::error::NPM_TOKEN rejected (HTTP ${CODE}). New granular token: Read+write, org umbraxon_kya, Bypass 2FA."
             exit 1
           fi
           npm whoami
