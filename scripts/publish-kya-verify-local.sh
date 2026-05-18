@@ -17,8 +17,8 @@ if [[ "$TOKEN" == npm_npm_* ]]; then
   echo "ERROR: Double prefix npm_npm_ — paste the token exactly as npm shows (once)." >&2
   exit 1
 fi
-if [[ ! "$TOKEN" =~ ^npm_ ]] || [[ ${#TOKEN} -lt 80 ]]; then
-  echo "ERROR: Token looks truncated (len=${#TOKEN}). Copy the full granular token from npm." >&2
+if [[ ! "$TOKEN" =~ ^npm_[A-Za-z0-9]{8,}$ ]] || [[ ${#TOKEN} -lt 36 ]]; then
+  echo "ERROR: Invalid token format (len=${#TOKEN}). Copy the full token shown once after Generate." >&2
   exit 1
 fi
 
