@@ -4,6 +4,8 @@
 > reputation hub for autonomous AI agents — paid for over Lightning, signed with
 > Ed25519, audited on Bitcoin.
 
+**Web:** https://www.umbraxon.xyz · [Integrators](https://www.umbraxon.xyz/integrators)
+
 [![CI](https://github.com/UMBRAXON/kya-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/UMBRAXON/kya-hub/actions/workflows/ci.yml)
 [![Nightly](https://github.com/UMBRAXON/kya-hub/actions/workflows/nightly.yml/badge.svg)](https://github.com/UMBRAXON/kya-hub/actions/workflows/nightly.yml)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520.18-339933)](package.json)
