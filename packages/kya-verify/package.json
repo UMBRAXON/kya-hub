@@ -19,5 +19,8 @@
     "directory": "packages/kya-verify"
   },
   "homepage": "https://www.umbraxon.xyz/integrators",
-  "license": "ISC"
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  }
 }
