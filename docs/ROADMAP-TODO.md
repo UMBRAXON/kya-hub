@@ -23,11 +23,11 @@ Legenda: **Ty** = človek / biznis · **Kód** = môžem v repozitári / serveri
 
 | # | Úloha | Kto | Poznámka |
 |---|--------|-----|----------|
-| P1.1 | Sanitizovať **500 na verejných API** (žiadne `e.message`) | Kód | audit `SECURITY-AUDIT-2026-05-12.md` PR-1 |
+| P1.1 | Sanitizovať **500 na verejných API** (žiadne `e.message`) | Kód | `lib/http-public-error.js` + vybrané routy |
 | P1.2 | **Branch protection** na `main` (smoke required, žiadny bypass) | Ty | GitHub Settings |
 | P1.3 | Zavrieť **Dependabot moderate** | Kód/Ty | `npm audit` + PR |
 | P1.4 | Zjednotiť **brand** (`umbraxon` vs `umbraxon_kya`) | Spolu | npm org, copy, doména |
-| P1.5 | **Uptime / status** stránka pre integrátorov | Kód | health + public-metrics, optional status subdomain |
+| P1.5 | **Uptime / status** stránka pre integrátorov | Kód | `/status` na portáli |
 | P1.6 | Monolit: ďalšie routy do `lib/routes/*` | Kód | postupne, nie big-bang |
 | P1.7 | **Runbook SLA** (čo ak hub 4h down) | Kód | `docs/OPS-SLA-DRAFT.md` |
 | P1.8 | Externý **nezávislý audit** alebo bug bounty | Ty | keď prvý partner |
@@ -41,7 +41,7 @@ Legenda: **Ty** = človek / biznis · **Kód** = môžem v repozitári / serveri
 | P2.1 | **10+ platených agentov** mimo testov | Čas | organické + 1 sponsor invite kampaň |
 | P2.2 | **1 integrátor** s verejnou referenciou | Ty | LNBits / marketplace / framework |
 | P2.3 | **PyPI** `umbraxon` (Trusted Publisher) | Ty | Actions workflow hotový |
-| P2.4 | **Self-host Docker** „hub-lite“ | Kód | zníži vendor-lock obavy |
+| P2.4 | **Self-host Docker** „hub-lite“ | Kód | `docker-compose.hub-lite.yml` + `docs/HUB-LITE-DOCKER.md` |
 | P2.5 | **Federácia / 2. hub** ADR | Kód | dokument, nie implementácia hneď |
 | P2.6 | HSM / offline ROOT | Kód | investor ask |
 | P2.7 | Právnik: GDPR + CRL + purge | Ty | 1 konzultácia |
@@ -81,7 +81,11 @@ Legenda: **Ty** = človek / biznis · **Kód** = môžem v repozitári / serveri
 | WHAT-WE-ARE-NOT.md | hotové |
 | ON-CHAIN-STATUS.md | hotové |
 | GET /api/protocol/public-metrics | hotové |
-| P1.1 500 sanitization | TODO |
+| P1.1 500 sanitization | čiastočne hotové |
+| P1.5 /status page | hotové |
+| P2.4 hub-lite Docker | hotové |
+| KYA vs API key doc | hotové |
+| Verify badge on /integrators | hotové |
 | Ostatné | backlog |
 
 Posledná aktualizácia: 2026-05-18

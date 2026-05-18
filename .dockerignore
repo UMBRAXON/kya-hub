@@ -1,0 +1,10 @@
+node_modules
+portal/node_modules
+portal/.next
+.git
+logs
+tmp
+.secrets
+*.log
+.env
+.env.*

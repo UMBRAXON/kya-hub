@@ -31,6 +31,37 @@ export default function IntegratorsPage() {
           <code className="text-foreground">{HUB_BASE}</code>
         </p>
         <IntegratorQuickstart hubBase={HUB_BASE} />
+
+        <section className="mt-10 rounded-lg border border-border bg-muted/20 p-5">
+          <h2 className="mb-2 text-lg font-semibold">Verify badge (embed)</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Show KYA status on your site. Replace <code>UMBRA-000467</code> with the agent you gate.
+          </p>
+          <div className="mb-4 flex flex-wrap items-center gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`${HUB_BASE}/api/embed/badge/UMBRA-000467`}
+              alt="KYA verified badge"
+              height={20}
+            />
+            <a
+              className="text-sm text-primary underline"
+              href={`${HUB_BASE}/api/v1/agents/UMBRA-000467/status`}
+            >
+              Live status JSON
+            </a>
+          </div>
+          <pre className="overflow-x-auto rounded border border-border bg-background/50 p-3 font-mono text-xs">
+{`<!-- Markdown -->
+![KYA verified](${HUB_BASE}/api/embed/badge/UMBRA-000467)
+
+<!-- HTML -->
+<a href="${HUB_BASE}/api/v1/agents/UMBRA-000467/status">
+  <img src="${HUB_BASE}/api/embed/badge/UMBRA-000467" alt="KYA verified" height="20" />
+</a>`}
+          </pre>
+        </section>
+
         <pre className="mt-10 overflow-x-auto rounded-lg border border-border bg-muted/30 p-4 font-mono text-xs text-foreground">
 {`npm install @umbraxon_kya/kya-verify
 
@@ -57,6 +88,14 @@ const { verified } = await verifyAgentStatus('${HUB_BASE}', 'UMBRA-000467');`}
           {" · "}
           <a className="text-primary underline" href="/AGENTS.md">
             AGENTS.md
+          </a>
+          {" · "}
+          <a className="text-primary underline" href="/status">
+            Status
+          </a>
+          {" · "}
+          <a className="text-primary underline" href="/docs/KYA-VS-API-KEY.md">
+            KYA vs API key
           </a>
         </p>
       </main>

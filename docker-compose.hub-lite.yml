@@ -1,0 +1,40 @@
+# UMBRAXON KYA Hub — minimal self-host stack (dev / pilot integrators)
+# Usage:
+#   cp .env.example .env.hub-lite
+#   # set DATABASE_URL, ADMIN_KEY, BTCPAY_* or ALBY_NWC_URI
+#   docker compose -f docker-compose.hub-lite.yml up -d --build
+#   docker compose -f docker-compose.hub-lite.yml exec hub node migrations/run.js
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kyahub
+      POSTGRES_PASSWORD: kyahub_local_dev
+      POSTGRES_DB: kyahub
+    volumes:
+      - kyahub_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kyahub -d kyahub"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  hub:
+    build:
+      context: .
+      dockerfile: Dockerfile.hub-lite
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.hub-lite
+    environment:
+      DATABASE_URL: postgres://kyahub:kyahub_local_dev@db:5432/kyahub
+      NODE_ENV: production
+      PORT: "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  kyahub_pg:

@@ -98,6 +98,7 @@ const platformIntegratorRoutes = require('./lib/routes/platform-integrator-route
 const registrationIpCap = require('./lib/registration-ip-cap');
 const protocolEconomics = require('./lib/protocol-economics');
 const protocolPublicMetrics = require('./lib/protocol-public-metrics');
+const httpPublicError = require('./lib/http-public-error');
 // Strategic Sprint §31 C — PDF invoice generator.
 const invoicePdf = require('./lib/invoice-pdf');
 
@@ -2064,14 +2065,10 @@ async function handleRegisterInitiate(req, res) {
             source: invoiceFailSource,
             registration_id: registrationId,
         }, 'invoice create FAIL');
-        const body = {
+        return res.status(502).json({
             error: 'INVOICE_FAILED',
             message: 'Nepodarilo sa vytvoriť faktúru, skús to o chvíľu znova.',
-        };
-        if (invoiceFailSource) body.source = invoiceFailSource;
-        if (httpStatus != null) body.upstream_http_status = httpStatus;
-        if (errCode) body.upstream_error_code = errCode;
-        return res.status(502).json(body);
+        });
     }
 }
 
@@ -3036,7 +3033,7 @@ app.post('/api/agent/:kya_id/delegation-pass', phase2Limiter, async (req, res) =
         });
     } catch (e) {
         logger.error({ err: e.message, kya_id }, 'delegation-pass issue FAIL');
-        return res.status(500).json({ error: e.code || 'INTERNAL' });
+        return httpPublicError.send500(res, httpPublicError.clientErrorCode(e));
     }
     res.json({
         delegation_pass: pass,
@@ -6178,7 +6175,7 @@ app.post('/api/manufacturer/attestation', mfrAttestLimiter, async (req, res) => 
                        : (r.error === 'ATTESTATION_METADATA_TOO_LARGE'
                           || r.error === 'MANIFEST_METADATA_TOO_LARGE') ? 413
                        : 400;
-            return res.status(code).json(r);
+            return res.status(code).json(httpPublicError.sanitizeLibError(r));
         }
         logger.info({
             manufacturer_id: r.manufacturer_id,
