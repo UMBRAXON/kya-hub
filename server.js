@@ -97,6 +97,7 @@ const integratorSandbox = require('./lib/platform-integrator-sandbox');
 const platformIntegratorRoutes = require('./lib/routes/platform-integrator-routes');
 const registrationIpCap = require('./lib/registration-ip-cap');
 const protocolEconomics = require('./lib/protocol-economics');
+const protocolPublicMetrics = require('./lib/protocol-public-metrics');
 // Strategic Sprint §31 C — PDF invoice generator.
 const invoicePdf = require('./lib/invoice-pdf');
 
@@ -2257,6 +2258,20 @@ app.get('/api/protocol/economics', async (req, res) => {
         return res.json(doc);
     } catch (err) {
         logger.error({ err: err.message }, 'GET /api/protocol/economics FAIL');
+        return res.status(500).json({ error: 'DB_ERROR' });
+    }
+});
+
+app.get('/api/protocol/public-metrics', async (req, res) => {
+    try {
+        const doc = await protocolPublicMetrics.buildPublicMetrics(pool, {
+            hubVersion: HUB_RELEASE_VERSION,
+            hubPhase: HUB_RELEASE_PHASE,
+        });
+        res.set('Cache-Control', 'public, max-age=300');
+        return res.json(doc);
+    } catch (err) {
+        logger.error({ err: err.message }, 'GET /api/protocol/public-metrics FAIL');
         return res.status(500).json({ error: 'DB_ERROR' });
     }
 });

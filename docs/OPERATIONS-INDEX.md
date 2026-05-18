@@ -35,7 +35,7 @@ Single-page navigation for production ops. Start here, then jump into the deeper
 
 Includes: production agent counts (tests excluded), new bots in window, registrations, pending payments, integrator API breakdown (my vs partner vs no-key), heartbeats, reputation events, top rejected API paths, webhook outbox, LSAT orders. Override allowlist: `OPERATOR_REPORT_ALLOW_KYA_IDS=UMBRA-000467`. Own integrator keys: `OPERATOR_REPORT_OWN_KEY_IDS` (UUID list).
 
-**Integrator traction:** `GET /api/protocol/integrator-ops` · **Sybil economics:** `GET /api/protocol/economics` · **Trust gate guide:** `docs/INTEGRATOR-TRUST-GATE.md`
+**Integrator traction:** `GET /api/protocol/integrator-ops` · **Public metrics (investor):** `GET /api/protocol/public-metrics` · **Sybil economics:** `GET /api/protocol/economics` · **Roadmap TODO:** `docs/ROADMAP-TODO.md` · **Trust gate guide:** `docs/INTEGRATOR-TRUST-GATE.md`
 
 ## SEO / Google indexácia
 
