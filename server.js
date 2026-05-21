@@ -95,6 +95,10 @@ const integratorLsat = require('./lib/integrator-lsat');
 const integratorKeyRequests = require('./lib/integrator-key-requests');
 const integratorSandbox = require('./lib/platform-integrator-sandbox');
 const platformIntegratorRoutes = require('./lib/routes/platform-integrator-routes');
+const protocolRoutes = require('./lib/routes/protocol-routes');
+const discoveryRoutes = require('./lib/routes/discovery-routes');
+const adminGrowthRoutes = require('./lib/routes/admin-growth-routes');
+const discoveryNotify = require('./lib/discovery-notify');
 const registrationIpCap = require('./lib/registration-ip-cap');
 const protocolEconomics = require('./lib/protocol-economics');
 const protocolPublicMetrics = require('./lib/protocol-public-metrics');
@@ -770,6 +774,14 @@ async function registerAgent({ tier, agentName, pubkey, manifest, paymentMethod,
                 discovery_opt_in: discoveryOptIn,
             },
         }).catch(() => {});
+
+        if (discoveryOptIn) {
+            discoveryNotify.notifyNewDiscoveryAgent(pool, {
+                kya_id: newAgent.kya_id,
+                agent_name: agentName,
+                tier: tier.name,
+            }).catch(() => {});
+        }
 
         // Fire-and-forget Telegram/Discord PING po každej zaplatenej registrácii (BASIC + ELITE).
         notifications.notifyRegistrationPaid({
@@ -1497,157 +1509,21 @@ app.get('/api/hub/pubkey', (req, res) => {
 // ----------------------------------------------------------------------------
 // 7.5) Manifest schema (verejne dostupná pre klientov)
 // ----------------------------------------------------------------------------
-app.get('/api/protocol/manifest-schema', (req, res) => {
-    res.json(manifestSchema.SCHEMA);
+// ----------------------------------------------------------------------------
+// 7.5x) Protocol + discovery routes → lib/routes/*
+// ----------------------------------------------------------------------------
+protocolRoutes.register(app, {
+    pool,
+    logger,
+    manifestSchema,
+    delegationPass,
+    integratorLsat,
+    protocolEconomics,
+    protocolPublicMetrics,
+    hubReleaseVersion: HUB_RELEASE_VERSION,
+    hubReleasePhase: HUB_RELEASE_PHASE,
 });
-
-// ----------------------------------------------------------------------------
-// 7.55) L402-aligned delegated payment profile + delegation pass verify
-// ----------------------------------------------------------------------------
-app.get('/api/protocol/l402-delegation-profile', (req, res) => {
-    res.set('Cache-Control', 'public, max-age=3600');
-    res.json(delegationPass.l402DelegationProfileDoc());
-});
-
-app.get('/api/protocol/integrator-lsat-profile', (req, res) => {
-    res.set('Cache-Control', 'public, max-age=3600');
-    res.json(integratorLsat.profileDoc());
-});
-
-app.post('/api/delegation-pass/verify', async (req, res) => {
-    const pass = req.body;
-    const v = delegationPass.verifyDelegationPass(pass);
-    res.json({
-        ...v,
-        optional_next_checks: {
-            crl: '/crl/latest.json',
-            cert_status: pass && pass.sub ? `/api/cert/${pass.sub}/status` : null,
-        },
-    });
-});
-
-// ----------------------------------------------------------------------------
-// 7.56) Public discovery feed (opt-in agents only)
-// ----------------------------------------------------------------------------
-app.get('/api/discovery/v1/agents.json', async (req, res) => {
-    const cap = (req.query.capability || '').trim().toLowerCase();
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '50', 10), 1), 200);
-    const params = [];
-    let where = `WHERE a.discovery_opt_in = TRUE AND a.is_active = TRUE AND a.status = 'VERIFIED'`;
-    if (cap) {
-        params.push(cap);
-        where += ` AND EXISTS (
-            SELECT 1 FROM jsonb_array_elements_text(COALESCE(a.agent_manifest->'agent'->'capabilities', '[]'::jsonb)) cap
-            WHERE lower(cap) = lower($${params.length})
-        )`;
-    }
-    params.push(limit);
-    const limIdx = params.length;
-    try {
-        const r = await pool.query(
-            `SELECT a.kya_id, a.agent_name, a.tier, a.reputation_score,
-                    a.agent_manifest->'agent'->'capabilities' AS capabilities,
-                    a.agent_manifest->'payment_hints' AS payment_hints
-             FROM agents a
-             ${where}
-             ORDER BY a.reputation_score DESC NULLS LAST
-             LIMIT $${limIdx}`,
-            params
-        );
-        res.set('Cache-Control', 'public, max-age=30');
-        res.json({
-            profile: delegationPass.L402_PROFILE_ID,
-            count: r.rowCount,
-            agents: r.rows,
-        });
-    } catch (e) {
-        logger.error({ err: e.message }, 'discovery feed FAIL');
-        res.status(500).json({ error: 'DB_ERROR' });
-    }
-});
-
-// ----------------------------------------------------------------------------
-// 7.57) Embed badge (SVG) — third-party pages / README shields
-// ----------------------------------------------------------------------------
-app.get('/api/embed/badge/:kya_id', async (req, res) => {
-    const kya_id = req.params.kya_id;
-    if (!/^UMBRA-[A-F0-9]{6}$/.test(kya_id)) {
-        return res.status(400).type('text/plain').send('INVALID_KYA_ID');
-    }
-    const fmt = (req.query.format || 'svg').toLowerCase();
-    try {
-        const r = await pool.query(
-            `SELECT a.kya_id, a.agent_name, a.status, a.is_active, c.revoked_at
-             FROM agents a
-             LEFT JOIN certificates c ON c.kya_id = a.kya_id AND c.is_current = TRUE
-             WHERE a.kya_id = $1`,
-            [kya_id]
-        );
-        if (r.rowCount === 0) {
-            if (fmt === 'json') return res.status(404).json({ error: 'NOT_FOUND' });
-            return res.status(404).type('image/svg+xml').send('<svg xmlns="http://www.w3.org/2000/svg" width="90" height="20"><text x="4" y="14" font-size="11">KYA unknown</text></svg>');
-        }
-        const row = r.rows[0];
-        const ok = row.is_active && row.status === 'VERIFIED' && !row.revoked_at;
-        if (fmt === 'json') {
-            return res.json({
-                kya_id,
-                agent_name: row.agent_name,
-                status: ok ? 'verified' : 'not_verified',
-                hub: hubkeys.getPublicInfo().hub_url || 'https://umbraxon.xyz',
-            });
-        }
-        const label = ok ? 'KYA verified' : 'KYA not ok';
-        const fill = ok ? '#16a34a' : '#64748b';
-        const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20" role="img" aria-label="${label}">
-  <title>${label}</title>
-  <rect width="120" height="20" rx="3" fill="${fill}"/>
-  <text x="8" y="14" fill="#ffffff" font-family="system-ui,sans-serif" font-size="11">${row.agent_name.slice(0, 18)}</text>
-</svg>`;
-        res.set('Cache-Control', 'public, max-age=60');
-        res.type('image/svg+xml').send(svg);
-    } catch (e) {
-        logger.error({ err: e.message, kya_id }, 'embed badge FAIL');
-        res.status(500).type('text/plain').send('ERR');
-    }
-});
-
-// ----------------------------------------------------------------------------
-// 7.6) Strategic Sprint §30 Item 9 — Protocol version handshake.
-//      Clients MUST call this before any other API call to pick a
-//      `protocol_version` they support. Cached for 60s at the edge.
-// ----------------------------------------------------------------------------
-const PROTOCOL_VERSION_INFO = (() => {
-    // Pull from manifest-schema enum when possible so we never drift.
-    let supported;
-    try {
-        const enumList = manifestSchema?.SCHEMA?.properties?.protocol_version?.enum;
-        supported = Array.isArray(enumList) && enumList.length ? enumList.slice() : ['1.0'];
-    } catch (_) { supported = ['1.0']; }
-    const preferred = process.env.HUB_PROTOCOL_PREFERRED
-        || supported[supported.length - 1] || '1.0';
-    const minRequired = process.env.HUB_PROTOCOL_MIN_REQUIRED || supported[0] || '1.0';
-    const deprecated = (process.env.HUB_PROTOCOL_DEPRECATED || '')
-        .split(',').map(s => s.trim()).filter(Boolean);
-    const nextPlanned = process.env.HUB_PROTOCOL_NEXT_PLANNED || '1.1';
-    const changelogUrl = process.env.HUB_PROTOCOL_CHANGELOG_URL
-        || 'https://umbraxon.xyz/docs/protocol-changelog';
-    return {
-        supported,
-        preferred,
-        deprecated,
-        min_required: minRequired,
-        next_planned: nextPlanned,
-        changelog_url: changelogUrl,
-        handshake_required: true,
-    };
-})();
-
-app.get('/api/protocol/versions', (req, res) => {
-    res.set('Cache-Control', 'public, max-age=60');
-    res.json(PROTOCOL_VERSION_INFO);
-});
+discoveryRoutes.register(app, { pool, logger, delegationPass, hubkeys });
 
 // ----------------------------------------------------------------------------
 // 7.6) Proof-of-Work captcha (Phase 2.2)
@@ -2248,30 +2124,7 @@ platformIntegratorRoutes.register(app, {
     integratorReadLimiter,
 });
 
-app.get('/api/protocol/economics', async (req, res) => {
-    try {
-        const doc = await protocolEconomics.buildEconomicsDoc(pool);
-        res.set('Cache-Control', 'public, max-age=600');
-        return res.json(doc);
-    } catch (err) {
-        logger.error({ err: err.message }, 'GET /api/protocol/economics FAIL');
-        return res.status(500).json({ error: 'DB_ERROR' });
-    }
-});
-
-app.get('/api/protocol/public-metrics', async (req, res) => {
-    try {
-        const doc = await protocolPublicMetrics.buildPublicMetrics(pool, {
-            hubVersion: HUB_RELEASE_VERSION,
-            hubPhase: HUB_RELEASE_PHASE,
-        });
-        res.set('Cache-Control', 'public, max-age=300');
-        return res.json(doc);
-    } catch (err) {
-        logger.error({ err: err.message }, 'GET /api/protocol/public-metrics FAIL');
-        return res.status(500).json({ error: 'DB_ERROR' });
-    }
-});
+adminGrowthRoutes.register(app, { pool, security, logger });
 
 // ----------------------------------------------------------------------------
 // 11.5) Agent reputation info (verejné — pre dashboardy aj samotného bota)

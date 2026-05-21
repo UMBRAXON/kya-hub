@@ -204,9 +204,9 @@ module.exports = {
         },
         {
             // Strategic Sprint §30 Item 6 — Lightning inbound liquidity monitor.
-            // PM2 cron: every 15 min. Uses Alby Hub HTTP API if unlock password
-            // is dropped in /root/kya-hub/.secrets/alby-unlock.txt; else falls
-            // back to NWC outbound-only with a warning notification.
+            // PM2 cron: every 15 min. Uses Alby Hub HTTP API (/api/start) when
+            // ALBY_UNLOCK_PASSWORD or .secrets/alby-unlock.txt is set; else NWC
+            // outbound-only. File lock prevents overlapping cron + ?fresh=1.
             name: 'kya-liquidity-monitor',
             script: 'scripts/lightning-liquidity-monitor.js',
             cwd: '/root/kya-hub',
@@ -299,6 +299,26 @@ module.exports = {
             },
             error_file: '/root/.pm2/logs/kya-dac8-export-error.log',
             out_file: '/root/.pm2/logs/kya-dac8-export-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // Growth: demo witness + HN/Reddit listener + GitHub issue scout (dry-run drafts).
+            name: 'kya-growth-cycle',
+            script: 'scripts/growth/run-cycle.sh',
+            interpreter: 'bash',
+            cwd: '/root/kya-hub',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '0 8 * * *',
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-growth-cycle-error.log',
+            out_file: '/root/.pm2/logs/kya-growth-cycle-out.log',
             merge_logs: true,
             time: true,
         },

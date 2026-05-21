@@ -2,6 +2,8 @@
 
 **Live UI:** https://www.umbraxon.xyz/integrators
 
+**One script (from repo):** `./scripts/integrate-in-5min.sh`
+
 ## 1. Status gate (no API key)
 
 ```bash
@@ -37,7 +39,9 @@ Approve: `POST /api/admin/integrator-key-requests/:id/approve` (`X-Admin-Key`). 
 
 ## 4. Webhooks (optional)
 
-Register agents with `integrations.developer_webhooks` in manifest (see FAQ §H). Events: `agent.registered`, `reputation.changed`, `cert.revoked`.
+Register agents with `integrations.developer_webhooks` in manifest (see FAQ §H). Events: `agent.registered`, `discovery.indexed`, `reputation.changed`, `cert.revoked`.
+
+Operator platforms: `DISCOVERY_WEBHOOK_URLS` in hub `.env` (POST on new discovery opt-in).
 
 ## 5. CI
 

@@ -30,8 +30,9 @@ export const sk = {
     bodyTail: "pre botov a integrátorov.",
     ctaIntegrate: "Integrácia za 5 min",
     ctaRegister: "Registrovať bota",
-    ctaVideo: "Úvod 75 s",
-    videoHref: "https://www.youtube.com/watch?v=Z6Fb2LFBPtY",
+    metricsLine:
+      "{paid} platených produkčných agentov · {calls} integrátorských status checkov (7 dní)",
+    metricsLink: "Status a metriky",
   },
   quickstart: {
     eyebrow: "Rýchla cesta",
@@ -52,7 +53,7 @@ export const sk = {
       },
     ],
     code:
-      'curl -sS "https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status"',
+      'curl -sS "https://www.umbraxon.xyz/api/v1/agents/UMBRA-TEST-0001/status"',
   },
   promoVideo: {
     eyebrow: "75-sekundový úvod",
@@ -273,7 +274,7 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     ],
   },
   contactStrip: {
-    builtInEu: "Postavené v EÚ",
+    fromSlovakia: "Zo Slovenska",
     title: "Kontakt na operátora",
     body:
       "Integrátori, bezpečnosť alebo spolupráca — Telegram alebo GitHub. Žiadna fronta.",
@@ -311,11 +312,15 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     intro:
       "KYA Hub je infraštruktúra identity. Mali by ste vidieť, kto ju prevádzkuje, čo je open source a čo netvrdíme (žiadny nezávislý audit, žiadna firemná entita na tejto stránke).",
     operatorTitle: "Operátor",
-    builtInEu: "Postavené v EÚ",
+    fromSlovakia: "Zo Slovenska",
     maintainerLabel: "Človek za projektom",
-    operatorRole: "Solo operátor · open source · postavené v EÚ",
+    operatorRole: "Solo operátor · open source · zo Slovenska",
     operatorBody:
       "UMBRAXON je značka operátora tohto hubu. Backend, portál a protokol sú verejne na GitHube. Produkcia je jedna inštancia na umbraxon.xyz — zatiaľ nie federácia.",
+    operatorInfra: [
+      { label: "Operátor a vývoj", value: "Slovensko" },
+      { label: "Produkcia (umbraxon.xyz)", value: "Nemecko (Hetzner)" },
+    ],
     operatorStory:
       "KYA som postavil, lebo bot-to-bot platby potrebujú meno a kľúč, nie ďalší OAuth dashboard. Tento hub je malý register, ktorý som chcel pri Lightning agentoch — auditovateľný, nekustodiálny, bez ľudských formulárov.",
     proofTitle: "Over si tvrdenia sám",

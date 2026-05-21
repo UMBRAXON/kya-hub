@@ -159,4 +159,34 @@ export async function fetchIntegratorAgentStatus(
   }
 }
 
+export interface PublicMetrics {
+  updated_at?: string;
+  traction?: {
+    production_agents_paid?: number;
+    disclaimer?: string;
+    integrator_verify_7d?: {
+      calls?: number;
+      verified_ok?: number;
+      cert_checks?: number;
+    };
+  };
+  hub?: { version?: string; phase?: string; site?: string };
+  developer?: {
+    npm?: { package?: string; url?: string };
+  };
+}
+
+export async function fetchPublicMetrics(): Promise<PublicMetrics | null> {
+  try {
+    const res = await fetch(`${HUB_BASE}/api/protocol/public-metrics`, {
+      headers: { Accept: "application/json", "User-Agent": "kya-portal/1.0" },
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as PublicMetrics;
+  } catch {
+    return null;
+  }
+}
+
 export { HUB_BASE };

@@ -1,8 +1,16 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
 
-export function Hero({ t }: { t: Dictionary["hero"] }) {
+export function Hero({
+  t,
+  metricsSlot,
+}: {
+  t: Dictionary["hero"];
+  /** Streamed below the fold of the hero (Suspense). */
+  metricsSlot?: ReactNode;
+}) {
   return (
     <section className="section-glow-top section-pro-tight flex flex-col items-center justify-center text-center">
       <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card/50 px-3 py-1 text-xs font-medium text-muted-foreground">
@@ -28,21 +36,13 @@ export function Hero({ t }: { t: Dictionary["hero"] }) {
           <ArrowRight className="size-4" aria-hidden />
         </Link>
         <Link
-          href="#docs"
+          href="/bots/"
           className="btn-secondary inline-flex h-11 items-center rounded-lg px-5 text-sm font-medium"
         >
           {t.ctaRegister}
         </Link>
-        <a
-          href={t.videoHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex h-11 items-center gap-2 rounded-lg px-4 text-sm text-muted-foreground transition-colors hover:text-primary"
-        >
-          <Play className="size-4" aria-hidden />
-          {t.ctaVideo}
-        </a>
       </div>
+      {metricsSlot}
     </section>
   );
 }

@@ -30,8 +30,8 @@ export const en = {
     bodyTail: "for bots and integrators.",
     ctaIntegrate: "Integrate in 5 min",
     ctaRegister: "Register a bot",
-    ctaVideo: "75s intro",
-    videoHref: "https://www.youtube.com/watch?v=Z6Fb2LFBPtY",
+    metricsLine: "{paid} paid production agents · {calls} integrator status checks (7d)",
+    metricsLink: "Status & metrics",
   },
   quickstart: {
     eyebrow: "Quick path",
@@ -52,7 +52,7 @@ export const en = {
       },
     ],
     code:
-      'curl -sS "https://www.umbraxon.xyz/api/v1/agents/UMBRA-000467/status"',
+      'curl -sS "https://www.umbraxon.xyz/api/v1/agents/UMBRA-TEST-0001/status"',
   },
   promoVideo: {
     eyebrow: "75-second intro",
@@ -274,7 +274,7 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     ],
   },
   contactStrip: {
-    builtInEu: "Built in EU",
+    fromSlovakia: "From Slovakia",
     title: "Contact the operator",
     body:
       "Integrators, security questions, or partnership — Telegram or GitHub. No ticket queue.",
@@ -312,11 +312,15 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     intro:
       "KYA Hub is identity infrastructure. You should see who operates it, what is open source, and what we do not claim (no third-party audit, no corporate entity on this page).",
     operatorTitle: "Operator",
-    builtInEu: "Built in EU",
+    fromSlovakia: "From Slovakia",
     maintainerLabel: "Person behind the project",
-    operatorRole: "Solo operator · open source · built in the EU",
+    operatorRole: "Solo operator · open source · from Slovakia",
     operatorBody:
       "UMBRAXON is the operator brand behind this hub. The backend, portal, and protocol docs are public on GitHub. Production is a single hub instance at umbraxon.xyz — not a federation yet.",
+    operatorInfra: [
+      { label: "Operator & development", value: "Slovakia" },
+      { label: "Production (umbraxon.xyz)", value: "Germany (Hetzner)" },
+    ],
     operatorStory:
       "I built KYA because bot-to-bot flows need a name and a key, not another OAuth screen. This hub is the small registry I wanted when wiring Lightning agents — auditable, non-custodial, no human signup forms.",
     proofTitle: "Verify claims yourself",

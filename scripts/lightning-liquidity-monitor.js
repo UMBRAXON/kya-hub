@@ -8,8 +8,8 @@
 //   1) PREFERRED: Alby Hub native HTTP API. Returns full per-channel state
 //      including `localBalance` (outbound), `remoteBalance` (inbound),
 //      `state` (open / opening / closed), `active`. Requires the hub to be
-//      unlocked — we POST the unlock password to `/api/login` (or the
-//      legacy `/api/unlock`) and reuse the session cookie / JWT for
+//      unlocked — we POST the unlock password to `/api/start` (v1.21.x)
+//      or legacy `/api/unlock` and reuse the session cookie / JWT for
 //      `/api/channels`. The session is cached at module scope and refreshed
 //      on HTTP 401.
 //
@@ -46,9 +46,14 @@ const path = require('path');
 const alby = require('../lib/alby');
 const notifications = require('../lib/notifications');
 
+const LOCK_PATH = process.env.LIQUIDITY_MONITOR_LOCK_FILE || '/tmp/kya-liquidity-monitor.lock';
+const LOCK_STALE_MS = parseInt(process.env.LIQUIDITY_MONITOR_LOCK_STALE_MS || '120000', 10);
+
 const CFG = {
     ALBY_HUB_URL: process.env.ALBY_HUB_URL || 'http://127.0.0.1:8080',
     UNLOCK_PASSWORD_FILE: process.env.ALBY_UNLOCK_PASSWORD_FILE || '/root/kya-hub/.secrets/alby-unlock.txt',
+    ALBY_UNLOCK_RETRY_MS: parseInt(process.env.LIQUIDITY_ALBY_UNLOCK_RETRY_MS || '800', 10),
+    ALBY_UNLOCK_RETRY_MAX: parseInt(process.env.LIQUIDITY_ALBY_UNLOCK_RETRY_MAX || '4', 10),
     // Legacy absolute thresholds (kept for backwards compatibility + tests).
     WARN_INBOUND_SATS: parseInt(process.env.LIQUIDITY_WARN_SATS || '500000', 10),
     CRITICAL_INBOUND_SATS: parseInt(process.env.LIQUIDITY_CRITICAL_SATS || '200000', 10),
@@ -123,49 +128,89 @@ function readUnlockPassword() {
     }
 }
 
-// Login to Alby Hub. Tries `/api/start` first (v1.21.x — the canonical
-// unlock endpoint; `/api/login` is OAuth/JWT, not unlock), then `/api/unlock`
-// (older builds), then `/api/login` as a final fallback. Returns
-// { token, cookie } or throws.
+function _sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+// Single-instance guard — PM2 cron + manual `?fresh=1` can overlap and trip
+// Alby's per-minute unlock rate limit (429), which previously fell through to
+// `/api/login` (OAuth) and produced a false "set unlock password" Telegram.
+function acquireProcessLock() {
+    try {
+        if (fs.existsSync(LOCK_PATH)) {
+            const st = fs.statSync(LOCK_PATH);
+            const age = Date.now() - st.mtimeMs;
+            if (age < LOCK_STALE_MS) {
+                try {
+                    const pid = parseInt(fs.readFileSync(LOCK_PATH, 'utf8').trim(), 10);
+                    if (pid > 0) process.kill(pid, 0);
+                    return { acquired: false, reason: 'already-running', other_pid: pid };
+                } catch (e) {
+                    if (e.code !== 'ESRCH') throw e;
+                }
+            }
+            fs.unlinkSync(LOCK_PATH);
+        }
+        fs.writeFileSync(LOCK_PATH, String(process.pid), { flag: 'wx', mode: 0o600 });
+        return { acquired: true };
+    } catch (e) {
+        if (e.code === 'EEXIST') return { acquired: false, reason: 'lock-contention' };
+        throw e;
+    }
+}
+
+function releaseProcessLock() {
+    try {
+        if (!fs.existsSync(LOCK_PATH)) return;
+        const pid = parseInt(fs.readFileSync(LOCK_PATH, 'utf8').trim(), 10);
+        if (pid === process.pid) fs.unlinkSync(LOCK_PATH);
+    } catch (_) {}
+}
+
+// Unlock Alby Hub. `/api/start` (v1.21.x) then `/api/unlock` (older). Never
+// `/api/login` — that is OAuth/JWT and returns 401 for unlock passwords.
 async function _albyLogin(password) {
-    // The body shape varies across Alby Hub versions:
-    //   - newer (v1.21.x): { unlockPassword: "..." }
-    //   - some forks: { unlock_password: "..." }
-    // We send BOTH fields so either parser accepts the payload, and we never
-    // log the body.
     const body = { unlockPassword: password, unlock_password: password };
     const endpoints = [
         `${CFG.ALBY_HUB_URL}/api/start`,
         `${CFG.ALBY_HUB_URL}/api/unlock`,
-        `${CFG.ALBY_HUB_URL}/api/login`,
     ];
     let lastErr = null;
     for (const url of endpoints) {
-        try {
-            const r = await axios.post(url, body, {
-                timeout: CFG.HTTP_TIMEOUT_MS,
-                validateStatus: () => true,
-                headers: { 'Content-Type': 'application/json' },
-            });
-            if (r.status >= 200 && r.status < 300) {
-                const cookie = Array.isArray(r.headers['set-cookie'])
-                    ? r.headers['set-cookie'].join('; ')
-                    : (r.headers['set-cookie'] || null);
-                const token = r.data?.token || r.data?.jwt || null;
-                return { token, cookie, endpoint: url, acquiredAt: Date.now() };
+        for (let attempt = 0; attempt < CFG.ALBY_UNLOCK_RETRY_MAX; attempt++) {
+            if (attempt > 0) {
+                await _sleep(CFG.ALBY_UNLOCK_RETRY_MS * attempt);
             }
-            lastErr = new Error(`http=${r.status} (${url})`);
-            lastErr.httpStatus = r.status;
-            // 404 / 405 → endpoint not present in this build, try the next.
-            // 429 → rate-limited on this endpoint, try the next (different bucket).
-            // Other non-2xx → bail (likely wrong password / server error).
-            if (r.status !== 404 && r.status !== 405 && r.status !== 429) throw lastErr;
-        } catch (e) {
-            lastErr = e;
-            if (e.httpStatus && e.httpStatus !== 404 && e.httpStatus !== 405 && e.httpStatus !== 429) throw e;
+            try {
+                const r = await axios.post(url, body, {
+                    timeout: CFG.HTTP_TIMEOUT_MS,
+                    validateStatus: () => true,
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (r.status >= 200 && r.status < 300) {
+                    const cookie = Array.isArray(r.headers['set-cookie'])
+                        ? r.headers['set-cookie'].join('; ')
+                        : (r.headers['set-cookie'] || null);
+                    const token = r.data?.token || r.data?.jwt || null;
+                    return { token, cookie, endpoint: url, acquiredAt: Date.now() };
+                }
+                lastErr = new Error(`http=${r.status} (${url})`);
+                lastErr.httpStatus = r.status;
+                if (r.status === 429) continue;
+                if (r.status === 404 || r.status === 405) break;
+                throw lastErr;
+            } catch (e) {
+                lastErr = e;
+                if (e.httpStatus === 429) continue;
+                if (e.httpStatus && e.httpStatus !== 404 && e.httpStatus !== 405) throw e;
+                break;
+            }
         }
     }
-    throw lastErr || new Error('alby login failed (no endpoint accepted credentials)');
+    if (lastErr && lastErr.httpStatus === 429) {
+        const e = new Error('alby unlock rate-limited (429)');
+        e.httpStatus = 429;
+        throw e;
+    }
+    throw lastErr || new Error('alby unlock failed (no endpoint accepted credentials)');
 }
 
 async function _albyGetChannels(session) {
@@ -244,7 +289,7 @@ async function probeAlbyHttp() {
             return {
                 ok: false,
                 source: 'alby-http',
-                reason: 'alby-api-failed',
+                reason: e.httpStatus === 429 ? 'alby-rate-limited' : 'alby-api-failed',
                 error: e.message,
                 http_status: e.httpStatus,
             };
@@ -335,7 +380,21 @@ async function _safeNotify(payload) {
 }
 
 async function runOnce() {
+    const lock = acquireProcessLock();
+    if (!lock.acquired) {
+        log('info', { event: 'liquidity_skip_concurrent', reason: lock.reason, other_pid: lock.other_pid });
+        return { exit: 0, result: { ok: true, source: 'skipped-concurrent', skipped: true, reason: lock.reason } };
+    }
+    try {
+        return await _runOnceUnlocked();
+    } finally {
+        releaseProcessLock();
+    }
+}
+
+async function _runOnceUnlocked() {
     let result = await probeAlbyHttp();
+    const hadUnlockPassword = result.reason !== 'no-unlock-password';
 
     if (!result.ok) {
         // Fallback to NWC (outbound only)
@@ -346,9 +405,10 @@ async function runOnce() {
             inbound_sats: null,
             inbound_unknown: true,
             outbound_sats: nwc.outbound_sats || null,
-            warn_no_unlock_password: true,
+            warn_no_unlock_password: !hadUnlockPassword,
             alby_http_reason: result.reason,
             alby_http_error: result.error,
+            alby_http_status: result.http_status,
             nwc_error: nwc.error,
         };
         if (!nwc.ok) {
@@ -368,12 +428,30 @@ async function runOnce() {
         });
         // Telegram alert ONCE PER PROCESS LIFETIME — reduces noise on PM2
         // cron when the operator hasn't pasted credentials yet.
-        if (_emitOnce('liquidity_no_auth')) {
+        if (result.warn_no_unlock_password) {
+            if (_emitOnce('liquidity_no_auth')) {
+                await _safeNotify({
+                    category: 'warning',
+                    title: 'Lightning liquidity: inbound unknown (NWC fallback)',
+                    body: `Could not read full channel state from Alby Hub HTTP API. Outbound only: ${result.outbound_sats} sats.\nTo fix: set ALBY_UNLOCK_PASSWORD in .env (preferred) or drop the password into ${CFG.UNLOCK_PASSWORD_FILE} (chmod 600).`,
+                    dedupe_key: 'liquidity_no_auth',
+                });
+            }
+        } else if (result.alby_http_reason === 'alby-rate-limited' || result.alby_http_status === 429) {
+            if (_emitOnce('liquidity_rate_limited')) {
+                await _safeNotify({
+                    category: 'warning',
+                    title: 'Lightning liquidity: Alby unlock rate-limited',
+                    body: `Concurrent unlock calls hit Alby Hub 429; outbound only via NWC: ${result.outbound_sats} sats. Next cron tick should recover — no password change needed.`,
+                    dedupe_key: 'liquidity_rate_limited',
+                });
+            }
+        } else if (_emitOnce('liquidity_http_fallback')) {
             await _safeNotify({
                 category: 'warning',
                 title: 'Lightning liquidity: inbound unknown (NWC fallback)',
-                body: `Could not read full channel state from Alby Hub HTTP API. Outbound only: ${result.outbound_sats} sats.\nTo fix: set ALBY_UNLOCK_PASSWORD in .env (preferred) or drop the password into ${CFG.UNLOCK_PASSWORD_FILE} (chmod 600).`,
-                dedupe_key: 'liquidity_no_auth',
+                body: `Alby Hub HTTP probe failed (${result.alby_http_reason || 'unknown'}: ${result.alby_http_error || '—'}). Outbound only: ${result.outbound_sats} sats. Unlock password is configured; check alby-hub logs.`,
+                dedupe_key: 'liquidity_http_fallback',
             });
         }
         lastResult = { ...result, ts: nowIso(), level: 'AUTH_REQUIRED' };
@@ -454,4 +532,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { runOnce, getLastResult, CFG, _resetSession };
+module.exports = { runOnce, getLastResult, CFG, _resetSession, acquireProcessLock, releaseProcessLock };

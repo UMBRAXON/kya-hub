@@ -68,7 +68,7 @@ export default async function AboutPage() {
         <section className="mb-10 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-6">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full border border-cyan-500/40 bg-cyan-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-              {p.builtInEu}
+              {p.fromSlovakia}
             </span>
           </div>
           <h2 className="mb-2 text-lg font-semibold text-foreground">{p.operatorTitle}</h2>
@@ -92,6 +92,14 @@ export default async function AboutPage() {
           <p className="mt-2 font-mono text-xl text-primary">{OPERATOR.displayName}</p>
           <p className="mt-2 text-sm text-muted-foreground">{p.operatorRole}</p>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{p.operatorBody}</p>
+          <dl className="mt-4 space-y-2 rounded-lg border border-border/60 bg-background/40 px-4 py-3 text-sm">
+            {p.operatorInfra.map((row) => (
+              <div key={row.label} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+                <dt className="shrink-0 font-medium text-foreground/90 sm:w-52">{row.label}</dt>
+                <dd className="text-muted-foreground">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
           <p className="mt-4 text-sm leading-relaxed text-foreground/90">{p.operatorStory}</p>
           <ul className="mt-4 flex flex-wrap gap-3">
             <li>

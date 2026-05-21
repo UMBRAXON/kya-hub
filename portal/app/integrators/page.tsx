@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { IntegratorQuickstart } from "@/components/integrator-quickstart";
+import { PromoVideo } from "@/components/promo-video";
 import { HUB_BASE } from "@/lib/hub-api";
+import { getServerDictionary } from "@/lib/locale-server";
 import { buildPageMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
@@ -11,7 +13,9 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/integrators",
 });
 
-export default function IntegratorsPage() {
+export default async function IntegratorsPage() {
+  const { t } = await getServerDictionary();
+
   return (
     <div className="bg-grid min-h-screen">
       <header className="border-b border-border/60 bg-background/80 backdrop-blur">
@@ -66,7 +70,7 @@ export default function IntegratorsPage() {
 {`npm install @umbraxon_kya/kya-verify
 
 import { verifyAgentStatus } from '@umbraxon_kya/kya-verify';
-const { verified } = await verifyAgentStatus('${HUB_BASE}', 'UMBRA-000467');`}
+const { verified } = await verifyAgentStatus('${HUB_BASE}', 'UMBRA-TEST-0001');`}
         </pre>
         <p className="mt-6 text-sm text-muted-foreground">
           Docs:{" "}
@@ -97,8 +101,13 @@ const { verified } = await verifyAgentStatus('${HUB_BASE}', 'UMBRA-000467');`}
           <a className="text-primary underline" href="/docs/KYA-VS-API-KEY.md">
             KYA vs API key
           </a>
+          {" · "}
+          <a className="text-primary underline" href="/operator-pack.html">
+            Operator pack (Word)
+          </a>
         </p>
       </main>
+      <PromoVideo t={t.promoVideo} />
     </div>
   );
 }

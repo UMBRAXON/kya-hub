@@ -177,7 +177,7 @@ export function AboutSection({
                   ))}
                 </ul>
                 <Link
-                  href="#docs"
+                  href="/bots/"
                   className="neon-btn-outline mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg border px-6 text-sm font-medium sm:w-auto"
                 >
                   {t.basic.cta}
@@ -240,7 +240,7 @@ export function AboutSection({
                   ))}
                 </ul>
                 <Link
-                  href="#docs"
+                  href="/bots/"
                   className="neon-btn-cyan mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg text-sm font-medium sm:w-auto sm:px-6"
                 >
                   {t.elite.cta}

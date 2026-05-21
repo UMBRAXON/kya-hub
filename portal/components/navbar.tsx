@@ -102,7 +102,7 @@ export function Navbar({
             />
           </div>
           <Link
-            href="#docs"
+            href="/bots/"
             className="btn-primary hidden h-9 items-center rounded-lg px-3 text-xs font-medium sm:inline-flex sm:h-10 sm:px-4 sm:text-sm"
           >
             <span className="xl:hidden">{nav.registerShort}</span>
@@ -147,7 +147,7 @@ export function Navbar({
             </li>
             <li className="pt-1 sm:hidden">
               <Link
-                href="#docs"
+                href="/bots/"
                 className="btn-primary flex h-11 items-center justify-center rounded-lg text-sm font-medium"
                 onClick={close}
               >

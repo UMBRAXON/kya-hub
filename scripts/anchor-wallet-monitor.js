@@ -89,7 +89,15 @@ function logLine(level, obj) {
     console.log(JSON.stringify({ ...base, ...obj }));
 }
 
+async function ensureAnchorWalletLoaded() {
+    const loaded = await bitcoindRpc.call('listwallets', []);
+    if (Array.isArray(loaded) && loaded.includes(WALLET_NAME)) return;
+    await bitcoindRpc.call('loadwallet', [WALLET_NAME]);
+    logLine('info', { event: 'loadwallet', wallet: WALLET_NAME });
+}
+
 async function fetchBalance() {
+    await ensureAnchorWalletLoaded();
     // getbalance returns BTC (number, e.g. 0.00007372)
     const btc = await bitcoindRpc.walletCall(WALLET_NAME, 'getbalance', []);
     const info = await bitcoindRpc.walletCall(WALLET_NAME, 'getwalletinfo', []);

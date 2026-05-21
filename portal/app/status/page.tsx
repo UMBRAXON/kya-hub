@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { HUB_BASE } from "@/lib/hub-api";
+import {
+  fetchDiscoveryAgents,
+  fetchPublicMetrics,
+  HUB_BASE,
+} from "@/lib/hub-api";
 import { buildPageMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
@@ -9,46 +13,38 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/status",
 });
 
-async function fetchJson<T>(path: string): Promise<T | null> {
-  try {
-    const r = await fetch(`${HUB_BASE}${path}`, {
-      next: { revalidate: 60 },
-    });
-    if (!r.ok) return null;
-    return (await r.json()) as T;
-  } catch {
-    return null;
-  }
-}
-
-type Health = {
+async function fetchHealth(): Promise<{
   server?: string;
   hub_release?: { version?: string; phase?: string };
   db?: { status?: string };
   btcpay?: { status?: string };
   alby?: string;
   cache?: { degraded?: boolean; staleness_ms?: number | null };
-};
-
-type Metrics = {
-  traction?: {
-    production_agents_paid?: number;
-    disclaimer?: string;
-  };
-  hub?: { site?: string };
-  developer?: { npm?: { package?: string; url?: string } };
-};
+} | null> {
+  try {
+    const r = await fetch(`${HUB_BASE}/api/health`, {
+      next: { revalidate: 60 },
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch {
+    return null;
+  }
+}
 
 export default async function StatusPage() {
-  const [health, metrics] = await Promise.all([
-    fetchJson<Health>("/api/health"),
-    fetchJson<Metrics>("/api/protocol/public-metrics"),
+  const [health, metrics, discoveryAgents] = await Promise.all([
+    fetchHealth(),
+    fetchPublicMetrics(),
+    fetchDiscoveryAgents().catch(() => []),
   ]);
 
   const ok =
     health?.server === "OK" &&
     health?.db?.status === "OK" &&
     !health?.cache?.degraded;
+
+  const verify7d = metrics?.traction?.integrator_verify_7d;
 
   return (
     <div className="bg-grid min-h-screen">
@@ -75,17 +71,43 @@ export default async function StatusPage() {
             <li>
               Release:{" "}
               <code>
-                {health?.hub_release?.version ?? "—"} ({health?.hub_release?.phase ?? "—"})
+                {health?.hub_release?.version ?? metrics?.hub?.version ?? "—"} (
+                {health?.hub_release?.phase ?? metrics?.hub?.phase ?? "—"})
               </code>
             </li>
-            <li>Database: <code>{health?.db?.status ?? "—"}</code></li>
-            <li>BTCPay probe: <code>{health?.btcpay?.status ?? "—"}</code></li>
-            <li>Alby: <code>{health?.alby ?? "—"}</code></li>
+            <li>
+              Database: <code>{health?.db?.status ?? "—"}</code>
+            </li>
+            <li>
+              BTCPay probe: <code>{health?.btcpay?.status ?? "—"}</code>
+            </li>
+            <li>
+              Alby: <code>{health?.alby ?? "—"}</code>
+            </li>
             <li>
               Production agents (paid):{" "}
               <strong>{metrics?.traction?.production_agents_paid ?? "—"}</strong>
             </li>
+            <li>
+              ELITE discovery index (public):{" "}
+              <strong>{discoveryAgents.length}</strong>
+            </li>
+            <li>
+              Integrator status checks (7d):{" "}
+              <strong>{verify7d?.calls ?? "—"}</strong>
+              {verify7d?.verified_ok != null && (
+                <>
+                  {" "}
+                  · verified OK: <strong>{verify7d.verified_ok}</strong>
+                </>
+              )}
+            </li>
           </ul>
+          {metrics?.updated_at && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Metrics updated: <code>{metrics.updated_at}</code>
+            </p>
+          )}
           <p className="mt-4 text-xs text-muted-foreground">
             {metrics?.traction?.disclaimer}
           </p>
@@ -100,6 +122,11 @@ export default async function StatusPage() {
             <li>
               <a href={`${HUB_BASE}/api/protocol/public-metrics`}>
                 {HUB_BASE}/api/protocol/public-metrics
+              </a>
+            </li>
+            <li>
+              <a href={`${HUB_BASE}/api/discovery/v1/agents.json`}>
+                {HUB_BASE}/api/discovery/v1/agents.json
               </a>
             </li>
           </ul>
@@ -120,6 +147,13 @@ export default async function StatusPage() {
           <Link href="/integrators" className="text-primary underline">
             Integrator quickstart
           </Link>
+          {" · "}
+          <a
+            className="text-primary underline"
+            href="https://github.com/UMBRAXON/kya-hub/blob/main/docs/OPS-SLA-DRAFT.md"
+          >
+            OPS SLA (draft)
+          </a>
           {" · "}
           <Link href="/docs/WHAT-WE-ARE-NOT.md" className="text-primary underline">
             What we are not

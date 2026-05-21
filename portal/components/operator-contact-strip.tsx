@@ -16,7 +16,7 @@ export function OperatorContactStrip({ t }: { t: Dictionary["contactStrip"] }) {
         <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
             <span className="inline-flex rounded-full border border-border bg-background px-3 py-1 text-xs font-medium uppercase tracking-wider text-primary">
-              {t.builtInEu}
+              {t.fromSlovakia}
             </span>
             <h2
               id="contact-heading"

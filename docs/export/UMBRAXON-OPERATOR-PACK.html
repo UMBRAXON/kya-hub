@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UMBRAXON KYA-Hub — Operátorský balík (GTM 90 dní)</title>
+  <style>
+    body { font-family: "Segoe UI", Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.45; color: #1a1a1a; max-width: 210mm; margin: 20mm auto; padding: 0 12mm; }
+    h1 { font-size: 22pt; color: #0d4f4f; border-bottom: 2px solid #14b8a6; padding-bottom: 8px; page-break-after: avoid; }
+    h2 { font-size: 14pt; color: #0d4f4f; margin-top: 22px; page-break-after: avoid; }
+    h3 { font-size: 12pt; color: #334155; margin-top: 16px; }
+    .meta { font-size: 9pt; color: #64748b; margin-bottom: 24px; }
+    .box { background: #f0fdfa; border: 1px solid #99f6e4; padding: 12px 16px; margin: 12px 0; }
+    .warn { background: #fffbeb; border: 1px solid #fcd34d; padding: 12px 16px; margin: 12px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 10pt; }
+    th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #e2e8f0; font-weight: 600; }
+    code, .mono { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: #f1f5f9; padding: 1px 4px; }
+    pre { font-family: Consolas, monospace; font-size: 9pt; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; white-space: pre-wrap; }
+    ul { margin: 8px 0; padding-left: 22px; }
+    a { color: #0f766e; }
+    .page-break { page-break-before: always; }
+    @media print { body { margin: 15mm; } }
+  </style>
+</head>
+<body>
+
+<h1>UMBRAXON KYA-Hub — Operátorský balík</h1>
+<p class="meta">
+  Dokument: Go-to-market 90 dní + dôvera + outreach<br />
+  Verzia hubu: 1.1.0 (Integrations v1) · Snapshot metrík: 2026-05-19<br />
+  Web: <a href="https://www.umbraxon.xyz">https://www.umbraxon.xyz</a> · GitHub: <a href="https://github.com/UMBRAXON/kya-hub">UMBRAXON/kya-hub</a>
+</p>
+
+<div class="box">
+  <strong>Jednovetný pitch (investor / partner):</strong><br />
+  Verejný register autonómnych agentov: platba cez Lightning, identita Ed25519, overenie jedným HTTP volaním.
+  Nekustodiálne. Sybil odolnosť cez cenu registrácie, nie cez sľub „nepreplatiť útok“.
+</div>
+
+<h2>1. Čo sme / čo nie sme (dôvera)</h2>
+
+<h3>Sme</h3>
+<ul>
+  <li>Verejný register softvérových agentov s platbou Lightning a certifikátom Ed25519.</li>
+  <li>Jeden HTTP gate pre tretie strany: <code>GET /api/v1/agents/{kya_id}/status</code> (voliteľne <code>?include=cert_proof</code>).</li>
+  <li>Nekustodiálne — ne držíme prostriedky agentov.</li>
+  <li>Transparentná ekonomika: <code>GET /api/protocol/economics</code> a <code>GET /api/protocol/public-metrics</code>.</li>
+</ul>
+
+<h3>Nie sme</h3>
+<ul>
+  <li>KYC pre ľudí (žiadny občiansky, žiadny register firiem).</li>
+  <li>Záruka dobrého správania — <code>verified: true</code> ≠ „pošli milión“.</li>
+  <li>Anti-Sybil záruka — motivovaný útočník si kúpi viac identít.</li>
+  <li>Decentralizovaná sieť dnes — jeden produkčný hub (federácia v roadmap).</li>
+</ul>
+
+<table>
+  <tr><th>Riziko integrácie</th><th>Odporúčaný gate</th></tr>
+  <tr><td>Nízke (logovanie)</td><td><code>GET …/status</code></td></tr>
+  <tr><td>Stredné</td><td>status + reputácia + rate limits</td></tr>
+  <tr><td>Vysoké (výplaty)</td><td><code>cert_proof</code> + vlastný review</td></tr>
+</table>
+
+<h2>2. Živé metriky (snapshot)</h2>
+<p>Pred meetingom vždy obnov: <a href="https://www.umbraxon.xyz/api/protocol/public-metrics">public-metrics JSON</a> · <a href="https://www.umbraxon.xyz/status">/status</a></p>
+<table>
+  <tr><th>Metrika</th><th>Hodnota (snapshot)</th></tr>
+  <tr><td>Platení produkční agenti</td><td>2</td></tr>
+  <tr><td>Verify API (7 dní)</td><td>16 volaní, 16 OK</td></tr>
+  <tr><td>BASIC registrácia</td><td>10 000 sats</td></tr>
+  <tr><td>ELITE registrácia</td><td>80 000 sats</td></tr>
+</table>
+<p class="meta">Disclaimer z hubu: skorá fáza siete; čísla bez testovacích UMBRA-TEST-*.</p>
+
+<h2>3. Priorita na 90 dní</h2>
+<table>
+  <tr><th>Fáza</th><th>Čas</th><th>Cieľ</th></tr>
+  <tr><td>1 — Viditeľnosť</td><td>Mesiac 1</td><td>1 cudzí integrátor + 3–5 cudzích UMBRA-*</td></tr>
+  <tr><td>2 — Sieť</td><td>Mesiac 2</td><td>5+ platených agentov, discovery feed</td></tr>
+  <tr><td>3 — Financie</td><td>Mesiac 3</td><td>Pokryť prevádzku, SLA, partner</td></tr>
+</table>
+
+<div class="warn">
+  <strong>Mentálny model:</strong> Ne predávame „AI platformu“. Predávame infra trust gate.
+  Úspech mesiaca 1 nie je 50 features — je to jedna reálna integrácia v cudzom produkte.
+</div>
+
+<h2>4. Mesiac 1 — Kde sú a ako ich nájsť</h2>
+
+<h3>Týždeň 1</h3>
+<table>
+  <tr><th>Deň</th><th>Operátor</th></tr>
+  <tr><td>1–2</td><td>Vypíš 20 konkrétnych miest (LNBits, HN, GitHub topics) — nie „internet“</td></tr>
+  <tr><td>3</td><td>Show HN: „Know Your Agent: Lightning-paid bot certs + one HTTP gate“</td></tr>
+  <tr><td>4</td><td>1× post r/lightningnetwork alebo r/bitcoin (technický)</td></tr>
+  <tr><td>5</td><td>Google Search Console — index /, /integrators, /bots</td></tr>
+  <tr><td>6</td><td>GitHub pinned issue „Integrate in 5 min“</td></tr>
+  <tr><td>7</td><td>Review traffic, issues, DM — uprav týždeň 2</td></tr>
+</table>
+<p><strong>Cieľ týždňa 1:</strong> 1 launch post, 50+ návštev /integrators, 0–2 inbound správy.</p>
+
+<h3>Týždeň 2 — Lightning beachhead</h3>
+<ul>
+  <li><strong>LNBits</strong> — plugin gate pred payout (repo: integrations/lnbits-kya-verify)</li>
+  <li><strong>Alby / LSP</strong> — inbound likvidita pre BASIC registrácie</li>
+  <li><strong>Nostr / MCP zoznamy</strong> — technický thread, nie sales</li>
+</ul>
+<p><strong>Cieľ:</strong> 3 outreach správy s curl, 1 odpoveď.</p>
+
+<h3>Týždeň 3 — Agent frameworky</h3>
+<ul>
+  <li>LangChain / CrewAI issues: „How do you verify the other agent?“</li>
+  <li>GitHub Discussions — šablóna Platform integrator</li>
+  <li>2 min demo video: curl status + badge</li>
+</ul>
+
+<h3>Týždeň 4 — Prvá lastovička</h3>
+<p><strong>Lastovička</strong> = niekto nasadí <code>GET /api/v1/agents/{id}/status</code> vo svojom produkte.</p>
+<ul>
+  <li>Ponuka: partner API key + 2h pomoc s integráciou</li>
+  <li>Logo na /integrators len so súhlasom</li>
+  <li>Ak 0 — all-in na jeden LN projekt</li>
+</ul>
+<p><strong>Cieľ mesiaca 1:</strong> ≥1 integrátor, ≥10 verify calls/7d od cudzieho kľúča.</p>
+
+<div class="page-break"></div>
+
+<h2>5. Mesiac 2 — Prvé boty do siete</h2>
+<ul>
+  <li>Sandbox <code>UMBRA-TEST-*</code> → potom mainnet registrácia (10k sats BASIC)</li>
+  <li>Sponsor pool kódy (admin API) pre prvých botov</li>
+  <li>Discovery opt-in → feed + webhook discovery.indexed</li>
+  <li>2 agenti s payment_hints (M2M LN)</li>
+</ul>
+<p><strong>Cieľ:</strong> 5+ platených agentov mimo vlastných testov, 2+ v discovery.</p>
+
+<h2>6. Mesiac 3 — Financie a zrelosť</h2>
+<ul>
+  <li>Tabuľka náklady vs príjmy (Hetzner, CF, čas)</li>
+  <li>Cieľ: pokryť prevádzku z 10–20 BASIC/mesiac</li>
+  <li>1h GDPR konzultácia (WHAT-WE-ARE-NOT ako podklad)</li>
+  <li>Branch protection, OPS SLA draft, federácia ADR</li>
+</ul>
+<p><strong>Cieľ:</strong> 10+ agentov, 2 integrátori, náklady ≤ príjmy alebo partner deal.</p>
+
+<h2>7. Kde hľadať (mapa kanálov)</h2>
+<table>
+  <tr><th>Priorita</th><th>Kde</th><th>Kto</th></tr>
+  <tr><td>P0</td><td>LNBits, Alby, r/lightningnetwork</td><td>LN devs, plugin autori</td></tr>
+  <tr><td>P0</td><td>Hacker News, GitHub agent/MCP</td><td>Early adopters</td></tr>
+  <tr><td>P1</td><td>Agent framework Discord</td><td>Bot devops</td></tr>
+  <tr><td>P2</td><td>Enterprise compliance</td><td>Až po case study</td></tr>
+</table>
+
+<h2>8. Outreach šablóna (copy-paste)</h2>
+<pre>We run a public KYA registry: bots pay 10k sats (Lightning), get an Ed25519 cert,
+no API keys on privileged actions. Your app can gate in one HTTP call:
+GET /api/v1/agents/{kya_id}/status — sandbox: UMBRA-TEST-0001 (verified true).
+Docs: https://www.umbraxon.xyz/integrators
+5 min: https://github.com/UMBRAXON/kya-hub/blob/main/docs/INTEGRATOR-QUICKSTART-5MIN.md</pre>
+
+<h2>9. Týždenný dashboard (pondelok, 5 min)</h2>
+<pre>curl -fsS https://www.umbraxon.xyz/api/protocol/public-metrics
+curl -fsS https://www.umbraxon.xyz/api/discovery/v1/agents.json</pre>
+<table>
+  <tr><th>Metrika</th><th>M1</th><th>M2</th><th>M3</th></tr>
+  <tr><td>production_agents_paid</td><td>3</td><td>8</td><td>15</td></tr>
+  <tr><td>Integrator API keys (7d)</td><td>1</td><td>2</td><td>3</td></tr>
+  <tr><td>Verify calls (7d)</td><td>50</td><td>200</td><td>500</td></tr>
+  <tr><td>Discovery count</td><td>2</td><td>6</td><td>12</td></tr>
+</table>
+
+<h2>10. Čo nerobiť (90 dní)</h2>
+<ul>
+  <li>Token / ICO / „KYA coin“</li>
+  <li>Sľubovať AML/KYC pre ľudí</li>
+  <li>Multi-region pred prvým partnerom</li>
+  <li>Spam bez technického obsahu</li>
+</ul>
+
+<h2>11. Odkazy pre dôveryhodnosť (verejné)</h2>
+<table>
+  <tr><th>Čo</th><th>URL</th></tr>
+  <tr><td>Integrátori</td><td><a href="https://www.umbraxon.xyz/integrators">www.umbraxon.xyz/integrators</a></td></tr>
+  <tr><td>Status</td><td><a href="https://www.umbraxon.xyz/status">www.umbraxon.xyz/status</a></td></tr>
+  <tr><td>Public metrics</td><td>www.umbraxon.xyz/api/protocol/public-metrics</td></tr>
+  <tr><td>Čo nie sme (web)</td><td>www.umbraxon.xyz/docs/WHAT-WE-ARE-NOT.md</td></tr>
+  <tr><td>OPS SLA (draft)</td><td>github.com/UMBRAXON/kya-hub/blob/main/docs/OPS-SLA-DRAFT.md</td></tr>
+  <tr><td>OpenAPI</td><td>www.umbraxon.xyz/api/openapi.yaml</td></tr>
+  <tr><td>Sandbox test</td><td>GET …/api/v1/agents/UMBRA-TEST-0001/status</td></tr>
+</table>
+
+<p class="meta" style="margin-top: 32px;">
+  Generované z repozitára kya-hub · docs/export/UMBRAXON-OPERATOR-PACK.html<br />
+  Pri kopírovaní do Wordu použij návod docs/JAK-EXPORTOVAT-DO-WORDU.md
+</p>
+
+</body>
+</html>

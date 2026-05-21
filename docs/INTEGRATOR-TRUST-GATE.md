@@ -27,7 +27,7 @@ Node helper: `lib/integrator-gate.js` (`verifyAgentGate` with `requireCertProof:
 
 ## Sandbox IDs on production
 
-`UMBRA-TEST-*` returns **400** on production (`SANDBOX_ID_IN_PRODUCTION`). Use `GET /api/protocol/integrator-sandbox` for fixture documentation only.
+On production, `UMBRA-TEST-*` works when `INTEGRATOR_SANDBOX_ON_PRODUCTION=true` (enabled on www.umbraxon.xyz). If disabled, you get `400 SANDBOX_ID_IN_PRODUCTION` — use `GET /api/protocol/integrator-sandbox` for fixture docs only.
 
 ## Integrator API keys vs agent identity
 

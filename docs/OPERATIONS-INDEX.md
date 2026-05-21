@@ -37,6 +37,13 @@ Includes: production agent counts (tests excluded), new bots in window, registra
 
 **Integrator traction:** `GET /api/protocol/integrator-ops` · **Public metrics (investor):** `GET /api/protocol/public-metrics` · **Sybil economics:** `GET /api/protocol/economics` · **Roadmap TODO:** `docs/ROADMAP-TODO.md` · **Trust gate guide:** `docs/INTEGRATOR-TRUST-GATE.md`
 
+## Go-to-market / Word export (operátor)
+
+- `docs/GO-TO-MARKET-90-DAYS.md` — 90-dňový plán (viditeľnosť → boti → financie)
+- `docs/export/UMBRAXON-OPERATOR-PACK.html` — **jeden súbor pre Word** (GTM + dôvera + metriky + outreach)
+- `docs/JAK-EXPORTOVAT-DO-WORDU.md` — ako otvoriť / skopírovať do Wordu
+- `docs/WHERE-TO-FIND-INTEGRATORS.md` — kde hľadať prvých integrátorov
+
 ## SEO / Google indexácia
 
 - Runbook (operátor): [`docs/SEO-INDEXING.md`](SEO-INDEXING.md) — Search Console, Cloudflare, sitemap
@@ -103,6 +110,22 @@ Includes: production agent counts (tests excluded), new bots in window, registra
 - `config/logrotate-btcpay-bitcoin-lnd.example` — optional host `logrotate` template for large `debug.log` paths (edit `PLACEHOLDER_*` before use; see `LOGGING.md` §4).
 - `docs/DIAGNOSTIC-CHECKLIST.md` — live API traffic (`nginx` / PM2), self-test `node test-protocol.js`, payment UI pointers, `/api/register/initiate` notes.
 - `scripts/diagnostic-tail-api.sh` — `tail -f` helper: nginx access log if readable, else PM2 `kya-hub-out.log`.
+
+## Post-reboot (host)
+
+After `reboot`, Docker bridge IPs change — hub uses `BITCOIND_RPC_DOCKER_CONTAINER` + dynamic resolve in `lib/bitcoind-rpc.js`.
+
+```bash
+bash scripts/prod/bitcoind-post-reboot.sh   # loadwallet kya-anchor
+node scripts/anchor-wallet-monitor.js --dry-run
+pm2 resurrect && pm2 save
+```
+
+## Growth automation (scout, community alerts, demo witness)
+
+- Playbook (ty — 1 kanál/týždeň): [`OUTREACH-WEEKLY-PLAYBOOK.md`](OUTREACH-WEEKLY-PLAYBOOK.md)
+- PM2 + boty: [`GROWTH-BOTS.md`](GROWTH-BOTS.md)
+- Cron: `kya-growth-cycle` (08:00 UTC) → `logs/growth/`
 
 ## Error tracking (opt-in)
 

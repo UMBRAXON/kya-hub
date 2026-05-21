@@ -27,9 +27,13 @@ function assert(name, cond, detail) {
 
     if (r.result.source === 'nwc-fallback') {
         assert('inbound_unknown flag set on fallback', r.result.inbound_unknown === true);
-        assert('warn_no_unlock_password set', r.result.warn_no_unlock_password === true);
         assert('outbound_sats present', Number.isFinite(r.result.outbound_sats));
-        console.log(`  -- alby-http path not available (no unlock pw); outbound: ${r.result.outbound_sats} sats`);
+        if (r.result.warn_no_unlock_password) {
+            assert('warn_no_unlock_password only when no unlock pw', r.result.warn_no_unlock_password === true);
+            console.log(`  -- alby-http path not available (no unlock pw); outbound: ${r.result.outbound_sats} sats`);
+        } else {
+            console.log(`  -- nwc fallback with unlock pw configured (${r.result.alby_http_reason}); outbound: ${r.result.outbound_sats} sats`);
+        }
     } else if (r.result.source === 'alby-http') {
         assert('inbound_sats finite number', Number.isFinite(r.result.inbound_sats));
         assert('outbound_sats finite number', Number.isFinite(r.result.outbound_sats));

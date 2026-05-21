@@ -1,6 +1,7 @@
 # Roadmap & TODO — po kritickom review (dev + investor)
 
-> Kontext: skorá prevádzka, čakáme na prvého externého bota/integrátora. Priorita = dôvera, čestnosť, nízke trenie pre adopciu.
+> Kontext: skorá prevádzka, čakáme na prvého externého bota/integrátora. Priorita = dôvera, čestnosť, nízke trenie pre adopciu.  
+> **90-dňový GTM plán:** [`GO-TO-MARKET-90-DAYS.md`](GO-TO-MARKET-90-DAYS.md) · **Kde hľadať ľudí:** [`WHERE-TO-FIND-INTEGRATORS.md`](WHERE-TO-FIND-INTEGRATORS.md)
 
 Legenda: **Ty** = človek / biznis · **Kód** = môžem v repozitári / serveri · **Spolu** = oboje
 
@@ -10,12 +11,12 @@ Legenda: **Ty** = človek / biznis · **Kód** = môžem v repozitári / serveri
 
 | # | Úloha | Kto | Poznámka |
 |---|--------|-----|----------|
-| P0.1 | Jednostránka **Čo sme / nie sme** | Kód | `docs/WHAT-WE-ARE-NOT.md` |
-| P0.2 | Tabuľka **On-chain vs live** | Kód | `docs/ON-CHAIN-STATUS.md` |
-| P0.3 | Verejný **`GET /api/protocol/public-metrics`** | Kód | trakcia + economics + uptime hint |
+| P0.1 | Jednostránka **Čo sme / nie sme** | Kód | `docs/WHAT-WE-ARE-NOT.md` ✅ |
+| P0.2 | Tabuľka **On-chain vs live** | Kód | `docs/ON-CHAIN-STATUS.md` ✅ |
+| P0.3 | Verejný **`GET /api/protocol/public-metrics`** | Kód | ✅ |
 | P0.4 | Show HN + 1× Reddit | Ty | najväčší dosah |
 | P0.5 | GSC index `/` + `/integrators` | Ty | 5 min |
-| P0.6 | Pinned GitHub issue „Integrate in 5 min“ | Ty | `.github/PINNED_ISSUE_BODY.md` |
+| P0.6 | Pinned GitHub issue „Integrate in 5 min“ | Ty | `.github/PINNED_ISSUE_BODY.md` ✅ |
 
 ---
 
@@ -23,69 +24,50 @@ Legenda: **Ty** = človek / biznis · **Kód** = môžem v repozitári / serveri
 
 | # | Úloha | Kto | Poznámka |
 |---|--------|-----|----------|
-| P1.1 | Sanitizovať **500 na verejných API** (žiadne `e.message`) | Kód | `lib/http-public-error.js` + vybrané routy |
-| P1.2 | **Branch protection** na `main` (smoke required, žiadny bypass) | Ty | GitHub Settings |
-| P1.3 | Zavrieť **Dependabot moderate** | Kód/Ty | `npm audit` + PR |
-| P1.4 | Zjednotiť **brand** (`umbraxon` vs `umbraxon_kya`) | Spolu | npm org, copy, doména |
-| P1.5 | **Uptime / status** stránka pre integrátorov | Kód | `/status` na portáli |
-| P1.6 | Monolit: ďalšie routy do `lib/routes/*` | Kód | postupne, nie big-bang |
-| P1.7 | **Runbook SLA** (čo ak hub 4h down) | Kód | `docs/OPS-SLA-DRAFT.md` |
-| P1.8 | Externý **nezávislý audit** alebo bug bounty | Ty | keď prvý partner |
+| P1.1 | Sanitizovať **500 na verejných API** | Kód | `lib/http-public-error.js` + protocol/discovery routes ✅ (pokračovať na zvyšku server.js) |
+| P1.2 | **Branch protection** na `main` | Ty | GitHub Settings |
+| P1.3 | Zavrieť **Dependabot moderate** | Kód/Ty | `npm audit` |
+| P1.4 | Zjednotiť **brand** | Spolu | npm `@umbraxon_kya/kya-verify` |
+| P1.5 | **Uptime / status** | Kód | `/status` + OPS SLA link ✅ |
+| P1.6 | Monolit → `lib/routes/*` | Kód | protocol, discovery, admin-growth ✅; ďalšie skupiny v [`ARCHITECTURE-THIN-HUB.md`](ARCHITECTURE-THIN-HUB.md) |
+| P1.7 | **Runbook SLA** | Kód | `docs/OPS-SLA-DRAFT.md` ✅ |
+| P1.8 | Externý audit / bug bounty | Ty | po prvom partnerovi |
 
 ---
 
-## P2 — rast a sieť (keď príde prvý externý user)
+## P2 — rast a sieť
 
 | # | Úloha | Kto | Poznámka |
 |---|--------|-----|----------|
-| P2.1 | **10+ platených agentov** mimo testov | Čas | organické + 1 sponsor invite kampaň |
-| P2.2 | **1 integrátor** s verejnou referenciou | Ty | LNBits / marketplace / framework |
-| P2.3 | **PyPI** `umbraxon` (Trusted Publisher) | Ty | Actions workflow hotový |
-| P2.4 | **Self-host Docker** „hub-lite“ | Kód | `docker-compose.hub-lite.yml` + `docs/HUB-LITE-DOCKER.md` |
-| P2.5 | **Federácia / 2. hub** ADR | Kód | dokument, nie implementácia hneď |
-| P2.6 | HSM / offline ROOT | Kód | investor ask |
-| P2.7 | Právnik: GDPR + CRL + purge | Ty | 1 konzultácia |
+| P2.1 | **10+ platených agentov** | Čas | [`GO-TO-MARKET-90-DAYS.md`](GO-TO-MARKET-90-DAYS.md) mesiac 2 |
+| P2.2 | **1 integrátor** s referenciou | Ty | LNBits / marketplace |
+| P2.3 | **PyPI** `umbraxon` | Ty | workflow v `.github/workflows/publish-umbraxon-pypi.yml` |
+| P2.4 | **Self-host hub-lite** | Kód | ✅ |
+| P2.5 | **Federácia ADR** | Kód | `docs/adr/ADR-001-multi-hub-federation.md` + `GET /api/protocol/trusted-hubs.json` ✅ |
+| P2.6 | HSM / offline ROOT | Kód | backlog |
+| P2.7 | Právnik GDPR | Ty | 1 konzultácia |
 
 ---
 
-## Extra — hodnota pre ostatných (nie len pre nás)
+## Extra — implementované / rozšírené (2026-05-19)
 
-| Nápad | Pre koho | Čo rieši |
-|--------|----------|----------|
-| **Verify badge** (embed / SVG) | Integrátori | „Overené KYA“ na webe partnera |
-| **Open metrics** `/api/protocol/public-metrics` | Investori, devs | transparentná trakcia bez dashboardu |
-| **LNBits plugin** `integrations/lnbits-kya-verify` | Lightning komunita | gate pred platbou v LNBits |
-| **Webhook „nový agent v discovery“** | Platformy | notifikácia pri opt-in feed |
-| **Sponsor invites** (už v protokole) | Prví boti | prvých N registrácií bez trenia |
-| **Porovnávacia tabuľka** KYA vs API key vs OAuth | Rozhodovatelia | prečo nie len API kľúč |
-| **llms.txt + well-known** (hotové) | AI agenti | objaviteľnosť |
-| **Sandbox `UMBRA-TEST-*`** (hotové) | Integrátori | test bez mainnetu |
-| **Economics API** (hotové) | Integrátori | úprimný Sybil popis |
-| **MCP read-only** | Cursor / IDE | dev skúša hub bez platby |
+| Nápad | Stav |
+|--------|------|
+| `scripts/integrate-in-5min.sh` | ✅ |
+| `lib/protocol-core.js` | ✅ |
+| Discovery webhook (`DISCOVERY_WEBHOOK_URLS`) | ✅ |
+| `discovery.indexed` dev webhook event | ✅ |
+| Sponsor pool admin API + migrácia 028 | ✅ (register hook = env, default off) |
+| Agent history export `GET /api/admin/agent/:id/history-export` | ✅ |
+| LNBits plugin | ✅ `integrations/lnbits-kya-verify/` |
+| Sandbox-first registration doc | ✅ |
 
 ---
 
 ## Čo zámerne NERobiť teraz
 
-- Sľubovať „anti-Sybil záruku“ alebo AML compliance
-- Multi-region cluster pred prvým partnerom
-- Token / ICO / „trust coin“
-- Spam automat na sociálnych sieťach
+- Token / ICO
+- Multi-region HA pred prvým partnerom
+- Sľubovať AML compliance
 
----
-
-## Stav implementácie tohto dokumentu
-
-| Položka | Stav |
-|---------|------|
-| WHAT-WE-ARE-NOT.md | hotové |
-| ON-CHAIN-STATUS.md | hotové |
-| GET /api/protocol/public-metrics | hotové |
-| P1.1 500 sanitization | čiastočne hotové |
-| P1.5 /status page | hotové |
-| P2.4 hub-lite Docker | hotové |
-| KYA vs API key doc | hotové |
-| Verify badge on /integrators | hotové |
-| Ostatné | backlog |
-
-Posledná aktualizácia: 2026-05-18
+Posledná aktualizácia: 2026-05-19
