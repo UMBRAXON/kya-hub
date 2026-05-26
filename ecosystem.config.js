@@ -325,6 +325,28 @@ module.exports = {
             time: true,
         },
         {
+            // Growth: post a couple of scout drafts as real GitHub comments (requires `gh auth login`).
+            // Safe limits via env:
+            //   SCOUT_POST_MAX_PER_RUN=2 (default)
+            name: 'kya-growth-gh-comments',
+            script: 'scripts/growth/post-scout-drafts.sh',
+            interpreter: 'bash',
+            cwd: '/root/kya-hub',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '30 8 * * *', // after scout run; UTC
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-growth-gh-comments-error.log',
+            out_file: '/root/.pm2/logs/kya-growth-gh-comments-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
             // Operator daily digest — agents, registrations, integrator requests,
             // heartbeats, reputation, rejected API → Telegram (07:00 UTC ≈ 09:00 CET).
             name: 'kya-operator-daily-report',

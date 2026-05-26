@@ -20,6 +20,15 @@ tail -30 /root/.pm2/logs/kya-growth-cycle-out.log
 
 **Problém v logoch (má 2026):** `kya-pr-engage` → `moltbook_auth_failed` — treba obnoviť `MOLTBOOK_API_KEY` v `agents/umbraxon-pr-agent/.env`.
 
+**Nostr:** PR agent potrebuje Python venv s `pynostr` (inak `pip install pynostr` v logu):
+
+```bash
+cd /root/kya-hub/agents/umbraxon-pr-agent
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+./run-python.sh main.py nostr-post --log-dir /root/kya-hub/logs/pr-agent   # test
+./run-python.sh main.py nostr-profile --log-dir /root/kya-hub/logs/pr-agent
+```
+
 Zapnutie po reštarte servera (ak cron nebeží):
 
 ```bash

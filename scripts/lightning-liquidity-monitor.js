@@ -273,7 +273,25 @@ async function probeAlbyHttp() {
                 _albySession = session;
                 log('info', { event: 'alby_login_ok', endpoint: session.endpoint, source: pw.source });
             }
-            channels = await _albyGetChannels(session);
+            // Alby may return 500 "LNClient not started" briefly after unlock/restart.
+            let lastChannelsErr = null;
+            for (let attempt = 0; attempt < 5; attempt++) {
+                try {
+                    channels = await _albyGetChannels(session);
+                    lastChannelsErr = null;
+                    break;
+                } catch (chErr) {
+                    lastChannelsErr = chErr;
+                    const msg = String(chErr.message || '');
+                    const lndWarmup = chErr.httpStatus === 500 && /LNClient not started/i.test(msg);
+                    if (lndWarmup && attempt < 4) {
+                        await new Promise((r) => setTimeout(r, 3000));
+                        continue;
+                    }
+                    throw chErr;
+                }
+            }
+            if (lastChannelsErr) throw lastChannelsErr;
             break;
         } catch (e) {
             // Only retry on 401 if we ENTERED the loop with a cached session

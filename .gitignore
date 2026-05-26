@@ -61,6 +61,7 @@ data-exports/
 
 # --- Python (monitoring dashboard local venv + caches) ------------------
 monitoring/.venv/
+agents/umbraxon-pr-agent/.venv/
 **/__pycache__/
 *.pyc
 

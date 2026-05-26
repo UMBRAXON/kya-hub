@@ -7,11 +7,19 @@ mkdir -p "$OUT"
 STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 LOG="$OUT/demo-witness-latest.txt"
 
+run_smoke() {
+  HUB_URL="${HUB_URL:-https://www.umbraxon.xyz}" "$ROOT/scripts/integrate-in-5min.sh"
+}
+
 {
   echo "KYA demo witness — $STAMP UTC"
   echo "Hub: ${HUB_URL:-https://www.umbraxon.xyz}"
   echo "---"
-  HUB_URL="${HUB_URL:-https://www.umbraxon.xyz}" "$ROOT/scripts/integrate-in-5min.sh" || true
+  if ! run_smoke; then
+    echo "--- retry after 20s (hub/alby warm-up) ---"
+    sleep 20
+    run_smoke || true
+  fi
 } >"$LOG" 2>&1
 
 FAIL=0
