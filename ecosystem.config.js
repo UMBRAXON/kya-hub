@@ -130,10 +130,9 @@ module.exports = {
             interpreter: 'bash',
             instances: 1,
             exec_mode: 'fork',
-            // Always-on mode: keep the bot alive; the script itself should gate frequency.
-            autorestart: true,
-            cron_restart: null,
-            restart_delay: 60 * 1000,
+            // Single-shot; PM2 cron schedules the next run.
+            autorestart: false,
+            cron_restart: '15 */3 * * *',
             env: {
                 NODE_ENV: 'production',
                 HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
@@ -152,10 +151,9 @@ module.exports = {
             interpreter: 'bash',
             instances: 1,
             exec_mode: 'fork',
-            // Always-on mode: keep the bot alive; the script itself should gate frequency.
-            autorestart: true,
-            cron_restart: null,
-            restart_delay: 60 * 1000,
+            // Single-shot; PM2 cron schedules the next run.
+            autorestart: false,
+            cron_restart: '0 10 * * *',
             env: {
                 NODE_ENV: 'production',
                 HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
@@ -194,10 +192,8 @@ module.exports = {
             interpreter: 'bash',
             instances: 1,
             exec_mode: 'fork',
-            // Always-on mode: keep the bot alive; the script itself should gate frequency.
-            autorestart: true,
-            cron_restart: null,
-            restart_delay: 60 * 1000,
+            autorestart: false,
+            cron_restart: '0 14 * * 1,3,5',
             env: {
                 NODE_ENV: 'production',
                 HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
@@ -316,10 +312,8 @@ module.exports = {
             cwd: '/root/kya-hub',
             instances: 1,
             exec_mode: 'fork',
-            // Always-on mode: run continuously (the script should sleep between cycles).
-            autorestart: true,
-            cron_restart: null,
-            restart_delay: 60 * 1000,
+            autorestart: false,
+            cron_restart: '0 8 * * *',
             env: {
                 NODE_ENV: 'production',
                 HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
