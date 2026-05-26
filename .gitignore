@@ -44,6 +44,9 @@ yarn-error.log*
 *.log
 output.log
 server.log
+*.log.*
+logs/
+tmp/
 backups/
 exports/
 invoices/
@@ -51,6 +54,10 @@ data-exports/
 .dac8-rate-cache/
 .tmp-ssh/
 *.pid
+
+# local npm auth files (may contain tokens)
+.npmrc
+**/.npmrc
 
 # --- Python (monitoring dashboard local venv + caches) ------------------
 monitoring/.venv/
@@ -64,3 +71,9 @@ monitoring/.venv/
 
 # --- Local release bundles (git archive / hand-off tarballs) ------------
 dist/
+
+# --- Personal / off-project (not UMBRAXON KYA-Hub) -----------------------
+OFFPROJECT-battery-passport-starter/
+
+# --- Local one-off analysis uploads (not part of hub) ----------------------
+upload-energocom/
