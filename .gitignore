@@ -53,6 +53,7 @@ invoices/
 data-exports/
 .dac8-rate-cache/
 .tmp-ssh/
+.tmp-scout-posted.json
 *.pid
 
 # local npm auth files (may contain tokens)
