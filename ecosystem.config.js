@@ -186,6 +186,27 @@ module.exports = {
             time: true,
         },
         {
+            // PR ambassador agent heartbeat (signed, external-bot style).
+            // Prevents reputation decay; does not "farm" score.
+            name: 'kya-pr-heartbeat',
+            script: 'scripts/prod/pr-agent-heartbeat.sh',
+            cwd: '/root/kya-hub',
+            interpreter: 'bash',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '0 */6 * * *', // every 6 hours
+            env: {
+                NODE_ENV: 'production',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-pr-heartbeat-error.log',
+            out_file: '/root/.pm2/logs/kya-pr-heartbeat-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
             // Developer webhook outbox — retry integrator HTTPS callbacks (every minute).
             name: 'kya-dev-webhook-worker',
             script: 'scripts/prod/developer-webhook-worker.sh',
