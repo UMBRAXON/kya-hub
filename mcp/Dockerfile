@@ -1,16 +1,17 @@
 FROM node:20-bookworm-slim
 
+RUN npm install -g mcp-proxy@latest
+
 WORKDIR /app
 
-# Install dependencies first for better layer caching
-COPY mcp/package.json mcp/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-# Copy the MCP source
-COPY mcp/ ./
+COPY . ./
 
-# MCP stdio transport: the process communicates via stdin/stdout.
 ENV KYA_HUB_BASE_URL=https://umbraxon.xyz
 ENV KYA_HUB_REQUEST_TIMEOUT_MS=30000
 
-CMD ["node", "src/index.js"]
+EXPOSE 8080
+
+CMD ["mcp-proxy", "--port", "8080", "--", "node", "src/index.js"]
