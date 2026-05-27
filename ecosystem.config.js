@@ -123,6 +123,29 @@ module.exports = {
             time: true,
         },
         {
+            // GitHub issue watcher → Telegram alert on new comments.
+            // Runs as PM2 cron (single-shot).
+            name: 'kya-gh-issue-watch',
+            script: 'scripts/github/issue-watch.js',
+            cwd: '/root/kya-hub',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '*/10 * * * *', // every 10 minutes
+            env: {
+                NODE_ENV: 'production',
+                GITHUB_ISSUE_WATCH_REPO: 'UMBRAXON/kya-hub',
+                GITHUB_ISSUE_WATCH_NUMBER: '10',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+                DOTENV_CONFIG_QUIET: 'true'
+            },
+            error_file: '/root/.pm2/logs/kya-gh-issue-watch-error.log',
+            out_file: '/root/.pm2/logs/kya-gh-issue-watch-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
             // UMBRAXON-PR-AMBASSADOR — Moltbook comments (every 3h).
             name: 'kya-pr-engage',
             script: 'scripts/prod/pr-agent-engage.sh',
