@@ -9,6 +9,7 @@ import type { Dictionary, Locale } from "@/lib/i18n";
 
 function primaryLinks(nav: Dictionary["nav"]) {
   return [
+    { href: "/bots/", label: "Bots" },
     { href: "/integrators", label: nav.integrators },
     { href: "#platform", label: nav.platform },
     { href: "/about", label: nav.trust },
@@ -21,6 +22,7 @@ function drawerLinks(nav: Dictionary["nav"]) {
   return [
     { href: "#contact", label: nav.contact },
     { href: "/about", label: nav.trust },
+    { href: "/bots/", label: "Bots" },
     { href: "/integrators", label: nav.integrators },
     { href: "#platform", label: nav.platform },
     { href: "#about", label: nav.about },

@@ -3,7 +3,9 @@ FROM node:20-bookworm-slim
 # MCP server image for Glama directory checks and local Docker.
 # Hub API uses Dockerfile.hub-lite (separate).
 
-RUN npm install -g mcp-proxy@latest
+# Glama runs builds with strict engine checks in some environments.
+# Pin mcp-proxy to a Node 20 compatible line (v6+ pulls pipenet which needs Node >=22).
+RUN npm install -g mcp-proxy@5.12.5
 
 WORKDIR /app/mcp
 

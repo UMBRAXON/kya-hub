@@ -403,6 +403,8 @@ module.exports = {
             script: 'node_modules/next/dist/bin/next',
             args: 'start -p 3001',
             cwd: '/root/kya-hub/portal',
+            // Use system node, not Cursor-bundled node (stability: avoids occasional PM2 pid/listen issues).
+            interpreter: '/usr/bin/node',
             instances: 1,
             exec_mode: 'fork',
             autorestart: true,

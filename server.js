@@ -1138,7 +1138,7 @@ app.post('/api/webhook/alby', express.raw({ type: 'application/json', limit: '64
 app.use(express.json({ limit: '100kb' }));
 
 // ----------------------------------------------------------------------------
-// Unified www portal + legacy /bots redirect + bots.* alias
+// Unified www portal + bots.* alias
 // ----------------------------------------------------------------------------
 // Primary HTML is repo-root index.html + /site/app.js (Tailwind CDN + dynamic /api).
 // Optional: BOTS_PORTAL_PUBLIC_BASE (no trailing slash), default https://www.umbraxon.xyz
@@ -1155,22 +1155,9 @@ app.use((req, res, next) => {
     try {
         u = new URL(req.originalUrl || '/', 'https://internal.local');
     } catch (_) {
-        return res.redirect(301, `${BOTS_PORTAL_PUBLIC_BASE}/`);
+        return res.redirect(301, `${BOTS_PORTAL_PUBLIC_BASE}/bots/`);
     }
-    const target = new URL('/', `${BOTS_PORTAL_PUBLIC_BASE}/`);
-    if (u.search) target.search = u.search;
-    return res.redirect(301, target.toString());
-});
-
-app.use('/bots', (req, res, next) => {
-    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-    let u;
-    try {
-        u = new URL(req.originalUrl || '/bots/', 'https://internal.local');
-    } catch (_) {
-        return res.redirect(301, `${BOTS_PORTAL_PUBLIC_BASE}/`);
-    }
-    const target = new URL('/', `${BOTS_PORTAL_PUBLIC_BASE}/`);
+    const target = new URL('/bots/', `${BOTS_PORTAL_PUBLIC_BASE}/`);
     if (u.search) target.search = u.search;
     return res.redirect(301, target.toString());
 });

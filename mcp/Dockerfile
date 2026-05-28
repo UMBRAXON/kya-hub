@@ -1,6 +1,7 @@
 FROM node:20-bookworm-slim
 
-RUN npm install -g mcp-proxy@latest
+# Pin for Node 20 compatibility (newer mcp-proxy versions require Node >=22 via pipenet).
+RUN npm install -g mcp-proxy@5.12.5
 
 WORKDIR /app
 
