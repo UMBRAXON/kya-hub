@@ -162,7 +162,7 @@ mustInclude('server.js', [
   'BOTS_ALIAS_HOST',
   'BOTS_PORTAL_PUBLIC_BASE',
   "res.redirect(301",
-  "app.use('/bots'",
+  "/bots/",
 ]);
 mustInclude('index.html', ['/site/app.js', 'cdn.tailwindcss.com', 'alpinejs', 'lottie-web']);
 
