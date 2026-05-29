@@ -1,3 +1,5 @@
+import { OPERATOR_LOCATION } from "@/lib/operator";
+
 export const en = {
   meta: {
     title: "UMBRAXON KYA Hub — Know Your Agent registry (Lightning + Ed25519)",
@@ -274,7 +276,7 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     ],
   },
   contactStrip: {
-    builtInEu: "Built in EU",
+    builtInEu: OPERATOR_LOCATION.badge.en,
     title: "Contact the operator",
     body:
       "Integrators, security questions, or partnership — Telegram or GitHub. No ticket queue.",
@@ -312,9 +314,9 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
     intro:
       "KYA Hub is identity infrastructure. You should see who operates it, what is open source, and what we do not claim (no third-party audit, no corporate entity on this page).",
     operatorTitle: "Operator",
-    builtInEu: "Built in EU",
+    builtInEu: OPERATOR_LOCATION.badge.en,
     maintainerLabel: "Person behind the project",
-    operatorRole: "Solo operator · open source · built in the EU",
+    operatorRole: OPERATOR_LOCATION.role.en,
     operatorBody:
       "UMBRAXON is the operator brand behind this hub. The backend, portal, and protocol docs are public on GitHub. Production is a single hub instance at umbraxon.xyz — not a federation yet.",
     operatorStory:

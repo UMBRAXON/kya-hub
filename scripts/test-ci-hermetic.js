@@ -166,6 +166,20 @@ mustInclude('server.js', [
 ]);
 mustInclude('index.html', ['/site/app.js', 'cdn.tailwindcss.com', 'alpinejs', 'lottie-web']);
 
+console.log('=== 11) Portal operator jurisdiction (no generic EU badge) ===');
+mustInclude('portal/lib/operator.ts', [
+  'OPERATOR_LOCATION',
+  'Slovakia · server in Germany',
+  'Slovensko · server v Nemecku',
+]);
+for (const p of ['portal/lib/messages/en.ts', 'portal/lib/messages/sk.ts']) {
+  const body = fs.readFileSync(path.join(ROOT, p), 'utf8');
+  truthy(!body.includes('Built in EU'), `${p} must not contain "Built in EU"`);
+  truthy(!body.includes('Postavené v EÚ'), `${p} must not contain "Postavené v EÚ"`);
+  truthy(!body.includes('built in the EU'), `${p} must not contain "built in the EU"`);
+  truthy(!body.includes('postavené v EÚ'), `${p} must not contain "postavené v EÚ"`);
+}
+
 console.log(`\nSUMMARY: ${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);
 

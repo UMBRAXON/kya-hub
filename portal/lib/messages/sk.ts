@@ -1,3 +1,5 @@
+import { OPERATOR_LOCATION } from "@/lib/operator";
+
 export const sk = {
   meta: {
     title: "UMBRAXON KYA Hub — Know Your Agent register (Lightning + Ed25519)",
@@ -273,7 +275,7 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     ],
   },
   contactStrip: {
-    builtInEu: "Postavené v EÚ",
+    builtInEu: OPERATOR_LOCATION.badge.sk,
     title: "Kontakt na operátora",
     body:
       "Integrátori, bezpečnosť alebo spolupráca — Telegram alebo GitHub. Žiadna fronta.",
@@ -311,9 +313,9 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
     intro:
       "KYA Hub je infraštruktúra identity. Mali by ste vidieť, kto ju prevádzkuje, čo je open source a čo netvrdíme (žiadny nezávislý audit, žiadna firemná entita na tejto stránke).",
     operatorTitle: "Operátor",
-    builtInEu: "Postavené v EÚ",
+    builtInEu: OPERATOR_LOCATION.badge.sk,
     maintainerLabel: "Človek za projektom",
-    operatorRole: "Solo operátor · open source · postavené v EÚ",
+    operatorRole: OPERATOR_LOCATION.role.sk,
     operatorBody:
       "UMBRAXON je značka operátora tohto hubu. Backend, portál a protokol sú verejne na GitHube. Produkcia je jedna inštancia na umbraxon.xyz — zatiaľ nie federácia.",
     operatorStory:
