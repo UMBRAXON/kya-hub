@@ -169,6 +169,29 @@ module.exports = {
             time: true,
         },
         {
+            // Curated Mastodon queue (markdown in scripts/mastodon/posts/).
+            name: 'kya-mastodon-daily',
+            script: 'scripts/prod/mastodon-daily-post.sh',
+            cwd: '/root/kya-hub',
+            interpreter: 'bash',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '30 9 * * *', // 09:30 UTC daily
+            env: {
+                NODE_ENV: 'production',
+                MASTODON_BASE_URL: 'https://mastodon.social',
+                MASTODON_TOKEN_FILE: '/root/kya-hub/.secrets/mastodon.token',
+                MASTODON_MAX_PER_RUN: '1',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+            },
+            error_file: '/root/.pm2/logs/kya-mastodon-daily-error.log',
+            out_file: '/root/.pm2/logs/kya-mastodon-daily-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
             // UMBRAXON-PR-AMBASSADOR — Moltbook comments (every 3h).
             name: 'kya-pr-engage',
             script: 'scripts/prod/pr-agent-engage.sh',
