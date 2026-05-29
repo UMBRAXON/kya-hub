@@ -32,7 +32,7 @@ export const OPERATOR_TELEGRAM_URL =
 
 /**
  * Public jurisdiction copy (homepage contact strip + /about).
- * Operator is based in Slovakia; production runs on Hetzner in Germany.
+ * Operator is based in Slovakia; production is hosted in Germany.
  * Do not replace with generic "Built in EU" — CI asserts these strings.
  */
 export const OPERATOR_LOCATION = {
@@ -41,7 +41,7 @@ export const OPERATOR_LOCATION = {
     sk: "Slovensko · server v Nemecku",
   },
   role: {
-    en: "Solo operator · open source · operator in Slovakia · production hosted in Germany (Hetzner)",
-    sk: "Solo operátor · open source · operátor na Slovensku · produkcia v Nemecku (Hetzner)",
+    en: "Solo operator · open source · operator in Slovakia · production hosted in Germany",
+    sk: "Solo operátor · open source · operátor na Slovensku · produkcia v Nemecku",
   },
 } as const;
