@@ -146,6 +146,29 @@ module.exports = {
             time: true,
         },
         {
+            // Public www uptime → Telegram/Discord on DOWN / RECOVERY.
+            name: 'kya-web-uptime-watch',
+            script: 'scripts/prod/web-uptime-watch.js',
+            cwd: '/root/kya-hub',
+            interpreter: '/usr/bin/node',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '*/2 * * * *', // every 2 minutes
+            env: {
+                NODE_ENV: 'production',
+                WEB_UPTIME_URL: 'https://www.umbraxon.xyz/',
+                WEB_UPTIME_FAIL_THRESHOLD: '2',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+                DOTENV_CONFIG_QUIET: 'true',
+            },
+            error_file: '/root/.pm2/logs/kya-web-uptime-watch-error.log',
+            out_file: '/root/.pm2/logs/kya-web-uptime-watch-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
             // UMBRAXON-PR-AMBASSADOR — Moltbook comments (every 3h).
             name: 'kya-pr-engage',
             script: 'scripts/prod/pr-agent-engage.sh',
