@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from config import Settings
 from hub.api_docs import fetch_hub_api_docs, summarize_for_prompt
 from hub.metrics import fetch_public_snapshot
-from pr.promote import _openai_chat, system_prompt_for_posts
+from pr.promote import _openai_chat, system_prompt_for_moltbook, system_prompt_for_posts
 from pr.state import get_set, load_state, put
 
 
@@ -307,7 +307,7 @@ def build_daily_post(settings: Settings, *, audience: str = "m2m_developers") ->
             "Write the Moltbook post body only (no title). Max 260 words. Include hub URL once."
         )
         try:
-            body = _openai_chat(settings, user, system=system_prompt_for_posts(settings))
+            body = _openai_chat(settings, user, system=system_prompt_for_moltbook(settings))
         except Exception:
             pass
     title = theme.title

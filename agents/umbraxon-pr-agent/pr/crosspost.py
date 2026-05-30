@@ -1,6 +1,7 @@
 """Cross-platform publish with spam guard and per-run limits."""
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List, Optional
 
 from config import Settings
@@ -8,6 +9,13 @@ from connectors.moltbook import MoltbookConnector
 from pr.connectors_registry import connectors_for_platform
 from pr.spam_guard import content_hash, may_post_now, validate_content
 from pr.state import record_post
+
+# Moltbook policy: English only (Mastodon queue may use SK).
+_SK_DIACRITICS = set("áäčďéíĺľňóôŕšťúýžÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ")
+
+
+def _moltbook_text_is_english(text: str) -> bool:
+    return not any(c in _SK_DIACRITICS for c in text)
 
 
 def crosspost(
@@ -46,6 +54,14 @@ def crosspost(
             results[name] = {"ok": True, "dry_run": True}
             published += 1
             continue
+        if name == "moltbook":
+            if not _moltbook_text_is_english(text) and os.getenv("MOLTBOOK_ALLOW_NON_ENGLISH") != "1":
+                results[name] = {
+                    "ok": False,
+                    "blocked": True,
+                    "reason": "moltbook_english_only",
+                }
+                continue
         if name == "moltbook" and isinstance(conn, MoltbookConnector):
             st = conn.claim_status()
             status = str(st.get("status") or "").lower()

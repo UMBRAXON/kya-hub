@@ -6,8 +6,8 @@ from typing import Any, Dict, Optional
 from config import Settings
 from hub.api_docs import fetch_hub_api_docs, summarize_for_prompt
 
-def system_prompt_for_posts(settings: Settings) -> str:
-    lang = (getattr(settings, "pr_post_language", "en") or "en").lower()
+def system_prompt_for_posts(settings: Settings, *, force_lang: str | None = None) -> str:
+    lang = (force_lang or getattr(settings, "pr_post_language", "en") or "en").lower()
     if lang == "sk":
         lang_line = "Píš po slovensky."
     elif lang == "en":
@@ -19,6 +19,11 @@ Share infrastructure updates, metrics, and real project value for the M2M agent 
 Never spam; provide technical insight, not hype.
 {lang_line}
 No "to the moon", no repeated CTAs. Max 280 words."""
+
+
+def system_prompt_for_moltbook(settings: Settings) -> str:
+    """Moltbook is English-only (international dev/agent audience)."""
+    return system_prompt_for_posts(settings, force_lang="en")
 
 
 SYSTEM_PROMPT = """Si oficiálny technický PR ambasádor pre Umbraxon KYA Hub."""
