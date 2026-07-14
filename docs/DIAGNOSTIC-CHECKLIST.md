@@ -69,6 +69,17 @@ curl -sS https://umbraxon.xyz/api/health | jq .
 
 Polia `btcpay`, `alby`, `db` musia byť v poriadku. Z Cursora alebo iného MCP hostiteľa rovnaké dáta vie vrátiť read-only server v [`mcp/README.md`](mcp/README.md) (nástroj `kya_health`).
 
+**`alby: NOT_CONNECTED`** — NWC URI je nastavené (`ALBY_NWC_URI` alebo `.secrets/alby-nwc.txt`), ale WebSocket k Alby Hub zlyhal (Hub locked po reštarte, relay timeout, zlá URI). Hub skúša reconnect s backoffom automaticky. Manuálne:
+
+```bash
+# 1) Over, že alby-hub beží a je odomknutý (UI :8080)
+pm2 status alby-hub
+# 2) Force reconnect z kya-hub
+curl -sS -X POST -H "X-Admin-Key: $ADMIN_API_KEY" http://127.0.0.1:3000/api/admin/alby/reconnect | jq .
+# 3) Health
+curl -sS http://127.0.0.1:3000/api/health | jq .alby
+```
+
 **Alby: „pending“ v KYA, ale v Alby Hub UI nič** — hub vytvára LN invoice cez **NWC** (`ALBY_NWC_URI`), nie nutne rovnaký zoznam ako ručné faktúry v UI. Overenie na uzle pripojenom NWC:
 
 ```bash

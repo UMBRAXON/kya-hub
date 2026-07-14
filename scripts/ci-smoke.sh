@@ -9,6 +9,7 @@ echo "[ci-smoke] npm  $(npm -v)"
 # Pure, hermetic checks only (no .env, no DB, no network).
 node scripts/test-item7-log-redaction.js
 node scripts/test-item13-watchtower-doc.js
+node scripts/test-alby-reconnect.js
 node scripts/test-ci-hermetic.js
 node scripts/test-openapi-sanity.js
 node scripts/test-bot-portal.js

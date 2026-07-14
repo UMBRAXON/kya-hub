@@ -153,8 +153,10 @@ if (missing.length) {
 if (!cfg.ADMIN_API_KEY) {
     logger.warn('ADMIN_API_KEY nie je nastavené — /api/dashboard bude odmietať všetko (503)');
 }
-if (!cfg.ALBY_NWC_URI) {
-    logger.warn('ALBY_NWC_URI nie je nastavené — Lightning platby cez Alby Hub vypnuté (fallback iba BTCPay LNURL)');
+if (!alby.isConfigured()) {
+    logger.warn('ALBY_NWC_URI / secrets file nie je nastavené — Lightning platby cez Alby Hub vypnuté (fallback iba BTCPay LNURL)');
+} else if (!cfg.ALBY_NWC_URI) {
+    logger.info('ALBY_NWC_URI env prázdne — používa sa ALBY_NWC_URI_FILE / .secrets/alby-nwc.txt');
 }
 
 // ----------------------------------------------------------------------------
@@ -1311,6 +1313,7 @@ let _healthCache = {
     ts: 0,
     db:     { status: 'unknown' },
     btcpay: { status: 'unknown' },
+    alby:   'unknown',
 };
 let _healthProbeInFlight = false;
 
@@ -1374,6 +1377,14 @@ async function _runHealthProbe() {
             },
         };
     }
+    // Alby NWC liveness + auto-reconnect nudge (non-blocking on failure).
+    try {
+        _healthCache.alby = await alby.probe(logger);
+    } catch (_) {
+        _healthCache.alby = alby.isConfigured()
+            ? (alby.isConnected() ? 'ERROR' : 'NOT_CONNECTED')
+            : 'NOT_CONFIGURED';
+    }
     _healthCache.ts = start;
     _healthProbeInFlight = false;
     return _healthCache;
@@ -1401,9 +1412,15 @@ app.get('/api/health', async (req, res) => {
     const degraded = (staleness_ms !== null) &&
                      (staleness_ms > HEALTH_PROBE_INTERVAL_MS * HEALTH_STALE_CYCLE_MULT);
 
-    const albyStatus = alby.isConfigured()
-        ? (alby.isConnected() ? 'OK' : 'NOT_CONNECTED')
-        : 'NOT_CONFIGURED';
+    // Prefer live connect flag; fall back to last probe label (ERROR/NOT_CONNECTED).
+    let albyStatus;
+    if (!alby.isConfigured()) {
+        albyStatus = 'NOT_CONFIGURED';
+    } else if (alby.isConnected()) {
+        albyStatus = (_healthCache.alby === 'ERROR') ? 'ERROR' : 'OK';
+    } else {
+        albyStatus = 'NOT_CONNECTED';
+    }
 
     res.set('Cache-Control', 'no-store');
     res.json({
@@ -1453,10 +1470,34 @@ app.get('/api/admin/health/details', security.adminAuth, async (req, res) => {
         db: _healthCache.db,         // includes raw {code,message,host,port}
         btcpay: _healthCache.btcpay, // includes raw {code,message} + http_status
         alby: {
-            configured: alby.isConfigured(),
-            connected: alby.isConfigured() ? alby.isConnected() : false,
+            ...alby.getStatus(),
+            probe: _healthCache.alby || null,
         },
     });
+});
+
+// Operator: force Alby NWC reconnect (e.g. after unlocking Alby Hub / rotating NWC URI).
+app.post('/api/admin/alby/reconnect', security.adminAuth, async (req, res) => {
+    const log = logger.child({ route: 'admin/alby/reconnect' });
+    if (!alby.isConfigured()) {
+        return res.status(503).json({ error: 'ALBY_NOT_CONFIGURED', status: alby.getStatus() });
+    }
+    try {
+        const ok = await alby.ensureReady(log, { forceReconnect: true, throwOnFail: true });
+        if (ok) {
+            await alby.startSubscriptions(log);
+        }
+        log.info({ connected: alby.isConnected() }, 'Alby reconnect OK');
+        return res.json({ ok: true, status: alby.getStatus() });
+    } catch (err) {
+        log.warn({ err: err.message }, 'Alby reconnect FAIL');
+        alby.startReconnectSupervisor(log);
+        return res.status(503).json({
+            error: 'ALBY_RECONNECT_FAILED',
+            message: err.message,
+            status: alby.getStatus(),
+        });
+    }
 });
 
 // ============================================================================
@@ -1963,8 +2004,11 @@ async function handleRegisterInitiate(req, res) {
         sponsor_invite_id: req.sponsor_invite_verified.invite_id,
     } : {};
 
-    // Vytvor invoice — preferuj Alby ak je dostupné
+    // Vytvor invoice — preferuj Alby ak je dostupné (one-shot ensureReady before BTCPay fallback)
     const description = `UMBRAXON ${tier.name} registration: ${agentName} [${registrationId}]`;
+    if (alby.isConfigured() && !alby.isConnected()) {
+        await alby.ensureReady(log).catch(() => false);
+    }
     const useAlby = alby.isConfigured() && alby.isConnected();
     let invoiceFailSource = null;
 
@@ -6384,12 +6428,13 @@ process.on('unhandledRejection', (reason) => {
 // Štart
 // ----------------------------------------------------------------------------
 async function start() {
-    // Alby connect (best effort)
+    // Alby connect (best effort) + reconnect supervisor so a locked/starting
+    // Alby Hub at boot does not permanently leave health at NOT_CONNECTED.
+    // Register payment listener BEFORE connect — otherwise a failed first connect
+    // never attaches the handler and later auto-reconnect would create invoices
+    // without settling them.
     if (alby.isConfigured()) {
-        try {
-            await alby.connect(logger);
-            // Listener na payment_received notifikácie
-            alby.onSettled(async (event) => {
+        alby.onSettled(async (event) => {
                 const log = logger.child({ source: 'alby-nwc' });
                 try {
                     let meta = event.metadata || {};
@@ -6522,12 +6567,14 @@ async function start() {
                         message: err.message,
                     });
                 }
-            });
-            // Subscriptions
+        });
+        try {
+            await alby.connect(logger);
             await alby.startSubscriptions(logger);
         } catch (err) {
-            logger.warn({ err: err.message }, 'Alby connect FAIL — pokračujem bez Alby integrácie');
+            logger.warn({ err: err.message }, 'Alby connect FAIL — pokračujem bez Alby; background reconnect beží');
         }
+        alby.startReconnectSupervisor(logger);
     }
     
     // Phase 2.3: napoj audit pool a synchronizuj hub_keys s DB
@@ -6572,7 +6619,9 @@ async function start() {
             bind_addr: bindAddr,
             env: cfg.NODE_ENV,
             tiers: { BASIC: TIERS.BASIC.total, ELITE: TIERS.ELITE.total },
-            alby: alby.isConfigured() ? (alby.isConnected() ? 'connected' : 'configured-but-disconnected') : 'not-configured',
+            alby: alby.isConfigured()
+                ? (alby.isConnected() ? 'connected' : 'configured-but-disconnected+reconnect-pending')
+                : 'not-configured',
             db_user: cfg.DB.user,
             pow_enabled: pow.CFG.ENABLED,
             pow_required_for: pow.CFG.REQUIRED_FOR,
