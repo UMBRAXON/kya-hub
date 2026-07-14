@@ -764,6 +764,22 @@ paths:
       responses:
         "200": { description: OK }
 
+  /api/admin/alby/reconnect:
+    post:
+      tags: [admin]
+      summary: Force Alby NWC reconnect
+      description: |
+        Reconnects to Alby Hub via Nostr Wallet Connect (reads `ALBY_NWC_URI` or
+        secrets file). Use after unlocking Alby Hub or rotating the NWC URI.
+        Requires `X-Admin-Key`.
+      security:
+        - AdminKey: []
+      responses:
+        '200':
+          description: Reconnected
+        '503':
+          description: Not configured or reconnect failed
+
   /api/admin/health/details:
     get:
       tags: [admin]
