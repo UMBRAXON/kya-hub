@@ -2,6 +2,8 @@
 
 **Package:** `@umbraxon/kya-hub-mcp` **1.1.0** (tracks hub **Integrations v1** / OpenAPI bundle 1.1).
 
+[![kya-hub MCP server](https://glama.ai/mcp/servers/UMBRAXON/kya-hub/badges/card.svg)](https://glama.ai/mcp/servers/UMBRAXON/kya-hub)
+
 Read-only [Model Context Protocol](https://modelcontextprotocol.io) bridge to the public UMBRAXON KYA-Hub HTTP API. Use it from Cursor, Claude Desktop, or any MCP client so models can look up certificates, reputation, tiers, and protocol metadata without copy-pasting JSON.
 
 ## Install

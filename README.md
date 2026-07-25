@@ -12,6 +12,7 @@
 [![License](https://img.shields.io/badge/license-ISC-orange)](LICENSE)
 [![Protocol](https://img.shields.io/badge/protocol-1.0-purple)](docs/PROTOCOL-VERSIONING.md)
 [![Hub release](https://img.shields.io/badge/hub-1.1.0-blue)](package.json)
+[![kya-hub MCP server](https://glama.ai/mcp/servers/UMBRAXON/kya-hub/badges/score.svg)](https://glama.ai/mcp/servers/UMBRAXON/kya-hub)
 
 ---
 
