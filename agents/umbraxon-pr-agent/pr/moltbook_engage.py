@@ -139,12 +139,15 @@ def _post_reply(
     if out.get("success") or out.get("comment"):
         comment = out.get("comment") or {}
         cid = comment.get("id") or ""
-        ver = comment.get("verification")
-        vstat = comment.get("verification_status") or comment.get("verificationStatus")
-        if ver and vstat == "pending":
-            from pr.moltbook_verify import verify_post
+        # Verification runs once inside MoltbookConnector.create_comment — do not
+        # re-POST /api/v1/verify (that yields HTTP 409 Already answered).
+        if "verification_result" not in out:
+            ver = comment.get("verification")
+            vstat = comment.get("verification_status") or comment.get("verificationStatus")
+            if ver and vstat == "pending":
+                from pr.moltbook_verify import verify_post
 
-            out["verification_result"] = verify_post(settings, ver)
+                out["verification_result"] = verify_post(settings, ver)
         if cid:
             state.mark_comment_replied(cid, post_id=post_id, parent_id=parent_id)
         try:

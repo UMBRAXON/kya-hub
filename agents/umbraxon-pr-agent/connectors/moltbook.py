@@ -84,7 +84,17 @@ class MoltbookConnector(SocialConnector):
         if parent_id:
             payload["parent_id"] = parent_id
         try:
-            return self._request("POST", f"/api/v1/posts/{post_id}/comments", payload)
+            out = self._request("POST", f"/api/v1/posts/{post_id}/comments", payload)
+            comment = out.get("comment") or out
+            ver = comment.get("verification") if isinstance(comment, dict) else None
+            vstat = comment.get("verification_status") or comment.get("verificationStatus")
+            if ver and vstat == "pending":
+                from pr.moltbook_verify import verify_post
+                from config import load_settings
+
+                vr = verify_post(load_settings(), ver, api_key=self.api_key)
+                out["verification_result"] = vr
+            return out
         except urllib.error.HTTPError as e:
             err_body = e.read().decode("utf-8", errors="replace")[:500]
             return {"ok": False, "http_status": e.code, "body": err_body}

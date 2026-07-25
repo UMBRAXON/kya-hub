@@ -39,8 +39,8 @@
     "@sentry/node": "^10.53.1",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
-    "archiver": "^6.0.2",
-    "axios": "^1.16.0",
+    "archiver": "^8.0.0",
+    "axios": "^1.18.1",
     "bip32": "^5.0.1",
     "bip39": "^3.1.0",
     "bitcoinjs-lib": "^7.0.1",
@@ -60,5 +60,8 @@
     "qrcode": "^1.5.4",
     "tiny-secp256k1": "^2.2.4",
     "ws": "^8.20.0"
+  },
+  "overrides": {
+    "brace-expansion": "5.0.8"
   }
 }
