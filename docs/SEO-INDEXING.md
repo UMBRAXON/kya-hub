@@ -137,3 +137,6 @@ pm2 restart kya-portal
 | robots stále Cloudflare | Krok 2 |
 | GSC „Couldn't fetch“ | Over CF/WAF, či Googlebot nie je blokovaný |
 | Stránka v Google, ale nie homepage | Request indexing + odkazy z GitHub |
+| **GSC „Stránka s presmerovaním“** | Sitemap musí mať **trailing slash** pri Next stránkach (`/integrators/`), lebo `trailingSlash: true` → inak 308. Regeneruj: `node scripts/generate-portal-sitemap.js` + restart portálu. Apex `umbraxon.xyz` → `www` je **zámer** (canonical). |
+| **GSC 404** (apple-touch-icon) | `portal/public/apple-touch-icon.png` (+ precomposed). Iné 404 = odstráň zo sitemap / oprav link. |
+| **Crawled – currently not indexed** | Soft signal Google — nie bug. Požiadaj o indexáciu kľúčových URL; počkaj na odkazy/autoritu. |

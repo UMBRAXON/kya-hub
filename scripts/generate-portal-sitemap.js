@@ -6,11 +6,14 @@ const fs = require('fs');
 const path = require('path');
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.umbraxon.xyz').replace(/\/$/, '');
+// Portal uses next.config trailingSlash:true — page locs MUST end with /
+// or Google Search Console reports "Page with redirect" (308 to slash URL).
+// File-like paths (.md, .txt, .yaml, .json) stay without a trailing slash.
 const PATHS = [
   { loc: '/', priority: '1.0', changefreq: 'weekly' },
-  { loc: '/integrators', priority: '0.9', changefreq: 'weekly' },
-  { loc: '/about', priority: '0.85', changefreq: 'monthly' },
-  { loc: '/status', priority: '0.7', changefreq: 'hourly' },
+  { loc: '/integrators/', priority: '0.9', changefreq: 'weekly' },
+  { loc: '/about/', priority: '0.85', changefreq: 'monthly' },
+  { loc: '/status/', priority: '0.7', changefreq: 'hourly' },
   { loc: '/docs/WHAT-WE-ARE-NOT.md', priority: '0.65', changefreq: 'monthly' },
   { loc: '/docs/ON-CHAIN-STATUS.md', priority: '0.6', changefreq: 'monthly' },
   { loc: '/llms.txt', priority: '0.8', changefreq: 'monthly' },
