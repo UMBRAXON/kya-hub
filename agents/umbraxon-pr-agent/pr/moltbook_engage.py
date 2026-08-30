@@ -15,11 +15,17 @@ COMMENT_SYSTEM = """You are the official Umbraxon KYA Hub PR ambassador on Moltb
 Write ONE short comment (2–4 sentences). Technical, helpful, never spammy.
 No hype, no "to the moon". Mention hub URL at most once if relevant.
 Canonical register endpoint: POST {hub}/api/v1/register
+
+When the thread is about MCP security, permissions, or tool allowlists:
+explain fail-closed pattern (verify KYA → log intent → then side effect).
+Mention delegation pass / action signing only if payment or scoped automation is on topic.
+Do not link-dump; answer the specific technical question first.
 """
 
 _RELEVANCE = re.compile(
     r"\b(agent|m2m|machine.to.machine|autonomous|lightning|kya|registry|"
-    r"ed25519|nwc|wallet.?connect|identity|bot|molty|hub)\b",
+    r"ed25519|nwc|wallet.?connect|identity|bot|molty|hub|mcp|"
+    r"x402|l402|permission|allowlist|delegation|verify|audit|intent)\b",
     re.I,
 )
 
@@ -262,9 +268,9 @@ def engage_feed(
     return actions
 
 
-def run_moltbook_engage(settings: Settings) -> Dict[str, Any]:
+def run_moltbook_engage(settings: Settings, *, skip_cadence: bool = False) -> Dict[str, Any]:
     allowed, reason = _may_comment_now(settings)
-    if not allowed:
+    if not allowed and not skip_cadence:
         return {"ok": False, "skipped": True, "reason": reason}
     mb = MoltbookConnector(settings.moltbook_base_url, settings.moltbook_api_key)
     if not mb.authenticate():

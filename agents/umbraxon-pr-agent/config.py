@@ -211,8 +211,10 @@ def load_settings() -> Settings:
         moltbook_reply_on_feed=_bool("MOLTBOOK_REPLY_ON_FEED", "true"),
         moltbook_feed_keywords=_csv(
             "MOLTBOOK_FEED_KEYWORDS",
-            "agent identity,m2m,autonomous agent,lightning agent,kya,agent registry,"
-            "machine-to-machine,ed25519,nwc,wallet connect,agent hub",
+            "mcp,model context protocol,permission,allowlist,tool rename,verification,"
+            "intent log,x402,l402,delegation pass,paid api,agent identity,m2m,"
+            "autonomous agent,lightning agent,kya,agent registry,machine-to-machine,"
+            "ed25519,security audit,fail closed",
         ),
         moltbook_min_comment_chars=int(os.getenv("MOLTBOOK_MIN_COMMENT_CHARS", "40")),
         moltbook_agent_name=os.getenv("MOLTBOOK_AGENT_NAME", "umbraxon-pr-ambassador"),

@@ -72,3 +72,16 @@ cd mcp && KYA_HUB_LIVE_TEST=1 npm run test:live
 Optional: `KYA_HUB_BASE_URL=https://other-host.example` (no trailing slash) for another deployment, or `http://127.0.0.1:3000` when your hub runs locally.
 
 If `fetch` fails with `getaddrinfo EAI_AGAIN` / `ENOTFOUND`, the machine cannot resolve or reach the host (VPN, DNS, or air-gapped CI). Hermetic CI does **not** run this step.
+
+## Security: read-only vs write MCP
+
+This server exposes **read-only** hub lookups. It does **not** perform payments,
+file writes, or privileged agent actions.
+
+If you operate a **write-capable** MCP server (payments, deploy, filesystem):
+
+1. Read [`docs/MCP-SECURITY-CHECKLIST.md`](../docs/MCP-SECURITY-CHECKLIST.md) — fail-closed permission boundaries.
+2. Wrap side-effect handlers with [`@umbraxon_kya/kya-mcp-guard`](../packages/kya-mcp-guard/) — verify KYA → log intent → allowlist → execute.
+3. For paid APIs, verify [`delegation-pass`](../docs/KYA-L402-VS-X402.md) before accepting x402/L402 payment.
+
+**Incident pattern:** certificate valid, operation invalid — e.g. tool rename bypasses allowlist while KYA cert still verifies. Bind execution to canonical tool id + signed intent, not display name alone.

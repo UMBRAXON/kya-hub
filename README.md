@@ -126,7 +126,9 @@ without a SaaS dependency. Concretely:
   **Python reference bot client** (`umbrexon_bot_client.py`).
 - **`mcp/`** — [Model Context Protocol](https://modelcontextprotocol.io) server
   (`stdio`) exposing public KYA-Hub HTTP endpoints as MCP tools; see
-  [`mcp/README.md`](mcp/README.md).
+  [`mcp/README.md`](mcp/README.md). Write-tool security:
+  [`docs/MCP-SECURITY-CHECKLIST.md`](docs/MCP-SECURITY-CHECKLIST.md) +
+  [`packages/kya-mcp-guard`](packages/kya-mcp-guard/).
 - **`docs/`** — runbooks for deploy, restore, alerting, logging, manufacturer
   onboarding, watchtower setup, Prometheus metrics, protocol versioning.
 - **`config/`** — `logrotate-kya-hub` (PM2 + `/var/log/kya-*.log`) and

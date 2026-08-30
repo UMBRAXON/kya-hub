@@ -12,6 +12,8 @@ const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.umbraxon.xyz').re
 const PATHS = [
   { loc: '/', priority: '1.0', changefreq: 'weekly' },
   { loc: '/integrators/', priority: '0.9', changefreq: 'weekly' },
+  { loc: '/docs/MCP-SECURITY-CHECKLIST.md', priority: '0.88', changefreq: 'monthly' },
+  { loc: '/docs/KYA-L402-VS-X402.md', priority: '0.85', changefreq: 'monthly' },
   { loc: '/about/', priority: '0.85', changefreq: 'monthly' },
   { loc: '/status/', priority: '0.7', changefreq: 'hourly' },
   { loc: '/docs/WHAT-WE-ARE-NOT.md', priority: '0.65', changefreq: 'monthly' },

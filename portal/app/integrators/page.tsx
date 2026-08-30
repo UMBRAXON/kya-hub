@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { IntegratorQuickstart } from "@/components/integrator-quickstart";
-import { HUB_BASE } from "@/lib/hub-api";
+import { IntegratorPricing } from "@/components/integrator-pricing";
+import { fetchIntegratorLsatProfile, HUB_BASE } from "@/lib/hub-api";
 import { buildPageMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Integrator quickstart — UMBRAXON KYA Hub",
   description:
-    "Verify KYA agents in your product: status gate, cert_proof, sandbox, partner API keys, webhooks.",
+    "Verify KYA agents in your product: status gate, LSAT day pass (Lightning), cert_proof, partner API keys.",
   path: "/integrators",
 });
 
-export default function IntegratorsPage() {
+export default async function IntegratorsPage() {
+  const lsat = await fetchIntegratorLsatProfile();
+
   return (
     <div className="bg-grid min-h-screen">
       <header className="border-b border-border/60 bg-background/80 backdrop-blur">
@@ -31,6 +34,7 @@ export default function IntegratorsPage() {
           <code className="text-foreground">{HUB_BASE}</code>
         </p>
         <IntegratorQuickstart hubBase={HUB_BASE} />
+        <IntegratorPricing hubBase={HUB_BASE} lsat={lsat} />
 
         <section className="mt-10 rounded-lg border border-border bg-muted/20 p-5">
           <h2 className="mb-2 text-lg font-semibold">Verify badge (embed)</h2>
@@ -76,6 +80,14 @@ const { verified } = await verifyAgentStatus('${HUB_BASE}', 'UMBRA-000467');`}
           {" · "}
           <a className="text-primary underline" href="/docs/FAQ-FOR-BOT-DEVELOPERS.md">
             FAQ §I
+          </a>
+          {" · "}
+          <a className="text-primary underline" href="/docs/KYA-L402-VS-X402.md">
+            KYA vs x402
+          </a>
+          {" · "}
+          <a className="text-primary underline" href="/docs/MCP-SECURITY-CHECKLIST.md">
+            MCP security
           </a>
           {" · "}
           <a className="text-primary underline" href="/openapi/openapi.yaml">

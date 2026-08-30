@@ -82,6 +82,8 @@ Includes: production agent counts (tests excluded), new bots in window, registra
 - Admin: `GET /api/admin/developer-webhooks/deliveries`, `POST .../process`
 - Metric: `kyahub_developer_webhook_outbox{status}`
 - LSAT: migration `025_integrator_lsat.sql`, `GET /api/protocol/integrator-lsat-profile`
+- MCP security (integrators): `docs/MCP-SECURITY-CHECKLIST.md`, `packages/kya-mcp-guard/`
+- Paid API positioning: `docs/KYA-L402-VS-X402.md` · portal `/integrators/` pricing section
 - **Ready gate (run before partner onboarding):**
   ```bash
   ./scripts/platform-integrator-ready.sh

@@ -39,9 +39,17 @@
 - [x] `robots.txt` + `sitemap.xml` na www (zjednodušená mapa: len homepage)
 - [x] nginx `location = /sitemap.xml` + `/robots.txt` (bez SPA fallback)
 - [ ] GSC property overená (`https://www.jasnelabs.eu` — **www**)
-- [ ] Sitemap znova odoslaná po „Nie je možné načítať“ (klik ⋮ → Odstrániť, potom znova `sitemap.xml`)
-- [ ] Request indexing homepage
+- [ ] Sitemap v GSC (Domain property často „Nie je možné načítať“ aj pri OK serveri — **nie je blocker**)
+- [x] Request indexing homepage — **prešlo** (2026-08-29)
 - [ ] Po týždni: `site:www.jasnelabs.eu`
+
+### Sitemap vs indexácia (2026-08-29)
+
+**Homepage indexácia prešla** → cieľ splnený pre 1-stránkový hub.  
+GSC **Sitemaps** môže na Domain property `jasnelabs.eu` stále ukazovať „Nie je možné načítať“ — server vracia 200, Bot Fight Mode Off; ide o GSC/Domain property quirk, nie o chýbajúci obsah.
+
+**Stačí:** `robots.txt` riadok `Sitemap:` + URL Inspection na `/` (hotové).  
+**Voliteľne:** druhá property **URL prefix** `https://www.jasnelabs.eu` → tam `sitemap.xml` — ak chceš zelený riadok v Sitemaps kvôli estetike.
 
 ### Ak GSC hlási „Nie je možné načítať“
 

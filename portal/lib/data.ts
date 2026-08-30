@@ -44,6 +44,16 @@ export const DOCUMENT_LINKS: Pick<DocCard, "id" | "href" | "type">[] = [
     href: "/docs/FAQ-FOR-BOT-DEVELOPERS.md#i-platform-integrator-plug-in--third-party-systems",
     type: "guide",
   },
+  {
+    id: "mcp-security",
+    href: "/docs/MCP-SECURITY-CHECKLIST.md",
+    type: "guide",
+  },
+  {
+    id: "x402-identity",
+    href: "/docs/KYA-L402-VS-X402.md",
+    type: "guide",
+  },
   { id: "readme-api", href: "/README_API.md", type: "api" },
   { id: "agents", href: "/AGENTS.md", type: "guide" },
   { id: "faq", href: "/docs/FAQ-FOR-BOT-DEVELOPERS.md", type: "guide" },

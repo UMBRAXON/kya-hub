@@ -4,7 +4,7 @@ export const sk = {
   meta: {
     title: "UMBRAXON KYA Hub — Know Your Agent register (Lightning + Ed25519)",
     description:
-      "Verejný register botov: Ed25519 identita, registrácia Lightningom, status API pre integrátorov. Open source na GitHube.",
+      "Gate pre agentov, ktorých nasadíte: MCP security checklist, integrátor verify API, KYA identita + Lightning. Open source.",
   },
   nav: {
     trust: "Dôvera",
@@ -245,6 +245,16 @@ Authorization: Bearer umb_live_…  (rate limit platformy, nie identita agenta)`
         title: "Platform Integrator API (plug-iny)",
         description:
           "Status gate, cert_proof, webhooky, umbraxon-py. umb_live_ = limity platformy, nie identita bota. FAQ §I.",
+      },
+      {
+        title: "MCP security checklist",
+        description:
+          "Fail-closed pattern pre MCP write tools: verify KYA → log intent → allowlist → execute.",
+      },
+      {
+        title: "KYA + L402 vs raw x402",
+        description:
+          "x402 = platba; KYA = kto platí a s akým trust score. Delegation pass + LSAT.",
       },
       {
         title: "README_API.md — M2M Register",

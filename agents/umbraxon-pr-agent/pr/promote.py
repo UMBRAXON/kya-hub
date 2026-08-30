@@ -18,7 +18,9 @@ def system_prompt_for_posts(settings: Settings, *, force_lang: str | None = None
 Share infrastructure updates, metrics, and real project value for the M2M agent economy.
 Never spam; provide technical insight, not hype.
 {lang_line}
-No "to the moon", no repeated CTAs. Max 280 words."""
+No "to the moon", no repeated CTAs. Max 280 words.
+When theme is MCP security: incident-style (tool rename / allowlist bypass), fail-closed fix.
+When theme is x402: position KYA as identity + trust layer above payment, not competing USDC endpoint."""
 
 
 def system_prompt_for_moltbook(settings: Settings) -> str:

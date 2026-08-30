@@ -116,9 +116,13 @@ V Search Console: **Pages** → indexed vs not indexed, **Performance** → quer
 ## Deploy po zmene SEO v portáli
 
 ```bash
+node scripts/generate-portal-sitemap.js   # po zmene PATHS / nových docs
 cd /root/kya-hub/portal && npm run build
 pm2 restart kya-portal
+# alebo: bash scripts/prod/deploy.sh --portal
 ```
+
+Posledný audit: [`docs/SEO-AUDIT-2026-08-30.md`](SEO-AUDIT-2026-08-30.md)
 
 ---
 

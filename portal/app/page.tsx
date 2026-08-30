@@ -23,6 +23,8 @@ export const revalidate = 60;
 
 const HOME_DOC_IDS = [
   "platform-integrator",
+  "mcp-security",
+  "x402-identity",
   "readme-api",
   "agents",
   "faq",

@@ -1,0 +1,32 @@
+{
+  "name": "@umbraxon_kya/kya-mcp-guard",
+  "version": "0.1.0",
+  "description": "Fail-closed MCP middleware: verify KYA agent, log signed intent, then execute write tools",
+  "type": "module",
+  "main": "index.js",
+  "exports": "./index.js",
+  "engines": { "node": ">=18" },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "kya",
+    "know-your-agent",
+    "security",
+    "umbraxon"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UMBRAXON/kya-hub.git",
+    "directory": "packages/kya-mcp-guard"
+  },
+  "homepage": "https://www.umbraxon.xyz/docs/MCP-SECURITY-CHECKLIST.md",
+  "license": "ISC",
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

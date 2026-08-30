@@ -159,4 +159,46 @@ export async function fetchIntegratorAgentStatus(
   }
 }
 
+export interface IntegratorLsatProfile {
+  profile: string;
+  default_amount_sats: number;
+  ttl_hours: number;
+  auth_header?: string;
+  endpoints?: {
+    create_invoice?: string;
+    poll_status?: string;
+  };
+}
+
+const LSAT_FALLBACK: IntegratorLsatProfile = {
+  profile: "umbraxon-integrator-lsat-v1",
+  default_amount_sats: 5_000,
+  ttl_hours: 24,
+  auth_header: "Authorization: Bearer umb_lsat_…",
+  endpoints: {
+    create_invoice: "POST /api/v1/integrator/lsat/invoice",
+    poll_status: "GET /api/v1/integrator/lsat/status?access_id=…",
+  },
+};
+
+/** Live LSAT day-pass pricing from hub protocol profile. */
+export async function fetchIntegratorLsatProfile(): Promise<IntegratorLsatProfile> {
+  try {
+    const res = await fetch(`${HUB_BASE}/api/protocol/integrator-lsat-profile`, {
+      headers: { Accept: "application/json", "User-Agent": "kya-portal/1.0" },
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return LSAT_FALLBACK;
+    const data = (await res.json()) as IntegratorLsatProfile;
+    return {
+      ...LSAT_FALLBACK,
+      ...data,
+      default_amount_sats: data.default_amount_sats ?? LSAT_FALLBACK.default_amount_sats,
+      ttl_hours: data.ttl_hours ?? LSAT_FALLBACK.ttl_hours,
+    };
+  } catch {
+    return LSAT_FALLBACK;
+  }
+}
+
 export { HUB_BASE };

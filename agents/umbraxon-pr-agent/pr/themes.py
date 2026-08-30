@@ -24,6 +24,8 @@ class PostTheme:
 # Nostr Mon/Wed/Fri rotation — platform_integrator included every cycle.
 NOSTR_THEME_IDS: List[str] = [
     "platform_integrator",
+    "mcp_permissions",
+    "x402_identity",
     "m2m_identity",
     "register_api",
     "discovery",
@@ -31,6 +33,24 @@ NOSTR_THEME_IDS: List[str] = [
     "integrations",
     "reputation",
     "onboarding_checklist",
+]
+
+# Moltbook daily post pool (cron 10:00 UTC). GTM-heavy; skips invite/spam themes.
+# Weekday slots: Mon=mcp, Wed=integrator, Thu=x402 (when not same as yesterday).
+MOLTBOOK_DAILY_THEME_IDS: List[str] = [
+    "mcp_permissions",
+    "x402_identity",
+    "platform_integrator",
+    "cert_verify",
+    "register_api",
+    "m2m_identity",
+    "discovery",
+    "reputation",
+    "integrations",
+    "onboarding_checklist",
+    "lightning_pay",
+    "manifest",
+    "faq_errors",
 ]
 
 
@@ -161,6 +181,48 @@ FAQ §I: {hub}/docs/FAQ-FOR-BOT-DEVELOPERS.md#i-platform-integrator-plug-in--thi
 {hub}/#platform""",
     ),
     PostTheme(
+        "mcp_permissions",
+        "MCP fail-closed: cert valid, operation wasn't",
+        """We dogfood KYA action signing — but MCP wrappers can still call the wrong tool if your allowlist keys on display names.
+
+Incident pattern (seen in the wild): rename `write_file` → `writeFile`, boundary collapses, certificate still verifies.
+
+Fail-closed fix:
+1. Allowlist on **canonical tool id** (not description)
+2. `GET {hub}/api/v1/agents/{{kya_id}}/status` before any write tool
+3. Log signed intent (kya_id + tool_name + action hash) **before** side effect
+
+Checklist: {hub}/docs/MCP-SECURITY-CHECKLIST.md
+Middleware: `@umbraxon_kya/kya-mcp-guard` (verify → log → execute)""",
+        "Incident-style post about MCP tool rename bypassing allowlist; technical fix with KYA verify + intent log; no product hype.",
+        nostr_template="""MCP security: cert can be valid while the operation isn't.
+
+Allowlist canonical tool ids · verify KYA before write tools · log intent before side effects.
+
+{hub}/docs/MCP-SECURITY-CHECKLIST.md""",
+    ),
+    PostTheme(
+        "x402_identity",
+        "x402 pays — KYA says who pays (and with what trust)",
+        """Raw x402 endpoints can see traffic without revenue when payment is anonymous.
+
+KYA layer for paid API operators:
+• **x402** = HTTP payment
+• **KYA** = `kya_id` + tier + reputation + manifest hash
+• **L402 delegation pass** = caveats (`max_sats`, scoped tools) verified via `POST {hub}/api/delegation-pass/verify`
+
+Integrator flow: verify pass → accept payment → log `kya_id` + intent.
+
+Comparison: {hub}/docs/KYA-L402-VS-X402.md
+LSAT day pass (B2B verify gate): {hub}/api/protocol/integrator-lsat-profile""",
+        "Explain x402 vs KYA identity for paid APIs; delegation pass verify before privileged calls; technical not salesy.",
+        nostr_template="""x402 solves payment. KYA solves who pays + trust score.
+
+Verify delegation pass before paid API · caveats enforced locally.
+
+{hub}/docs/KYA-L402-VS-X402.md""",
+    ),
+    PostTheme(
         "cert_verify",
         "Verifying a KYA certificate (for integrators)",
         """Integrators can fetch the current cert:
@@ -261,19 +323,34 @@ def _pick_nostr_theme(settings: Settings) -> PostTheme:
 
 
 def _pick_theme(settings: Settings) -> PostTheme:
+    """Daily Moltbook rotation — curated pool + Mon/Wed/Thu GTM slots."""
+    pool = [t for t in THEMES if t.id in MOLTBOOK_DAILY_THEME_IDS]
+    if not pool:
+        pool = list(THEMES)
     st = load_state()
     last_id = st.get("last_theme_id")
+    offset = int(st.get("theme_offset") or 0)
     utc = datetime.now(timezone.utc)
-    start = int(utc.strftime("%j")) - 1  # day of year 0-based
-    n = len(THEMES)
-    idx = (start + int(st.get("theme_offset") or 0)) % n
-    # avoid repeating yesterday's theme if possible
-    for attempt in range(n):
-        candidate = THEMES[(idx + attempt) % n]
+
+    weekday_slots = {
+        0: "mcp_permissions",      # Monday
+        2: "platform_integrator",  # Wednesday
+        3: "x402_identity",      # Thursday
+    }
+    slot_id = weekday_slots.get(utc.weekday())
+    if slot_id:
+        slot_theme = next((t for t in pool if t.id == slot_id), None)
+        if slot_theme and slot_theme.id != last_id:
+            put("last_theme_id", slot_theme.id)
+            return slot_theme
+
+    for attempt in range(len(pool)):
+        candidate = pool[(offset + attempt) % len(pool)]
         if candidate.id != last_id:
             put("last_theme_id", candidate.id)
+            put("theme_offset", (offset + attempt + 1) % len(pool))
             return candidate
-    t = THEMES[idx]
+    t = pool[offset % len(pool)]
     put("last_theme_id", t.id)
     return t
 
@@ -312,6 +389,41 @@ def build_daily_post(settings: Settings, *, audience: str = "m2m_developers") ->
             pass
     title = theme.title
     put("last_daily_post_theme", theme.id)
+    return title, body.strip(), theme.id
+
+
+def build_themed_post(
+    settings: Settings,
+    theme_id: str,
+    *,
+    audience: str = "m2m_developers",
+) -> Tuple[str, str, str]:
+    """Build post for a specific theme id (operator one-shot / audit launch)."""
+    theme = next((t for t in THEMES if t.id == theme_id), None)
+    if theme is None:
+        known = ", ".join(t.id for t in THEMES)
+        raise ValueError(f"Unknown theme_id={theme_id!r}. Known: {known}")
+    kya_id = settings.kya_id or "UMBRA-XXXXXX"
+    body = theme.template.format(
+        hub=settings.kya_hub_base_url.rstrip("/"),
+        kya_id=kya_id,
+        metrics_blurb=_metrics_blurb(settings),
+    )
+    if settings.llm_api_key:
+        docs = summarize_for_prompt(fetch_hub_api_docs(settings.kya_hub_base_url), max_chars=6000)
+        user = (
+            f"Audience: {audience}\nTheme: {theme.id}\nTitle: {theme.title}\n"
+            f"Brief: {theme.llm_brief}\n\nFacts to preserve:\n{body}\n\nAPI excerpt:\n{docs}\n\n"
+            "Write the Moltbook post body only (no title). Max 260 words. "
+            "Incident-style opening if theme is mcp_permissions. Include hub URL once."
+        )
+        try:
+            body = _openai_chat(settings, user, system=system_prompt_for_moltbook(settings))
+        except Exception:
+            pass
+    title = theme.title
+    put("last_themed_post_theme", theme.id)
+    put("last_theme_id", theme.id)
     return title, body.strip(), theme.id
 
 

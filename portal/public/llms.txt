@@ -13,7 +13,9 @@
 
 ## Start here (platforms / integrators)
 
-- [Integrators portal](https://www.umbraxon.xyz/integrators): live sandbox, API key request, copy-paste gate
+- [Integrators portal](https://www.umbraxon.xyz/integrators/): LSAT pricing, sandbox, API key request, copy-paste gate
+- [MCP security checklist](https://www.umbraxon.xyz/docs/MCP-SECURITY-CHECKLIST.md): fail-closed verify → log intent → execute
+- [KYA + L402 vs raw x402](https://www.umbraxon.xyz/docs/KYA-L402-VS-X402.md): payment vs identity + trust
 - [Integrator trust gate](https://www.umbraxon.xyz/docs/INTEGRATOR-TRUST-GATE.md)
 - [5-minute integrator quickstart](https://www.umbraxon.xyz/docs/INTEGRATOR-QUICKSTART-5MIN.md)
 - [Economics & Sybil](https://www.umbraxon.xyz/docs/ECONOMICS-AND-SYBIL.md)

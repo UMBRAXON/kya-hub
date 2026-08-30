@@ -4,7 +4,7 @@ export const en = {
   meta: {
     title: "UMBRAXON KYA Hub — Know Your Agent registry (Lightning + Ed25519)",
     description:
-      "Public bot registry: Ed25519 identity, Lightning registration, integrator status API. Open source on GitHub.",
+      "Gate agents your team deploys: MCP security checklist, integrator verify API, KYA identity + Lightning. Open source.",
   },
   nav: {
     trust: "Trust",
@@ -246,6 +246,16 @@ Authorization: Bearer umb_live_…  (platform rate limit, not agent identity)`,
         title: "Platform Integrator API (plug-ins)",
         description:
           "Status gate, cert_proof, webhooks, umbraxon-py. umb_live_ = platform rate limits, not bot identity. FAQ §I.",
+      },
+      {
+        title: "MCP security checklist",
+        description:
+          "Fail-closed pattern for write-capable MCP tools: verify KYA → log intent → allowlist → execute.",
+      },
+      {
+        title: "KYA + L402 vs raw x402",
+        description:
+          "x402 solves payment; KYA solves who pays and with what trust score. Delegation pass + LSAT.",
       },
       {
         title: "README_API.md — M2M Register",

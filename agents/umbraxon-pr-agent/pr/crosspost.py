@@ -25,6 +25,7 @@ def crosspost(
     title: Optional[str] = None,
     platforms: Optional[List[str]] = None,
     dry_run: Optional[bool] = None,
+    skip_cadence: bool = False,
 ) -> Dict[str, Any]:
     """Publish to configured platforms (respects PR_MAX_POSTS_PER_RUN)."""
     dry = settings.pr_dry_run if dry_run is None else dry_run
@@ -47,7 +48,7 @@ def crosspost(
             results[name] = {"ok": False, "skipped": True, "reason": "not configured"}
             continue
         plat_allowed, plat_reason = may_post_now(settings, platform=name)
-        if not plat_allowed and not dry:
+        if not plat_allowed and not dry and not skip_cadence:
             results[name] = {"ok": False, "skipped": True, "reason": plat_reason}
             continue
         if dry:

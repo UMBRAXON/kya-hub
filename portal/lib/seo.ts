@@ -15,6 +15,13 @@ export function buildPageMetadata(opts: {
   return {
     title: opts.title,
     description: opts.description,
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      ],
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
     alternates: { canonical: url },
     robots: opts.noIndex
       ? { index: false, follow: false }
@@ -42,6 +49,8 @@ export const INDEXABLE_DOC_PATHS = [
   "/docs/FAQ-FOR-BOT-DEVELOPERS.md",
   "/docs/INTEGRATOR-TRUST-GATE.md",
   "/docs/INTEGRATOR-QUICKSTART-5MIN.md",
+  "/docs/MCP-SECURITY-CHECKLIST.md",
+  "/docs/KYA-L402-VS-X402.md",
   "/docs/ECONOMICS-AND-SYBIL.md",
   "/docs/REGISTRATION-QUICKSTART.md",
   "/openapi/openapi.yaml",

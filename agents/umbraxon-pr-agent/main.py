@@ -23,6 +23,7 @@ from pr.heartbeat import moltbook_heartbeat
 from pr.promote import promote_hub
 from pr.daily_post import run_daily_post
 from pr.platform_post import run_platform_post
+from pr.themed_post import run_themed_post
 from pr.promo_video_post import run_promo_video_post
 from pr.nostr_post import run_nostr_post
 from pr.nostr_profile import publish_nostr_profile
@@ -264,6 +265,36 @@ def cmd_platform_post(args: argparse.Namespace) -> int:
     return 0 if pub.get("ok") else 1
 
 
+def cmd_themed_post(args: argparse.Namespace) -> int:
+    s = load_settings()
+    log = new_trace_logger(getattr(args, "log_dir", None) or "logs", prefix="pr-themed")
+    theme_id = getattr(args, "theme", "").strip()
+    if not theme_id:
+        print("error: --theme required (e.g. mcp_permissions, x402_identity)", file=sys.stderr)
+        return 2
+    out = run_themed_post(s, theme_id, skip_cadence=getattr(args, "force", False))
+    log.info(
+        "themed_post",
+        theme=out.get("theme_id"),
+        publish_ok=(out.get("publish") or {}).get("ok"),
+        skip_cadence=out.get("skip_cadence"),
+    )
+    print(json.dumps(out, indent=2, ensure_ascii=False)[:8000])
+    pub = out.get("publish") or {}
+    if pub.get("ok"):
+        return 0
+    reasons = pub.get("reasons") or []
+    plat = (pub.get("platforms") or {}).get("moltbook") or {}
+    if plat.get("skipped") and "cadence" in str(plat.get("reason", "")):
+        print(
+            "hint: retry with --force to bypass 24h post cadence (operator one-shot)",
+            file=sys.stderr,
+        )
+    if pub.get("blocked") and any("cadence" in str(r) for r in reasons):
+        return 0
+    return 1
+
+
 def cmd_daily_post(args: argparse.Namespace) -> int:
     s = load_settings()
     log = new_trace_logger(getattr(args, "log_dir", None) or "logs", prefix="pr-daily")
@@ -325,7 +356,7 @@ def cmd_heartbeat(_: argparse.Namespace) -> int:
 def cmd_moltbook_engage(args: argparse.Namespace) -> int:
     s = load_settings()
     log = new_trace_logger(getattr(args, "log_dir", None) or "logs", prefix="pr-engage")
-    out = run_moltbook_engage(s)
+    out = run_moltbook_engage(s, skip_cadence=getattr(args, "force", False))
     log.info("moltbook_engage", posted=out.get("posted"), skipped=out.get("skipped"))
     print(json.dumps(out, indent=2, ensure_ascii=False)[:12000])
     return 0 if out.get("ok") else 1
@@ -412,6 +443,19 @@ def main() -> int:
     pp.add_argument("--log-dir", default="logs")
     pp.set_defaults(func=cmd_platform_post)
 
+    tp = sub.add_parser(
+        "themed-post",
+        help="One-shot Moltbook post for a named theme (mcp_permissions, x402_identity, …)",
+    )
+    tp.add_argument("--theme", required=True, help="Theme id from pr/themes.py")
+    tp.add_argument(
+        "--force",
+        action="store_true",
+        help="Bypass 24h post cadence (operator one-shot; does not affect daily cron)",
+    )
+    tp.add_argument("--log-dir", default="logs")
+    tp.set_defaults(func=cmd_themed_post)
+
     dp = sub.add_parser("daily-post", help="Themed daily Moltbook post (cron)")
     dp.add_argument("--log-dir", default="logs")
     dp.set_defaults(func=cmd_daily_post)
@@ -435,6 +479,11 @@ def main() -> int:
 
     eng = sub.add_parser("moltbook-engage", help="Reply on own posts + relevant feed (LLM)")
     eng.add_argument("--log-dir", default="logs")
+    eng.add_argument(
+        "--force",
+        action="store_true",
+        help="Bypass min hours between comments (operator one-shot)",
+    )
     eng.set_defaults(func=cmd_moltbook_engage)
 
     sup = sub.add_parser("support", help="Draft dev support or partnership reply (LLM)")
