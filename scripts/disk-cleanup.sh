@@ -124,6 +124,11 @@ if [[ -d "$ALBY_LOG_DIR" ]]; then
     done < <(find "$ALBY_LOG_DIR" -maxdepth 1 -name 'nwc-*.log' -mtime "+${ALBY_LOG_MAX_AGE_DAYS}" -print0 2>/dev/null)
 fi
 
+# --- Winetricks cache (MT4 už nainštalovaný; 1.5G+ regenerovateľné) ---
+if [[ "$DISK_PCT" -ge "$DISK_WARN_PCT" ]]; then
+    remove_path "/root/.cache/winetricks" "winetricks cache"
+fi
+
 # --- Package manager caches ---
 if [[ "$DRY_RUN" == "1" ]]; then
     log "DRY_RUN would run apt-get clean"
@@ -160,6 +165,50 @@ fi
 
 # --- Next.js build cache (rebuilt on deploy) ---
 remove_path "${KYA_ROOT}/portal/.next/cache" "portal .next/cache"
+remove_path "/root/klubo/.next/cache" "klubo .next/cache"
+
+# --- Emergency (≥85%): Gradle -all (bin stačí), staré cursor-agent verzie ---
+DISK_EMERGENCY_PCT="${DISK_EMERGENCY_PCT:-85}"
+if [[ "$DISK_PCT" -ge "$DISK_EMERGENCY_PCT" ]]; then
+    log "emergency reclaim (disk ${DISK_PCT}% ≥ ${DISK_EMERGENCY_PCT}%)"
+    # Gradle wrapper: keep *-bin, drop *-all (~500+ MiB)
+    if [[ -d /root/.gradle/wrapper/dists ]]; then
+        for d in /root/.gradle/wrapper/dists/gradle-*-all; do
+            [[ -d "$d" ]] || continue
+            remove_path "$d" "gradle $(basename "$d")"
+        done
+    fi
+    # Cursor agent-cli: keep newest version only
+    AGENT_VER_ROOT="/root/.cursor-server/data/User/globalStorage/anysphere.cursor-agent-worker/agent-cli/.local/share/cursor-agent/versions"
+    if [[ -d "$AGENT_VER_ROOT" ]]; then
+        NEWEST_AGENT=""
+        NEWEST_MTIME=0
+        for d in "$AGENT_VER_ROOT"/*/; do
+            [[ -d "$d" ]] || continue
+            mtime="$(stat -c %Y "$d" 2>/dev/null || echo 0)"
+            if [[ "$mtime" -gt "$NEWEST_MTIME" ]]; then
+                NEWEST_MTIME="$mtime"
+                NEWEST_AGENT="$(basename "$d")"
+            fi
+        done
+        for d in "$AGENT_VER_ROOT"/*/; do
+            [[ -d "$d" ]] || continue
+            h="$(basename "$d")"
+            [[ -n "$NEWEST_AGENT" && "$h" == "$NEWEST_AGENT" ]] && continue
+            remove_path "$d" "cursor-agent $h"
+        done
+    fi
+fi
+
+# --- NaKus project (separate repo on same host) ---
+NAKUS_CLEANUP="${NAKUS_ROOT:-/root/nakus-project}/scripts/nakus-disk-cleanup.sh"
+if [[ -x "$NAKUS_CLEANUP" ]]; then
+    if [[ "$DRY_RUN" == "1" ]]; then
+        DRY_RUN=1 NAKUS_ROOT="${NAKUS_ROOT:-/root/nakus-project}" bash "$NAKUS_CLEANUP" || log "nakus-disk-cleanup failed (non-fatal)"
+    else
+        NAKUS_ROOT="${NAKUS_ROOT:-/root/nakus-project}" bash "$NAKUS_CLEANUP" || log "nakus-disk-cleanup failed (non-fatal)"
+    fi
+fi
 
 # --- Python __pycache__ (not inside .venv) ---
 if [[ "$DRY_RUN" == "1" ]]; then

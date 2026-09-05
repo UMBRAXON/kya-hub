@@ -146,7 +146,8 @@ module.exports = {
             time: true,
         },
         {
-            // Public www uptime → Telegram/Discord on DOWN / RECOVERY.
+            // Public www uptime (nakus + klubo + umbraxon) → Telegram on DOWN / RECOVERY.
+            // Probe každých 2 min; alert po 2 failoch za sebou (~4 min).
             name: 'kya-web-uptime-watch',
             script: 'scripts/prod/web-uptime-watch.js',
             cwd: '/root/kya-hub',
@@ -157,8 +158,10 @@ module.exports = {
             cron_restart: '*/2 * * * *', // every 2 minutes
             env: {
                 NODE_ENV: 'production',
-                WEB_UPTIME_URL: 'https://www.umbraxon.xyz/',
+                WEB_UPTIME_URLS:
+                    'https://www.nakus.sk/,https://www.klubo.sk/,https://www.umbraxon.xyz/',
                 WEB_UPTIME_FAIL_THRESHOLD: '2',
+                WEB_UPTIME_TIMEOUT_MS: '12000',
                 HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
                 ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
                 DOTENV_CONFIG_QUIET: 'true',
@@ -169,7 +172,130 @@ module.exports = {
             time: true,
         },
         {
-            // Curated Mastodon queue (markdown in scripts/mastodon/posts/).
+            // NaKus.sk — web uptime + pipeline + B2B archive (≥½ dňa) → Telegram.
+            // Canonical script: /root/nakus-project/scripts/ops/nakus-ops-watch.js
+            name: 'kya-nakus-ops-watch',
+            script: 'scripts/prod/nakus-ops-watch.js',
+            cwd: '/root/kya-hub',
+            interpreter: '/usr/bin/node',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '*/2 * * * *',
+            env: {
+                NODE_ENV: 'production',
+                NAKUS_ROOT: '/root/nakus-project',
+                KYA_HUB_ROOT: '/root/kya-hub',
+                NAKUS_FAIL_THRESHOLD: '2',
+                NAKUS_PIPELINE_CHECK_MIN: '30',
+                NAKUS_PROBE_TIMEOUT_MS: '12000',
+                NAKUS_ARCHIVE_STALE_H: '12',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+                DOTENV_CONFIG_QUIET: 'true',
+            },
+            error_file: '/root/.pm2/logs/kya-nakus-ops-watch-error.log',
+            out_file: '/root/.pm2/logs/kya-nakus-ops-watch-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // NaKus — denný visitor report o 08:00 Europe/Bratislava.
+            // PM2 06:00+07:00 UTC; skript pošle Telegram len keď je lokálne 08:00.
+            name: 'kya-nakus-daily-visitors',
+            script: 'scripts/prod/nakus-daily-visitors-report.sh',
+            interpreter: 'bash',
+            cwd: '/root/kya-hub',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '0 6,7 * * *',
+            env: {
+                NODE_ENV: 'production',
+                NAKUS_ROOT: '/root/nakus-project',
+                KYA_HUB_ROOT: '/root/kya-hub',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+                DOTENV_CONFIG_QUIET: 'true',
+            },
+            error_file: '/root/.pm2/logs/kya-nakus-daily-visitors-error.log',
+            out_file: '/root/.pm2/logs/kya-nakus-daily-visitors-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // NaKus — týždenný report pondelok 08:00 Europe/Bratislava (vs predchádzajúci týždeň).
+            // PM2 06:05+07:05 UTC Mon; skript pošle Telegram len keď je lokálne pondelok 08:00.
+            name: 'kya-nakus-weekly-visitors',
+            script: 'scripts/prod/nakus-weekly-visitors-report.sh',
+            interpreter: 'bash',
+            cwd: '/root/kya-hub',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '5 6,7 * * 1',
+            env: {
+                NODE_ENV: 'production',
+                NAKUS_ROOT: '/root/nakus-project',
+                KYA_HUB_ROOT: '/root/kya-hub',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+                DOTENV_CONFIG_QUIET: 'true',
+            },
+            error_file: '/root/.pm2/logs/kya-nakus-weekly-visitors-error.log',
+            out_file: '/root/.pm2/logs/kya-nakus-weekly-visitors-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // NaKus — mesačný report 1. deň mesiaca 08:00 Europe/Bratislava (vs predchádzajúci mesiac).
+            // PM2 06:10+07:10 UTC 1st; skript pošle Telegram len keď je lokálne 1. deň 08:00.
+            name: 'kya-nakus-monthly-visitors',
+            script: 'scripts/prod/nakus-monthly-visitors-report.sh',
+            interpreter: 'bash',
+            cwd: '/root/kya-hub',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '10 6,7 1 * *',
+            env: {
+                NODE_ENV: 'production',
+                NAKUS_ROOT: '/root/nakus-project',
+                KYA_HUB_ROOT: '/root/kya-hub',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+                DOTENV_CONFIG_QUIET: 'true',
+            },
+            error_file: '/root/.pm2/logs/kya-nakus-monthly-visitors-error.log',
+            out_file: '/root/.pm2/logs/kya-nakus-monthly-visitors-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // NaKus — RDAP domain watch (nakus.cz uvoľnenie / expirácia) 1× denne.
+            name: 'kya-nakus-domain-watch',
+            script: 'scripts/prod/nakus-domain-watch.sh',
+            interpreter: 'bash',
+            cwd: '/root/kya-hub',
+            instances: 1,
+            exec_mode: 'fork',
+            autorestart: false,
+            cron_restart: '20 7 * * *', // 07:20 UTC ≈ 09:20 SK
+            env: {
+                NODE_ENV: 'production',
+                NAKUS_ROOT: '/root/nakus-project',
+                KYA_HUB_ROOT: '/root/kya-hub',
+                HTTP_PROXY: '', HTTPS_PROXY: '', http_proxy: '', https_proxy: '',
+                ALL_PROXY: '', all_proxy: '', NO_PROXY: '*', no_proxy: '*',
+                DOTENV_CONFIG_QUIET: 'true',
+            },
+            error_file: '/root/.pm2/logs/kya-nakus-domain-watch-error.log',
+            out_file: '/root/.pm2/logs/kya-nakus-domain-watch-out.log',
+            merge_logs: true,
+            time: true,
+        },
+        {
+            // Curated Mastodon timeline (markdown in scripts/mastodon/posts/).
             name: 'kya-mastodon-daily',
             script: 'scripts/prod/mastodon-daily-post.sh',
             cwd: '/root/kya-hub',

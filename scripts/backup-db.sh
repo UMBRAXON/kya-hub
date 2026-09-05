@@ -16,7 +16,8 @@
 set -euo pipefail
 
 ENV_FILE="${ENV_FILE:-/root/kya-hub/.env}"
-BACKUP_DIR="${BACKUP_DIR:-/var/backups/kyahub}"
+# Lokálne dumpy NESMÚ ísť na root (38G). /root/backups → HC volume 105979036.
+BACKUP_DIR="${BACKUP_DIR:-/root/backups/kyahub-pgdump}"
 LOG_FILE="${BACKUP_LOG:-/var/log/kyahub-backup.log}"
 RETAIN_DAILY="${RETAIN_DAILY:-7}"
 RETAIN_WEEKLY="${RETAIN_WEEKLY:-4}"

@@ -231,6 +231,12 @@ esac
 if [[ "$DRY_RUN" != "1" ]]; then
     find "$LOCAL_BACKUP_DIR" -type f -name "channel-state-*.tar.gz.enc" -mtime "+$HOT_DAYS" -print -delete \
         2>/dev/null | while IFS= read -r f; do log info "pruned local hot artifact $f"; done || true
+# Hard cap on small HC volume (20G): keep at most N newest local channel backups
+KEEP_COUNT="${BACKUP_HOT_KEEP_COUNT:-8}"
+ls -1t "$LOCAL_BACKUP_DIR"/channel-state-*.tar.gz.enc 2>/dev/null | tail -n +"$((KEEP_COUNT + 1))" | while IFS= read -r f; do
+    rm -f "$f"
+    log info "pruned excess local hot artifact $f (keep=$KEEP_COUNT)"
+done || true
 fi
 
 # --- 8) audit row in backup_log ---------------------------------------------
