@@ -68,6 +68,17 @@ Trigger: HTTP 429 with JSON `{"error":"rate_limited","retry_after_seconds":60}`.
 - `proxy_read_timeout`: 20s
 - Connection limit per IP: 50 concurrent
 
+## Add `klubo.sk` / `www.klubo.sk`
+
+Separate container **`klubo-proxy`** (own LE cert — never on umbraxon mega-cert):
+
+1. DNS A: `klubo.sk` + `www` → origin `46.225.170.80` (Cloudflare proxied OK).
+2. `docker-compose.yml` service `klubo-proxy` + `conf.d/klubo.conf`.
+3. App: `/root/klubo` Next on host `:3010`.
+4. `docker-compose up -d` (this folder uses `docker-compose`, not `docker compose`).
+5. Verify: `curl -fsSI https://www.klubo.sk/login` → **200**.
+6. Legacy: `www.nakus.sk/klubo/*` → 301 `www.klubo.sk`.
+
 ## Adding `www.umbraxon.xyz` later
 
 Production `docker-compose.yml` in this repo already includes **`www.umbraxon.xyz`**
