@@ -46,15 +46,16 @@ services:
     restart: unless-stopped
     environment:
       VIRTUAL_HOST_NAME: "klubo"
-      VIRTUAL_HOST: "klubo.sk,www.klubo.sk"
+      VIRTUAL_HOST: "klubo.sk,www.klubo.sk,staging.klubo.sk"
       VIRTUAL_PORT: "80"
       VIRTUAL_NETWORK: "nginx-proxy"
-      LETSENCRYPT_HOST: "klubo.sk,www.klubo.sk"
+      LETSENCRYPT_HOST: "klubo.sk,www.klubo.sk,staging.klubo.sk"
       LETSENCRYPT_EMAIL: "admin@umbraxon.xyz"
       HSTS: "max-age=63072000; includeSubDomains; preload"
     volumes:
       - ./conf.d/klubo.conf:/etc/nginx/conf.d/default.conf:ro
       - ./snippets:/etc/nginx/snippets:ro
+      - ./secrets/klubo-staging.htpasswd:/etc/nginx/secrets/klubo-staging.htpasswd:ro
       - /root/klubo/public/marketing/downloads:/var/www/klubo/marketing/downloads:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -79,6 +79,19 @@ Separate container **`klubo-proxy`** (own LE cert — never on umbraxon mega-cer
 5. Verify: `curl -fsSI https://www.klubo.sk/login` → **200**.
 6. Legacy: `www.nakus.sk/klubo/*` → 301 `www.klubo.sk`.
 
+## Add `staging.klubo.sk`
+
+Internal preview (Basic auth) — Next on host **`:3015`**, pm2 `klubo-staging`.
+
+1. Cloudflare DNS A: `staging` → `46.225.170.80` (proxied OK).
+2. `VIRTUAL_HOST` / `LETSENCRYPT_HOST` includes `staging.klubo.sk` (see `docker-compose.yml`).
+3. htpasswd: `./secrets/klubo-staging.htpasswd` (from `npm run setup:staging` in `/root/klubo`).
+4. `docker-compose up -d --force-recreate klubo-proxy`
+5. App: `npm run deploy:staging` in `/root/klubo`.
+6. Verify: `curl -u klubo:PASS -fsSI https://staging.klubo.sk/login` → **200**.
+
+Capacitor / Play stays on `www.klubo.sk` — never point the shell at staging.
+
 ## Adding `www.umbraxon.xyz` later
 
 Production `docker-compose.yml` in this repo already includes **`www.umbraxon.xyz`**
