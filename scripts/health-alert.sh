@@ -20,6 +20,13 @@ HUB_URL="${HUB_URL_OVERRIDE:-http://127.0.0.1:3000}"
 ENV_FILE="${ENV_FILE:-/root/kya-hub/.env}"
 LOG_FILE="${LOG_FILE:-/var/log/kyahub-health.log}"
 FLAG_FILE="/tmp/kyahub-critical.flag"
+# Anti-spam: po kritischej notifikácii znova Telegram najskôr po N sekundách
+# (load spike z cronu flape critical↔ok každých 5–15 min → inak 10+ správ/deň).
+COOLDOWN_SEC="${HEALTH_ALERT_COOLDOWN_SEC:-7200}"
+LAST_NOTIFY_FILE="/tmp/kyahub-critical-last-notify"
+# Recover Telegram len ak je status OK súvisle aspoň N checkov (každý 5 min)
+RECOVER_OK_STREAK="${HEALTH_ALERT_RECOVER_OK_STREAK:-3}"
+OK_STREAK_FILE="/tmp/kyahub-ok-streak"
 
 # Načítaj credentials z .env (read-only)
 readEnv() {
@@ -80,28 +87,49 @@ ALERTS_JSON=$(jq -c '.alerts // []' /tmp/.kyahub-health.json)
 
 echo "[$(date -Is)] status=$STATUS disk=${DISK_PCT}% ram=${RAM_PCT}% load1=$LOAD1 alerts=$ALERTS_JSON"
 
+now_epoch() { date +%s; }
+
 case "$STATUS" in
     critical)
-        if [[ ! -f "$FLAG_FILE" ]]; then
-            echo "[$(date -Is)] NEW_CRITICAL alerts=$ALERTS_JSON"
+        rm -f "$OK_STREAK_FILE"
+        touch "$FLAG_FILE"
+        last=0
+        [[ -f "$LAST_NOTIFY_FILE" ]] && last=$(cat "$LAST_NOTIFY_FILE" 2>/dev/null || echo 0)
+        age=$(( $(now_epoch) - last ))
+        if [[ "$last" -eq 0 || "$age" -ge "$COOLDOWN_SEC" ]]; then
+            echo "[$(date -Is)] NEW_CRITICAL (notify) alerts=$ALERTS_JSON cooldown=${COOLDOWN_SEC}s"
             MSG="🚨 <b>KYA-Hub CRITICAL</b>
 host: $(hostname)
 disk: ${DISK_PCT}%   ram: ${RAM_PCT}%   load1: ${LOAD1}
-${ALERTS}"
+${ALERTS}
+<i>ďalší alert najskôr o $((COOLDOWN_SEC / 60)) min (cooldown)</i>"
             sendNotification "$MSG"
-            touch "$FLAG_FILE"
+            now_epoch > "$LAST_NOTIFY_FILE"
+        else
+            echo "[$(date -Is)] CRITICAL_SUPPRESSED age=${age}s < cooldown=${COOLDOWN_SEC}s alerts=$ALERTS_JSON"
         fi
         ;;
     warning)
-        # tichý warning — len log
+        # tichý warning — len log; nepočíta sa ako recover
+        rm -f "$OK_STREAK_FILE"
         ;;
     ok)
         if [[ -f "$FLAG_FILE" ]]; then
-            echo "[$(date -Is)] CRITICAL_RESOLVED"
-            sendNotification "✅ <b>KYA-Hub recovered</b>
+            streak=0
+            [[ -f "$OK_STREAK_FILE" ]] && streak=$(cat "$OK_STREAK_FILE" 2>/dev/null || echo 0)
+            streak=$((streak + 1))
+            echo "$streak" > "$OK_STREAK_FILE"
+            if [[ "$streak" -ge "$RECOVER_OK_STREAK" ]]; then
+                echo "[$(date -Is)] CRITICAL_RESOLVED after ${streak}× ok"
+                sendNotification "✅ <b>KYA-Hub recovered</b>
 host: $(hostname) → status OK
 disk: ${DISK_PCT}%   ram: ${RAM_PCT}%   load1: ${LOAD1}"
-            rm -f "$FLAG_FILE"
+                rm -f "$FLAG_FILE" "$OK_STREAK_FILE" "$LAST_NOTIFY_FILE"
+            else
+                echo "[$(date -Is)] CRITICAL_LINGERING ok_streak=${streak}/${RECOVER_OK_STREAK}"
+            fi
+        else
+            rm -f "$OK_STREAK_FILE"
         fi
         ;;
 esac

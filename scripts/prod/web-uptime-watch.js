@@ -20,6 +20,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
 const ROOT = path.join(__dirname, '..', '..');
 const ENSURE_EDGE = path.join(ROOT, 'scripts', 'prod', 'ensure-public-edge.sh');
+const REVIVE_ALL = path.join(ROOT, 'scripts', 'prod', 'revive-public-sites.sh');
 const DEFAULT_URLS = [
   'https://www.nakus.sk/',
   'https://www.klubo.sk/',
@@ -47,6 +48,28 @@ function tryHealPublicEdge(reason) {
       e && e.message ? e.message : e
     );
     return false;
+  }
+}
+
+/** Full revive: edge + proxies + NaKus + Klubo (owner offline). */
+function tryRevivePublicSites(reason) {
+  if (!AUTO_HEAL) return false;
+  const script = fs.existsSync(REVIVE_ALL) ? REVIVE_ALL : ENSURE_EDGE;
+  if (!fs.existsSync(script)) return false;
+  try {
+    execFileSync('bash', [script], {
+      timeout: 300000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    console.log(`[web-uptime] revive-public-sites OK (${reason})`);
+    return true;
+  } catch (e) {
+    console.warn(
+      `[web-uptime] revive-public-sites failed (${reason}):`,
+      e && e.message ? e.message : e
+    );
+    // fallback: edge-only
+    return tryHealPublicEdge(`fallback-after-revive:${reason}`);
   }
 }
 
@@ -219,7 +242,7 @@ async function main() {
 
   // Pre-heal when any site already marked down (post docker/containerd cutover)
   const anyDown = urls.some((u) => (st.sites[u] || {}).status === 'down');
-  if (anyDown) tryHealPublicEdge('state-down');
+  if (anyDown) tryRevivePublicSites('state-down');
 
   let failCount = 0;
   for (const url of urls) {
@@ -227,9 +250,13 @@ async function main() {
     if (!r.ok) failCount += 1;
   }
 
-  // If majority of sites fail once, heal edge and re-probe once (avoids overnight 521)
-  if (failCount >= Math.ceil(urls.length / 2)) {
-    if (tryHealPublicEdge(`probe-fails=${failCount}`)) {
+  const confirmedDown = urls.some(
+    (u) => Number((st.sites[u] || {}).consecutive_failures || 0) >= FAIL_THRESHOLD
+  );
+
+  // Majority fail OR confirmed DOWN (≥ threshold) → full revive + re-probe
+  if (failCount >= Math.ceil(urls.length / 2) || confirmedDown) {
+    if (tryRevivePublicSites(`probe-fails=${failCount};confirmed=${confirmedDown}`)) {
       for (const url of urls) {
         await checkOne(url, st);
       }
