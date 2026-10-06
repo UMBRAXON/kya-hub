@@ -15,9 +15,6 @@ def run_themed_post(
     skip_cadence: bool = False,
 ) -> Dict[str, Any]:
     title, body, resolved_id = build_themed_post(settings, theme_id)
-    hub = settings.kya_hub_base_url.rstrip("/")
-    if settings.pr_hub_url_required and hub not in body:
-        body = f"{body}\n\n{hub}/README_API.md"
     result = crosspost(
         settings,
         body,
@@ -25,6 +22,7 @@ def run_themed_post(
         platforms=["moltbook"],
         dry_run=settings.pr_dry_run,
         skip_cadence=skip_cadence,
+        utm_content=resolved_id,
     )
     return {
         "theme_id": resolved_id,

@@ -163,6 +163,30 @@ if command -v docker >/dev/null 2>&1; then
     fi
 fi
 
+# --- Kernel/apport crash dumps (safe) ---
+if [[ -d /var/crash ]]; then
+    while IFS= read -r -d '' f; do
+        remove_path "$f" "crash $(basename "$f")"
+    done < <(find /var/crash -type f -print0 2>/dev/null)
+fi
+
+# --- Ambassador nginx site logs (host bind mount) ---
+NGINX_SITE_LOG_DIR="/var/log/kya-hub-nginx"
+if [[ -d "$NGINX_SITE_LOG_DIR" ]]; then
+    # Soft cap: if any *-access.log exceeds 200 MiB, truncate in place (logrotate is primary)
+    while IFS= read -r -d '' f; do
+        size="$(du_bytes "$f")"
+        if [[ "$size" -gt $((200 * 1024 * 1024)) ]]; then
+            if [[ "$DRY_RUN" == "1" ]]; then
+                log "DRY_RUN would truncate ${f} (~$(( size / 1024 / 1024 )) MiB)"
+            else
+                : > "$f"
+                log "truncated ${f} was ~$(( size / 1024 / 1024 )) MiB"
+            fi
+        fi
+    done < <(find "$NGINX_SITE_LOG_DIR" -maxdepth 1 -type f -name '*-access.log' -print0 2>/dev/null)
+fi
+
 # --- Next.js build cache (rebuilt on deploy) ---
 remove_path "${KYA_ROOT}/portal/.next/cache" "portal .next/cache"
 remove_path "/root/klubo/.next/cache" "klubo .next/cache"

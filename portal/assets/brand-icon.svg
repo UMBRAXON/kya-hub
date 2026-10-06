@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" role="img" aria-label="UMBRAXON">
+  <rect width="180" height="180" fill="#111111"/>
+  <rect x="46" y="46" width="88" height="88" rx="16" fill="#171717" stroke="#2dd4bf" stroke-width="3"/>
+  <text
+    x="90"
+    y="112"
+    text-anchor="middle"
+    font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    font-size="56"
+    font-weight="700"
+    fill="#2dd4bf"
+  >U</text>
+</svg>

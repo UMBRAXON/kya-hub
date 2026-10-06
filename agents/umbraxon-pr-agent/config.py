@@ -87,6 +87,9 @@ class Settings:
     pr_hub_url_required: bool
     pr_publish_platforms: tuple[str, ...]
     pr_kya_heartbeat: bool
+    pr_utm_source: str
+    pr_utm_medium: str
+    pr_utm_campaign: str
 
     auto_pay_registration: bool
     nwc_pay_uri_file: str
@@ -162,6 +165,9 @@ def load_settings() -> Settings:
         pr_hub_url_required=_bool("PR_HUB_URL_REQUIRED", "true"),
         pr_publish_platforms=platforms,
         pr_kya_heartbeat=_bool("PR_KYA_HEARTBEAT", "true"),
+        pr_utm_source=os.getenv("PR_UTM_SOURCE", "moltbook").strip() or "moltbook",
+        pr_utm_medium=os.getenv("PR_UTM_MEDIUM", "social").strip() or "social",
+        pr_utm_campaign=os.getenv("PR_UTM_CAMPAIGN", "pr-agent").strip() or "pr-agent",
         auto_pay_registration=_bool("AUTO_PAY_REGISTRATION", "false"),
         nwc_pay_uri_file=os.getenv("NWC_PAY_URI_FILE", ""),
         kya_id=os.getenv("KYA_ID", ""),

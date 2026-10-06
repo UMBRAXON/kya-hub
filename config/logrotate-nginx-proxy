@@ -1,0 +1,20 @@
+# Ambassador nginx site logs (bind-mounted from containers → host)
+# Installed as: /etc/logrotate.d/kya-hub-nginx
+# Paths: /var/log/kya-hub-nginx/*.log
+
+/var/log/kya-hub-nginx/*-access.log
+/var/log/kya-hub-nginx/*-error.log
+{
+    daily
+    rotate 14
+    maxsize 50M
+    missingok
+    notifempty
+    compress
+    delaycompress
+    dateext
+    dateformat -%Y%m%d
+    copytruncate
+    create 0644 root root
+    sharedscripts
+}

@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple
 
 from config import Settings
 from pr.state import load_state, hours_since_last_post as _hours_since
+from pr.utm import hub_host
 
 _BANNED_PHRASES = (
     "to the moon",
@@ -16,6 +17,12 @@ _BANNED_PHRASES = (
     "limited time only",
     "act now",
     "free money",
+)
+
+# PR ambassador is Umbraxon/KYA only — never promote NaKus here.
+_BANNED_HOSTS = (
+    "nakus.sk",
+    "www.nakus.sk",
 )
 
 _LINK_RE = re.compile(r"https?://", re.I)
@@ -46,8 +53,12 @@ def validate_content(
     for phrase in _BANNED_PHRASES:
         if phrase in low:
             reasons.append(f"banned_phrase:{phrase}")
+    for host in _BANNED_HOSTS:
+        if host in low:
+            reasons.append(f"banned_host:{host}")
     hub_required = settings.pr_hub_url_required if require_hub_url is None else require_hub_url
-    if hub_required and settings.kya_hub_base_url not in t:
+    host = hub_host(settings)
+    if hub_required and host and host not in low and settings.kya_hub_base_url not in t:
         reasons.append("missing_hub_url")
     recent = load_state().get("posts") or []
     h = content_hash(t)

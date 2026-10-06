@@ -94,18 +94,29 @@ step_nakus() {
 }
 
 step_klubo() {
-  if command -v pm2 >/dev/null 2>&1; then
-    if pm2 describe klubo >/dev/null 2>&1; then
-      if pm2 restart klubo --update-env >>"$LOG" 2>&1; then
-        note "OK pm2 restart klubo"
-        ok=$((ok + 1))
-      else
-        note "FAIL pm2 restart klubo"
-        fail=$((fail + 1))
-      fi
-    else
-      note "SKIP pm2 klubo not registered"
-    fi
+  if ! command -v pm2 >/dev/null 2>&1; then
+    return
+  fi
+  if ! pm2 describe klubo >/dev/null 2>&1; then
+    note "SKIP pm2 klubo not registered"
+    return
+  fi
+  # Only bounce if unhealthy — unconditional restart every revive (= every 2 min
+  # via web-uptime-watch) re-opens :3010 and spams Cursor port-forward toasts.
+  local code
+  code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time "$PROBE_TIMEOUT" \
+    "http://127.0.0.1:3010/login" 2>/dev/null || echo 000)
+  if [[ "$code" =~ ^2|^3 ]]; then
+    note "OK klubo already healthy (HTTP $code) — no restart"
+    ok=$((ok + 1))
+    return
+  fi
+  if pm2 restart klubo --update-env >>"$LOG" 2>&1; then
+    note "OK pm2 restart klubo (was HTTP $code)"
+    ok=$((ok + 1))
+  else
+    note "FAIL pm2 restart klubo"
+    fail=$((fail + 1))
   fi
 }
 

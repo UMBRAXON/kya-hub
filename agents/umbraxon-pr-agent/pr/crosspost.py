@@ -9,6 +9,7 @@ from connectors.moltbook import MoltbookConnector
 from pr.connectors_registry import connectors_for_platform
 from pr.spam_guard import content_hash, may_post_now, validate_content
 from pr.state import record_post
+from pr.utm import ensure_hub_cta
 
 # Moltbook policy: English only (Mastodon queue may use SK).
 _SK_DIACRITICS = set("áäčďéíĺľňóôŕšťúýžÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ")
@@ -26,14 +27,24 @@ def crosspost(
     platforms: Optional[List[str]] = None,
     dry_run: Optional[bool] = None,
     skip_cadence: bool = False,
+    utm_content: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Publish to configured platforms (respects PR_MAX_POSTS_PER_RUN)."""
     dry = settings.pr_dry_run if dry_run is None else dry_run
+    medium = "moltbook"
+    targets = platforms or list(settings.pr_publish_platforms)
+    if targets and "moltbook" not in targets:
+        medium = (targets[0] or "social").lower()
+    text = ensure_hub_cta(
+        text,
+        settings,
+        medium=medium,
+        content=utm_content or "post",
+    )
     ok, reasons = validate_content(text, settings)
     if not ok:
         return {"ok": False, "blocked": True, "reasons": reasons}
 
-    targets = platforms or list(settings.pr_publish_platforms)
     results: Dict[str, Any] = {}
     published = 0
     max_p = settings.pr_max_posts_per_run

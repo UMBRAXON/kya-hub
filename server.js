@@ -5505,9 +5505,9 @@ app.get('/api/admin/system-health', security.adminAuth, async (req, res) => {
         } catch (_) { /* non-fatal */ }
 
         // Alert flags (pre cron consumer)
+        // Disk: Telegram len ≥95 % (owner 2026-10-06) — predtým warning od 80 % spamoval v critical balíku s loadom
         const alerts = [];
-        if (disk && disk.percent_used >= 90) alerts.push({ level: 'critical', kind: 'disk', message: `Disk ${disk.percent_used}% used` });
-        else if (disk && disk.percent_used >= 80) alerts.push({ level: 'warning', kind: 'disk', message: `Disk ${disk.percent_used}% used` });
+        if (disk && disk.percent_used >= 95) alerts.push({ level: 'critical', kind: 'disk', message: `Disk ${disk.percent_used}% used` });
         if (ram.percent_used >= 90) alerts.push({ level: 'critical', kind: 'ram', message: `RAM ${ram.percent_used}% used` });
         else if (ram.percent_used >= 80) alerts.push({ level: 'warning', kind: 'ram', message: `RAM ${ram.percent_used}% used` });
         if (load.load_per_cpu_1m >= 2) alerts.push({ level: 'critical', kind: 'load', message: `1m load ${load.load1.toFixed(2)} (${load.load_per_cpu_1m}× cpu count)` });

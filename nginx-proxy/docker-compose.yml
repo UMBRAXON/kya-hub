@@ -23,6 +23,8 @@ services:
       - ./conf.d/nakus.conf:/etc/nginx/conf.d/nakus.conf:ro
       - ./snippets:/etc/nginx/snippets:ro
       - ../nakus/dist:/var/www/nakus:ro
+      # Site access/error logs on host (not container overlay — was 3 GB nakus-access.log)
+      - /var/log/kya-hub-nginx:/var/log/nginx
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -57,6 +59,7 @@ services:
       - ./snippets:/etc/nginx/snippets:ro
       - ./secrets/klubo-staging.htpasswd:/etc/nginx/secrets/klubo-staging.htpasswd:ro
       - /root/klubo/public/marketing/downloads:/var/www/klubo/marketing/downloads:ro
+      - /var/log/kya-hub-nginx:/var/log/nginx
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -88,6 +91,7 @@ services:
     volumes:
       - ./conf.d/jasnelabs.conf:/etc/nginx/conf.d/default.conf:ro
       - ../jasnelabs/dist:/var/www/jasnelabs:ro
+      - /var/log/kya-hub-nginx:/var/log/nginx
     networks:
       - btcpay-net
     healthcheck:

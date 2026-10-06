@@ -10,10 +10,12 @@ from hub.api_docs import fetch_hub_api_docs, summarize_for_prompt
 from pr.promote import _openai_chat
 from pr.spam_guard import content_hash, validate_content
 from pr import state
+from pr.utm import apply_hub_utm, hub_url
 
 COMMENT_SYSTEM = """You are the official Umbraxon KYA Hub PR ambassador on Moltbook.
 Write ONE short comment (2–4 sentences). Technical, helpful, never spammy.
-No hype, no "to the moon". Mention hub URL at most once if relevant.
+No hype, no "to the moon". Never mention NaKus or nakus.sk — Umbraxon/KYA only.
+Mention hub URL at most once if relevant (use exactly: {hub_docs}).
 Canonical register endpoint: POST {hub}/api/v1/register
 
 When the thread is about MCP security, permissions, or tool allowlists:
@@ -108,22 +110,27 @@ def _generate_reply(
         f"Hub facts:\n{docs}\n\n"
         "Write only the comment body."
     )
-    system = COMMENT_SYSTEM.format(hub=settings.kya_hub_base_url)
+    system = COMMENT_SYSTEM.format(
+        hub=settings.kya_hub_base_url,
+        hub_docs=hub_url(settings, "/README_API.md", medium="moltbook", content="engage"),
+    )
     if settings.llm_api_key:
         try:
-            return _openai_chat(settings, user, system=system).strip()
+            raw = _openai_chat(settings, user, system=system).strip()
+            return apply_hub_utm(raw, settings, medium="moltbook", content="engage")
         except Exception:
             pass
+    docs = hub_url(settings, "/README_API.md", medium="moltbook", content="engage")
     if lang == "sk":
         return (
             f"Ďakujeme za záujem. KYA Hub: M2M registrácia cez "
             f"POST {settings.kya_hub_base_url}/api/v1/register — "
-            f"Ed25519, Lightning, discovery. Docs: {settings.kya_hub_base_url}/README_API.md"
+            f"Ed25519, Lightning, discovery. Docs: {docs}"
         )
     return (
         f"Thanks for the interest. KYA Hub offers M2M registration via "
         f"POST {settings.kya_hub_base_url}/api/v1/register (Ed25519 + Lightning). "
-        f"Docs: {settings.kya_hub_base_url}/README_API.md"
+        f"Docs: {docs}"
     )
 
 
@@ -136,6 +143,7 @@ def _post_reply(
     *,
     dry_run: bool,
 ) -> Dict[str, Any]:
+    body = apply_hub_utm(body, settings, medium="moltbook", content="engage")
     ok, reasons = _validate_comment(body, settings)
     if not ok:
         return {"ok": False, "blocked": True, "reasons": reasons}

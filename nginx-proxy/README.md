@@ -43,10 +43,20 @@ docker compose down
 
 `conf.d/default.conf` defines `log_format kyahub_log` with `$real_client_ip` (from `X-Forwarded-For` when present), request line, status, user-agent, timings, `host`, and **`cf_ipcountry=$http_cf_ipcountry`** when traffic passes through **Cloudflare** (otherwise the field is empty).
 
-Example: top client IPs hitting `/api/health` (on the host/container where `access.log` lives):
+**Host path (2026-09-24):** all three ambassadors (`kya-hub-proxy`, `klubo-proxy`, `jasnelabs-proxy`) bind-mount:
+
+`/var/log/kya-hub-nginx` → container `/var/log/nginx`
+
+Site files: `nakus-access.log`, `klubo-access.log`, `jasnelabs-access.log`, …  
+**Logrotate:** `/etc/logrotate.d/kya-hub-nginx` (daily / max 50 MB / 14 rotates / compress).  
+Do **not** let these grow inside the container overlay (previously `nakus-access.log` hit **3 GB**).
+
+Example: top client IPs hitting `/api/health`:
 
 ```bash
-grep '/api/health' /var/log/nginx/access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head
+grep '/api/health' /var/log/kya-hub-nginx/nakus-access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head
+# or inside container:
+docker exec kya-hub-proxy grep '/api/health' /var/log/nginx/nakus-access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head
 ```
 
 
