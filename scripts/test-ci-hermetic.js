@@ -49,12 +49,26 @@ mustExist('scripts/ci-audit.sh');
 mustInclude('scripts/ci-audit.sh', [
   'audit-level=high',
   'mcp/',
+  'portal/',
+]);
+mustInclude('.github/workflows/ci.yml', [
+  'portal/package-lock.json',
+  '(cd portal && npm ci)',
+]);
+mustInclude('.github/workflows/nightly.yml', [
+  'portal/package-lock.json',
+  '(cd portal && npm ci)',
 ]);
 mustExist('.github/dependabot.yml');
 mustInclude('.github/dependabot.yml', [
   'directory: "/"',
   'directory: "/mcp"',
+  'directory: "/portal"',
   'interval: daily',
+]);
+mustExist('portal/styles/shadcn-tailwind.css');
+mustInclude('portal/app/globals.css', [
+  '../styles/shadcn-tailwind.css',
 ]);
 
 console.log('=== 2) Prometheus alert rules ===');

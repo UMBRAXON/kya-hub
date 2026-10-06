@@ -19,11 +19,13 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             mcp/package-lock.json
+            portal/package-lock.json
 
       - name: Install deps
         run: |
           npm ci
           (cd mcp && npm ci)
+          (cd portal && npm ci)
 
       - name: Security audit (high+)
         run: npm run ci:audit
