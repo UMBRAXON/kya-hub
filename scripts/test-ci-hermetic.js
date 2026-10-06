@@ -45,6 +45,17 @@ mustInclude('.github/workflows/nightly.yml', [
   'npm run ci:audit',
   'npm run ci:smoke',
 ]);
+mustExist('scripts/ci-audit.sh');
+mustInclude('scripts/ci-audit.sh', [
+  'audit-level=high',
+  'mcp/',
+]);
+mustExist('.github/dependabot.yml');
+mustInclude('.github/dependabot.yml', [
+  'directory: "/"',
+  'directory: "/mcp"',
+  'interval: daily',
+]);
 
 console.log('=== 2) Prometheus alert rules ===');
 mustExist('config/prometheus-alerts.yml');
