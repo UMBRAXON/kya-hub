@@ -28,9 +28,17 @@ jobs:
           (cd mcp && npm ci)
           (cd portal && npm ci)
 
-      - name: Security audit (high+)
+      # Soft: nové CVE v deps padajú zvonku (npm advisory DB) — nesmú spamovať Nightly fail mail.
+      # Tvrdý gate ostáva v CI (push/PR). Soft fail = annotation + log, job = green.
+      - name: Security audit (high+, soft)
+        id: audit
+        continue-on-error: true
         run: npm run ci:audit
+
+      - name: Annotate soft audit failure
+        if: steps.audit.outcome == 'failure'
+        run: |
+          echo "::warning title=ci:audit soft-fail::Nightly security audit našiel high+ CVE. Oprav bumpom deps (tvrdý gate = CI na push). Job ostáva zelený zámerne."
 
       - name: Smoke tests (hermetic)
         run: npm run ci:smoke
-
