@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Security gate for CI + Nightly: production audit (high+) on root, mcp, and portal.
+# Security gate: production audit (high+) on root, mcp, and portal.
+# - CI (push/PR): tvrdý fail
+# - Nightly: soft (continue-on-error) — CVE zvonku nesmú spamovať fail mail
 # Keep package.json "overrides" floors in sync when a new high/critical lands.
 set -euo pipefail
 

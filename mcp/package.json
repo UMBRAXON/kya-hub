@@ -21,6 +21,7 @@
     "zod": "^3.25.76"
   },
   "overrides": {
+    "@modelcontextprotocol/sdk": "1.32.1",
     "@hono/node-server": "1.19.15",
     "body-parser": "2.3.0",
     "fast-uri": "3.1.8",
