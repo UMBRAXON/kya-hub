@@ -25,7 +25,7 @@
 | **Blog AI** | **`/blog/sto-prani-od-persilu-po-euro-za-pranie`** · `/blog/avivaz-4x-balenie-nie-lacnejsie` · `/blog/bella-happy-before-newborn-vs-new-born` · `/blog/masti-kremy-cena-za-gram` |
 | **Cite Engine** | Standing · huby +**pranie/káva** (2026-11-13) · AI strip aj `/pranie` `/kava` · `llms-sync`→`web:up`→queue→GSC |
 | **AI layer** | MCP v1.3.0 · CLI `npx github:UMBRAXON/nakus-mcp` · sameAs+Glama · GEO pack · Brave/prompt-lab · `docs/AI-MCP.md` |
-| **Ďalší krok** | Owner: npm 2FA Authenticator → Approve staged **`nakus-mcp@1.3.3`** → agent overí `npx nakus-mcp`. Parallel: `DEV_TO_API_KEY` / fóra. |
+| **Ďalší krok** | Owner: npm 2FA → Approve `nakus-mcp@1.3.3`. Index: „daj GSC/Bing“ → `catalog/ops/index-stash/` (bez URL dumpov). |
 | **Answer / AI** | `/odpoved/*` (**201**) · last GSC OK **#62** krmivo · next = fresh na vyžiadanie |
 | **chcemplienky** | **OFF 2026-11-09** — crawl bez affiliate; vymazané DB/crawler/export/cron/WAVE1 |
 | **Partner contact** | Denný enrich ≥2 hub segmenty, skip affiliate-onboard (`ops:partner-contact-enrich`) → CSV — bez auto-send |
