@@ -32,6 +32,7 @@
 | **Clean /out** | Scorecard len clean human (null-ref wave) · týždeň 36 out / CVR 8,3 % · cron 06:35 UTC tight-race |
 | **Dev.to** | 3 live + **cron UTC 07:20** max 2/deň · zajtra Lavazza+Oral-B · `devto-syndicate-daily.sh` |
 | **PSI home** | Desktop **99/96/96/100** · Mobile **94/96/96/100 · LCP 1,1 s** (17.11; bolo 80 / LCP 5 s) |
+| **Web revive** | `nakus-next-singleton` = len :3002/cwd · revive skip healthy · uptime cooldown 900s (FIX 2026-11-17 crash-loop) |
 | **Ďalší krok** | **2026-11-18 GSC #67** Request indexing · potom hub Cite ústna voda / umývačka · awesome PR merge wait. |
 | **Answer / AI** | `/odpoved/*` (**201**) · last GSC OK **#62** krmivo · next = fresh na vyžiadanie |
 | **chcemplienky** | **OFF 2026-11-09** — crawl bez affiliate; vymazané DB/crawler/export/cron/WAVE1 |

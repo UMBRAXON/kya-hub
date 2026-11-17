@@ -72,9 +72,20 @@ step_nakus() {
     note "SKIP nakus (no dir)"
     return
   fi
+  # Rovnako ako Klubo: zdravý :3002 = NEreštartovať.
+  # 2026-11-17: unconditional restart + pkill ALL next-server zabíjal
+  # tignum/portal/klubo → flaky umbraxon spúšťal revive → smyčka.
+  local code
+  code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time "$PROBE_TIMEOUT" \
+    "http://127.0.0.1:3002/" 2>/dev/null || echo 000)
+  if [[ "$code" =~ ^2|^3 ]]; then
+    note "OK nakus already healthy (HTTP $code) — no restart"
+    ok=$((ok + 1))
+    return
+  fi
   if [[ -x "$NAKUS/scripts/nakus-next-singleton.sh" ]]; then
-    if bash "$NAKUS/scripts/nakus-next-singleton.sh" restart >>"$LOG" 2>&1; then
-      note "OK nakus singleton restart"
+    if NAKUS_FORCE_RESTART=1 bash "$NAKUS/scripts/nakus-next-singleton.sh" restart >>"$LOG" 2>&1; then
+      note "OK nakus singleton restart (was HTTP $code)"
       ok=$((ok + 1))
     else
       note "WARN nakus singleton failed — try web:up"

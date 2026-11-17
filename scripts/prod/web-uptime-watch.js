@@ -31,6 +31,11 @@ const TIMEOUT_MS = Math.max(3000, parseInt(process.env.WEB_UPTIME_TIMEOUT_MS || 
 const STATE_PATH =
   process.env.WEB_UPTIME_STATE_PATH || path.join(ROOT, 'logs', 'growth', 'web-uptime.json');
 const AUTO_HEAL = String(process.env.WEB_UPTIME_AUTO_HEAL || '1') !== '0';
+/** Min. sekúnd medzi full revive (inak flaky 1 site = thrash každých 2 min). */
+const REVIVE_COOLDOWN_SEC = Math.max(
+  60,
+  parseInt(process.env.WEB_UPTIME_REVIVE_COOLDOWN_SEC || '900', 10)
+);
 
 function tryHealPublicEdge(reason) {
   if (!AUTO_HEAL) return false;
@@ -51,9 +56,22 @@ function tryHealPublicEdge(reason) {
   }
 }
 
-/** Full revive: edge + proxies + NaKus + Klubo (owner offline). */
-function tryRevivePublicSites(reason) {
+function lastReviveAt(st) {
+  const t = st && st.last_revive_at ? Date.parse(st.last_revive_at) : NaN;
+  return Number.isFinite(t) ? t : 0;
+}
+
+/** Full revive: edge + proxies + NaKus + Klubo (owner offline). Cooldown + skip thrash. */
+function tryRevivePublicSites(reason, st) {
   if (!AUTO_HEAL) return false;
+  const now = Date.now();
+  const elapsed = (now - lastReviveAt(st)) / 1000;
+  if (elapsed < REVIVE_COOLDOWN_SEC) {
+    console.log(
+      `[web-uptime] revive skipped cooldown ${Math.round(REVIVE_COOLDOWN_SEC - elapsed)}s (${reason})`
+    );
+    return false;
+  }
   const script = fs.existsSync(REVIVE_ALL) ? REVIVE_ALL : ENSURE_EDGE;
   if (!fs.existsSync(script)) return false;
   try {
@@ -61,6 +79,7 @@ function tryRevivePublicSites(reason) {
       timeout: 300000,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
+    if (st) st.last_revive_at = new Date().toISOString();
     console.log(`[web-uptime] revive-public-sites OK (${reason})`);
     return true;
   } catch (e) {
@@ -240,10 +259,6 @@ async function main() {
   const st = loadState();
   if (!st.sites) st.sites = {};
 
-  // Pre-heal when any site already marked down (post docker/containerd cutover)
-  const anyDown = urls.some((u) => (st.sites[u] || {}).status === 'down');
-  if (anyDown) tryRevivePublicSites('state-down');
-
   let failCount = 0;
   for (const url of urls) {
     const r = await checkOne(url, st);
@@ -254,9 +269,10 @@ async function main() {
     (u) => Number((st.sites[u] || {}).consecutive_failures || 0) >= FAIL_THRESHOLD
   );
 
-  // Majority fail OR confirmed DOWN (≥ threshold) → full revive + re-probe
+  // Majority fail OR confirmed DOWN — full revive (s cooldown).
+  // Jeden flaky site (umbraxon) už NEspúšťa revive každých 2 min.
   if (failCount >= Math.ceil(urls.length / 2) || confirmedDown) {
-    if (tryRevivePublicSites(`probe-fails=${failCount};confirmed=${confirmedDown}`)) {
+    if (tryRevivePublicSites(`probe-fails=${failCount};confirmed=${confirmedDown}`, st)) {
       for (const url of urls) {
         await checkOne(url, st);
       }
