@@ -1,6 +1,6 @@
 # Session handoff — NAKUS / KYA-Hub
+- **2026-11-18:** GSC **#67+#67b OK** · IndexNow 200 · fresh-gate harden (`assertGscBatchFresh`) — už nikdy confirmed URL do batche.
 - **2026-11-17:** Web crash-loop FIX — singleton zabíjal ALL next-server; revive vždy bounce NaKus; klubo cron */2. Opravené (skip healthy + cooldown 900s + scoped kill).
-- **2026-11-18 POVINNÉ:** GSC **#67** Request indexing — protein 1kg (33i) · Creapure · pants · hub `gsc-batch-67-2026-11-17` · lock `gsc-next-lock.json`. Po OK IndexNow. (17.11 hotové #68+#68b.)
 - **2026-11-15:** npm **`nakus-mcp@1.3.3` live** (`latest`) · `npx nakus-mcp` OK. Staré `0.0.0-stage`/`1.3.1` = voliteľne deprecate (neunpublish).
 - **2026-11-15:** GSC **#65+#65b OK** · confirmed 514 · IndexNow 200 · pending 0.
 - **2026-11-14:** GSC **#64+#64b OK** · confirmed 498 · IndexNow 200.
@@ -1240,3 +1240,23 @@
 - **Ukončená:** 2026-11-17T15:15:19Z na kya-node-01
 - **Ukončená:** 2026-11-17T15:15:19Z na kya-node-01
 - **Ukončená:** 2026-11-17T15:15:19Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-17T20:36:10Z na kya-node-01
+- **Ukončená:** 2026-11-18T07:06:07Z na kya-node-01

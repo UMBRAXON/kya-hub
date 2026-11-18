@@ -20,7 +20,7 @@
 | **CEO scorecard** | `ops:ceo-scorecard` · channel×segment×€ + /out + GSC + **product funnel** + demand gaps · pondelok pred weekly · `ceo-weekly-scorecard-latest.json` |
 | **Ops must-track** | `ops:product-performance` · `merchant-scorecard` · `price-position` · `assortment-coverage` · `demand-ledger` · `/out?rk&src&ps` |
 | **Bing** | **#45** · denne 13:30 SK · mix **~70 % Cite + 30 % PDP** · SubmitUrlBatch 100 + **TG** · **AI Performance KPI** `ops:pull-bing-ai` (CSV inbox — API GetAI* 404) · `docs/BING-WEBMASTER-API.md` |
-| **GSC** | **#68+#68b OK** (17.11) · **#67 = POVINNÉ 2026-11-18** · čelo **vlhčené hub + Fresh Clean** + protein · hub `gsc-batch-67-2026-11-17` |
+| **GSC** | **#67+#67b OK** (18.11) · IndexNow 200 · fresh-gate `assertGscBatchFresh` · next = `seo:gsc-fresh` |
 | **IndexNow / Bing** | Po GSC OK: `npm run seo:indexnow:gsc`. Denný Bing API + IndexNow 13:30 SK. Weekly priority cron. Meta desc ≥~150. |
 | **Blog AI** | **`/blog/sto-prani-od-persilu-po-euro-za-pranie`** · `/blog/avivaz-4x-balenie-nie-lacnejsie` · `/blog/bella-happy-before-newborn-vs-new-born` · `/blog/masti-kremy-cena-za-gram` |
 | **Cite Engine** | Standing · huby +vlhčené +**masti €/g** +**zubná pasta €/ml** +**aviváž €/pranie** (2026-11-17) · `alias_questions` vo fact JSON · AI strip · Dev.to seed→`/odpoved` |
