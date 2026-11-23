@@ -9,7 +9,8 @@
 | **Kontext** | `docs/PROJECT-CONTEXT.md` (START) → `PROJECT-LOG.md` → `npm run pipeline:health` |
 | **Live segmenty** | 22 · +`
 /ustna-voda` (€/ml) · +`/zubna-pasta` · SoT `catalog-categories.ts` · `audit:segment-wiring` |
-| **Pairing** | **2026-11-14 CRITICAL 0 HIGH 0** · gel scent všetky `gel-*` (Savo/Waschkönig) · DG Ristretto≡Espresso Barista |
+| **Pairing** | **2026-11-19 C0 H0 WARN~77** · káva fp-rebuild 29→4 · pack/EAN silence · kids/decaf SoT · root-fix ledger |
+| **Eng. štandard** | `root-cause-engineering.mdc` alwaysApply — žiadne náplasti; root pred editom; 2-step pri veľkom prepise |
 | **Deploy UI** | `NAKUS_FORCE_RESTART=1 npm run web:up` (+ auto warmup hubov; `NAKUS_SKIP_WARM=1` skip) |
 | **Engine DB lock** | `catalog/.cron-engine-db.lock` · FIFO fronta do **07:00 UTC** (`lib-engine-lock.sh`) · orphan `.holder` cleanup · ensure 180 s / B2B fd9 7200 · `npm run audit:engine-lock` · watchdog 09:00 |
 | **Nerobiť** | Full `feedo:sync` / pipeline v chate ak health OK (cron) |
@@ -18,22 +19,25 @@
 | **Affiliate €** | eHUB API = **CZK** → EUR (`NAKUS_EHUB_CZK_PER_EUR` default 25). Order 190800407 = **31,93 Kč ≈ 1,28 €** (nie 31 €). |
 | **Order atribúcia** | `ops:attribute-orders` → jsonl + **TG alert** každých 20 min · eHUB A+B · CJ `/out` + **SKU∩outbound fallback** (`cj_sku_out_match`) · Dognet API + mail |
 | **CEO scorecard** | `ops:ceo-scorecard` · channel×segment×€ + /out + GSC + **product funnel** + demand gaps · pondelok pred weekly · `ceo-weekly-scorecard-latest.json` |
-| **Ops must-track** | `ops:product-performance` · `merchant-scorecard` · `price-position` · `assortment-coverage` · `demand-ledger` · `/out?rk&src&ps` |
-| **Bing** | **#45** · denne 13:30 SK · mix **~70 % Cite + 30 % PDP** · SubmitUrlBatch 100 + **TG** · **AI Performance KPI** `ops:pull-bing-ai` (CSV inbox — API GetAI* 404) · `docs/BING-WEBMASTER-API.md` |
-| **GSC** | **#67+#67b OK** (18.11) · IndexNow 200 · fresh-gate `assertGscBatchFresh` · next = `seo:gsc-fresh` |
+| **Ops must-track** | `ops:product-performance` · `merchant-scorecard` · `price-position` · `assortment-coverage` · `demand-ledger` · **`ops:cite-ai-order-gaps`** · **`ops:propose-tight-race-cites`** · `/out?rk&src&ps` |
+| **Bing** | **#47** (18.11) · denne 13:30 SK · mix **~70 % Cite + 30 % PDP** · SubmitUrlBatch 100 + **same-day top-up** (`seo:bing-topup`) + TG · `docs/BING-WEBMASTER-API.md` |
+| **GSC** | **#73 zajtra 24.11** (dnes limit po #72) · living hub · confirmed 580 |
 | **IndexNow / Bing** | Po GSC OK: `npm run seo:indexnow:gsc`. Denný Bing API + IndexNow 13:30 SK. Weekly priority cron. Meta desc ≥~150. |
 | **Blog AI** | **`/blog/sto-prani-od-persilu-po-euro-za-pranie`** · `/blog/avivaz-4x-balenie-nie-lacnejsie` · `/blog/bella-happy-before-newborn-vs-new-born` · `/blog/masti-kremy-cena-za-gram` |
-| **Cite Engine** | Standing · huby +vlhčené +**masti €/g** +**zubná pasta €/ml** +**aviváž €/pranie** (2026-11-17) · `alias_questions` vo fact JSON · AI strip · Dev.to seed→`/odpoved` |
+| **Cite Engine** | Standing · huby + pins · umývačka €/umytie · dojčenské €/kg · **index organism** GSC=Bing (rule `nakus-index-organism`) · Dev.to OFF |
 | **AI layer** | MCP **`nakus-mcp@1.3.3`** · CLI `npx nakus-mcp` · sameAs+Glama · GEO pack · Brave/prompt-lab · `docs/AI-MCP.md` |
 | **Trading Advisor live** | `/marketing/downloads/trading-advisor-live/` · `npm run trading-advisor:live` · cron 03/09/15/21:15 UTC |
-| **Bing last** | `#45` 100 URL (2026-11-16) · 8 force Cite demand · cron UTC 11:30/12:30 |
-| **JSON-LD** | Merchant Listings: image+description+AggregateOffer+shipping/return (2026-11-15) |
+| **Bing last** | **#52** (23.11) 100 URL · Cite 23 + PDP 77 · API+IndexNow · cron 13:30 SK |
+| **JSON-LD** | Product snippets: AggregateOffer (+ Cite nested Offer/UnitPrice); **Merchant listings N/A** (2026-11-18) |
 | **Košík** | CJ export **322998** HTTP OK (2026-11-15) · nie 7641542 |
 | **Clean /out** | Scorecard len clean human (null-ref wave) · týždeň 36 out / CVR 8,3 % · cron 06:35 UTC tight-race |
-| **Dev.to** | 3 live + **cron UTC 07:20** max 2/deň · zajtra Lavazza+Oral-B · `devto-syndicate-daily.sh` |
+| **Dev.to** | **OFF** flagged 21.11 · `catalog/ops/.devto-disabled` · po unflag Creapure+Brit Puppy |
 | **PSI home** | Desktop **99/96/96/100** · Mobile **94/96/96/100 · LCP 1,1 s** (17.11; bolo 80 / LCP 5 s) |
 | **Web revive** | `nakus-next-singleton` = len :3002/cwd · revive skip healthy · uptime cooldown 900s (FIX 2026-11-17 crash-loop) |
-| **Ďalší krok** | **2026-11-18 GSC #67** Request indexing · potom hub Cite ústna voda / umývačka · awesome PR merge wait. |
+| **Káva kapsule** | grams≠ks + NxM + DG dual + beans/form + **multi-ean splits** (19.11) · pairing kava WARN **70** |
+| **HF dataset** | `nakusSK/sk-unit-prices` · **220** rows live (18.11) · cron UTC 07:25 · `seo:hf-push` |
+| **PDP trust UX** | 2026-11-19: Prečo toto · share/WA · Balenie klame · freshness (bez retencie alerts) |
+| **Ďalší krok** | Zajtra GSC #73 Request indexing → „prešli“; AI-first Cite loop. |
 | **Answer / AI** | `/odpoved/*` (**201**) · last GSC OK **#62** krmivo · next = fresh na vyžiadanie |
 | **chcemplienky** | **OFF 2026-11-09** — crawl bez affiliate; vymazané DB/crawler/export/cron/WAVE1 |
 | **Partner contact** | Denný enrich ≥2 hub segmenty, skip affiliate-onboard (`ops:partner-contact-enrich`) → CSV — bez auto-send |
@@ -44,7 +48,7 @@
 | **Outbound × sort** | Cookie `nk_cat_ctx` (last catalog sort) → `outbound-clicks.jsonl` · `npm run report:analytics` |
 | **„Bez CSS“ za Siemens** | Nie deploy — **Zscaler** 403 na `/_next/static/*` + assety (HTML prejde). Over hotspot / allowlist `www.nakus.sk`. Proof: `/marketing/downloads/homepage-styled-proof-20260921/` |
 | **UI šípky** | Kanon `NkCircleChevron` — plná brand oranžová **`#e88a2e`** + biely kotúč (späť/pager/expand/breadcrumb/select) |
-| **GSC (ops)** | last OK #68+#68b · **next #67 = 2026-11-18** · `ops:gsc-demand-adapt` |
+| **GSC (ops)** | last OK **#71+#71b** · `ops:gsc-demand-adapt` |
 | **Geo analytics** | page_view → **DB-IP** city MMDB + geoip-lite fallback (bez IP) · `geo:update-db` · TG Otvorili (Cite/utm_term) |
 | **Order metriky** | time_to_buy · cheapest · landing · returning · search · device · segment · geo · CJ/Dognet · `affiliate-orders.jsonl` |
 | **SEO URL pick** | **Povinné** `audit:seo-index-fresh` · `seo:gsc-fresh` (Cite-first z `gsc-priority-queue.json`) · `seo:gsc-queue:build` · `seo:bing-fresh` |
