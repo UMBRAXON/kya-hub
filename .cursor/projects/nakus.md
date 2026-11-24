@@ -21,7 +21,7 @@
 | **CEO scorecard** | `ops:ceo-scorecard` · channel×segment×€ + /out + GSC + **product funnel** + demand gaps · pondelok pred weekly · `ceo-weekly-scorecard-latest.json` |
 | **Ops must-track** | `ops:product-performance` · `merchant-scorecard` · `price-position` · `assortment-coverage` · `demand-ledger` · **`ops:cite-ai-order-gaps`** · **`ops:propose-tight-race-cites`** · `/out?rk&src&ps` |
 | **Bing** | **#47** (18.11) · denne 13:30 SK · mix **~70 % Cite + 30 % PDP** · SubmitUrlBatch 100 + **same-day top-up** (`seo:bing-topup`) + TG · `docs/BING-WEBMASTER-API.md` |
-| **GSC** | **#73 zajtra 24.11** (dnes limit po #72) · living hub · confirmed 580 |
+| **GSC** | **#73 OK** (24.11) 11/11 · IndexNow 200 · confirmed **591** |
 | **IndexNow / Bing** | Po GSC OK: `npm run seo:indexnow:gsc`. Denný Bing API + IndexNow 13:30 SK. Weekly priority cron. Meta desc ≥~150. |
 | **Blog AI** | **`/blog/sto-prani-od-persilu-po-euro-za-pranie`** · `/blog/avivaz-4x-balenie-nie-lacnejsie` · `/blog/bella-happy-before-newborn-vs-new-born` · `/blog/masti-kremy-cena-za-gram` |
 | **Cite Engine** | Standing · huby + pins · umývačka €/umytie · dojčenské €/kg · **index organism** GSC=Bing (rule `nakus-index-organism`) · Dev.to OFF |
@@ -37,7 +37,7 @@
 | **Káva kapsule** | grams≠ks + NxM + DG dual + beans/form + **multi-ean splits** (19.11) · pairing kava WARN **70** |
 | **HF dataset** | `nakusSK/sk-unit-prices` · **220** rows live (18.11) · cron UTC 07:25 · `seo:hf-push` |
 | **PDP trust UX** | 2026-11-19: Prečo toto · share/WA · Balenie klame · freshness (bez retencie alerts) |
-| **Ďalší krok** | Zajtra GSC #73 Request indexing → „prešli“; AI-first Cite loop. |
+| **Ďalší krok** | GSC #74 z živej fronty keď owner chce; AI-first Cite loop. |
 | **Answer / AI** | `/odpoved/*` (**201**) · last GSC OK **#62** krmivo · next = fresh na vyžiadanie |
 | **chcemplienky** | **OFF 2026-11-09** — crawl bez affiliate; vymazané DB/crawler/export/cron/WAVE1 |
 | **Partner contact** | Denný enrich ≥2 hub segmenty, skip affiliate-onboard (`ops:partner-contact-enrich`) → CSV — bez auto-send |
